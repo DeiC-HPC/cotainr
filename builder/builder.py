@@ -3,8 +3,14 @@ import sys
 import os
 from workers import BuildWorker
 
+#design
+# error early
+# self decribe commands and options
+# simple. Let the works do the work and keep this file only to add options and write help text.
+# Wrokers will have an init, verify and a run.
 
-# 
+
+# make sure to check the dir path now and up front to ensure we do have to do it later
 def dir_path(string):
     if os.path.isdir(string):
         return string
@@ -32,11 +38,12 @@ class Builder(object):
         # prefixing the argument with -- means it's optional
         parser.add_argument('--python', type=dir_path, help="Path to the python instalation to include")
         # now that we're inside a subcommand, ignore the first
-        # TWO argvs, ie the command (git) and the subcommand (commit)
+        # TWO argvs, ie the command (builder) and the subcommand (build)
         args = parser.parse_args(sys.argv[2:])
         
         # Setup the builder object to with all the args needed.
         worker = BuildWorker.BuildWorker(args.python)
+        worker.verify()
         worker.run()
         
 
