@@ -1,7 +1,7 @@
 import argparse
 import sys
 import os
-from workers import BuildWorker
+from workers import BuildWorker, ReportWorker
 
 #design
 # error early
@@ -36,6 +36,7 @@ class Builder(object):
         parser = argparse.ArgumentParser(
             description='Build the container with the selected options')
         # prefixing the argument with -- means it's optional
+        parser.add_argument("--dryrun", action='store_true')
         parser.add_argument('--python', type=dir_path, help="Path to the python instalation to include")
         # now that we're inside a subcommand, ignore the first
         # TWO argvs, ie the command (builder) and the subcommand (build)
@@ -44,9 +45,18 @@ class Builder(object):
         # Setup the builder object to with all the args needed.
         worker = BuildWorker.BuildWorker(args.python)
         worker.verify()
-        worker.run()
+        if (args.dryrun == False):
+            worker.run()
         
-
+    def system_report(self):
+        #output different system veriables the script would normaly want to include in the container
+        parser = argparse.ArgumentParser(
+            description='Report the different system enverioment and installed libs.')
+        parser.add_argument("--onlyenv", action='store_true', help="Only list the system enverioment to check if they are set")
+        args = parser.parse_args(sys.argv[2:])
+        worker = ReportWorker.ReportWorker(args.onlyenv)
+        worker.verify()
+        worker.run()
 
 
 
