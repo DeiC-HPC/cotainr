@@ -3,29 +3,30 @@
 ## Design
 
 ### Arguments design
-The container builder is designed around the commandline action/command structure like in git and other tools
 
-There are for now 3 commands supported
- - help
- - build
- - system_report
+The container builder is designed around the command line action/command structure like in git
+
+There are 2 supported commands:
+
+- build : Build a container
+- info : Obtain info about the state of all required dependencies for building a container
 
 The idea is to invoke the commands like
-`python builder.py help`
-`python builder.py build`
-`python builder.py system_report`
 
-Each subcommand then support a set of options. They all support
-`python builder.py build --help`
-that could results in the following report
-> usage: builder.py [-h] [--dryrun] [--python PYTHON]
-> 
-> Build the container with the selected options
-> 
-> options:
->   -h, --help       show this help message and exit
->   --dryrun
->   --python PYTHON  Path to the python instalation to include
+- `python builder.py build`
+- `python builder.py info`
 
+Each subcommand then supports a set of options. They all support `--help` for displaying a help message.
 
+The main command does not support any options except for `--help`.
 
+### The build subcommand
+
+The following option may be specified with the `build` subcommand:
+
+- `--base-image` : a valid singularity \<IMAGE PATH\> that is used as the base for the container
+- `--conda-env` : an exported Conda environment to install and activate in the container
+
+### The info subcommand
+
+The info subcommand does currently not take any options.
