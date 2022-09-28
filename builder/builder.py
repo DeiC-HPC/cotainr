@@ -76,8 +76,8 @@ class Info:
     Implements the "info" subcommand.
     """
 
-    @staticmethod
-    def add_arguments(parser):
+    @classmethod
+    def add_arguments(cls, parser):
         """
         Add command line arguments to arguments parser.
 
