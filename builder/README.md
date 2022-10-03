@@ -5,7 +5,7 @@
 Generally, we try to:
 
 - error early
-- use self-decribing commands and options
+- use self-describing commands and options
 - make it simple.
 
 ### Command line interface design
@@ -19,8 +19,8 @@ There are 2 supported commands:
 
 The idea is to invoke the commands like
 
-- `python builder.py build <positional_arg> <non-positional args>`
-- `python builder.py info`
+- `python builder/cli.py build <positional_arg> <non-positional args>`
+- `python builder/cli.py info`
 
 Each subcommand then supports a set of options. They all support `--help` for displaying a help message.
 
@@ -74,4 +74,4 @@ Throughout the implementation, we try to avoid repeating help messages for the C
 
 - The main CLI description text from the `BuilderCLI` short summary.
 - The subcommands help summary from their class short summary.
-- The subcommands help texts from the `Parameters` section in the subcomnmand `__init__` method. For easing this, we have the `_extract_help_from_docstring(arg, docstring)` function in `builder.py`. Note that this utility function relies on the assumption that the docstrings are formatted according to the numpydoc format.
+- The subcommands help texts from the `Parameters` section in the class docstring. For easing this, we have the `_extract_help_from_docstring(arg, docstring)` function in `builder.py`. Note that this utility function relies on the assumption that the docstrings are formatted according to the numpydoc format.

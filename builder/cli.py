@@ -1,37 +1,50 @@
 """
-User space Apptainer/Singularity container builder.
-
+Command line interface for user space Apptainer/Singularity container builder.
 Created by DeiC, deic.dk
+
+The classes in this module implements the command line main command and
+subcommands.
+
+Classes
+-------
+BuilderCLI
+    Build Apptainer/Singularity containers for HPC systems in user space. (The
+    main CLI command.)
+Build
+    Build a container.(The "build" subcommand.)
+Info
+    Obtain info about the state of all required dependencies for building a
+    container. (The "info" subcommand.)
 """
 
 import argparse
 import pathlib
+
+from container import Sandbox
+from package import CondaInstall
 
 
 class Build:
     """
     Build a container.
 
-    Implements the "build" subcommand.
+    The "build" subcommand.
+
+    Parameters
+    ----------
+    image_path : pathlike
+        Path to the built container image.
+    base_image : str
+        Base image to use for the container which may be any valid
+        Apptainer/Singularity <BUILD SPEC>.
+    conda_env : pathlike, optional
+        Path to a Conda environment.yml file to install and activate in the
+        container.
     """
 
     def __init__(self, *, image_path=None, base_image=None, conda_env=None):
-        """
-        Create the "build" subcommand.
-
-        Parameters
-        ----------
-        image_path : pathlike
-            Path to the built container image.
-        base_image : str
-            Base image to use for the container which may be any valid
-            Apptainer/Singularity <BUILD SPEC>.
-        conda_env : pathlike, optional
-            Path to a Conda environment.yml file to install and activate in the
-            container.
-
-        """
-        self.image_path = image_path
+        """Create the "build" subcommand."""
+        self.image_path = image_path.absolute()
         self.base_image = base_image
         self.conda_env = conda_env
 
@@ -47,33 +60,32 @@ class Build:
         """
         parser.add_argument(
             "image_path",
-            help=_extract_help_from_docstring("image_path", cls.__init__.__doc__),
+            help=_extract_help_from_docstring("image_path", cls.__doc__),
             type=pathlib.Path,
         )
         parser.add_argument(
             "--base-image",
             required=True,
-            help=_extract_help_from_docstring("base_image", cls.__init__.__doc__),
+            help=_extract_help_from_docstring("base_image", cls.__doc__),
         )
         parser.add_argument(
             "--conda-env",
-            help=_extract_help_from_docstring("conda_env", cls.__init__.__doc__),
+            help=_extract_help_from_docstring("conda_env", cls.__doc__),
             type=pathlib.Path,
         )
 
     def execute(self):
         """Execute the subcommand."""
-        print(
-            "Building container based on "
-            f"{self.image_path=}, {self.base_image=}, {self.conda_env=}"
-        )
+        with Sandbox(self.base_image) as sandbox:
+            sandbox.add_to_env('echo "Hello sandbox world!"')
+            sandbox.build_image(self.image_path)
 
 
 class Info:
     """
     Obtain info about the state of all required dependencies for building a container.
 
-    Implements the "info" subcommand.
+    The "info" subcommand.
     """
 
     @classmethod
@@ -97,7 +109,7 @@ class BuilderCLI:
     """
     Build Apptainer/Singularity containers for HPC systems in user space.
 
-    The main command CLI.
+    The main CLI command.
     """
 
     def __init__(self):
@@ -124,7 +136,16 @@ class BuilderCLI:
         subcommand_args = {
             key: val for key, val in vars(self.args).items() if key != "subcommand_cls"
         }
-        self.subcommand = self.args.subcommand_cls(**subcommand_args)
+
+        try:
+            self.subcommand = self.args.subcommand_cls(**subcommand_args)
+        except AttributeError:
+            # Print help if no subcommand was given
+            class NoSubcommand:
+                def execute(self):
+                    parser.print_help()
+
+            self.subcommand = NoSubcommand()
 
 
 def _extract_help_from_docstring(arg, docstring):
