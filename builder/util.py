@@ -35,6 +35,7 @@ def stream_subprocess(args, **kwargs):
     subprocess.CalledProcessError
         If the subprocess returned a non-zero status code.
     """
+    captured_stdout = []
     with subprocess.Popen(
         args,
         text=True,
@@ -45,13 +46,12 @@ def stream_subprocess(args, **kwargs):
     ) as process:
         for line in process.stdout:
             print(line, end="")
+            captured_stdout.append(line)
 
-    completed_process = subprocess.CompletedProcess(
-        process.args,
-        process.returncode,
-        stdout=process.stdout,
-        stderr=process.stderr,
-    )
+        completed_process = subprocess.CompletedProcess(
+            process.args, process.returncode, stdout="\n".join(captured_stdout)
+        )
+
     completed_process.check_returncode()
 
     return completed_process

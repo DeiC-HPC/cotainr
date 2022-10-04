@@ -20,8 +20,8 @@ Info
 import argparse
 import pathlib
 
-from container import Sandbox
-from package import CondaInstall
+import container
+import pack
 
 
 class Build:
@@ -46,7 +46,10 @@ class Build:
         """Create the "build" subcommand."""
         self.image_path = image_path.absolute()
         self.base_image = base_image
-        self.conda_env = conda_env
+        if conda_env is not None:
+            self.conda_env = conda_env.absolute()
+        else:
+            self.conda_env = None
 
     @classmethod
     def add_arguments(cls, parser):
@@ -76,8 +79,23 @@ class Build:
 
     def execute(self):
         """Execute the subcommand."""
-        with Sandbox(self.base_image) as sandbox:
-            sandbox.add_to_env('echo "Hello sandbox world!"')
+        with container.Sandbox(self.base_image) as sandbox:
+            if self.conda_env is not None:
+                # Install supplied conda env
+                conda_install = pack.CondaInstall(sandbox.sandbox_dir)
+                conda_env_name = "conda_container_env"
+                conda_install.run_command(
+                    f"conda env create -f {self.conda_env.as_posix()} "
+                    f"-n {conda_env_name}"
+                )
+
+                # Activate env on container startup
+                sandbox.add_to_env(conda_install.conda_runtime_bootstrap_script)
+                sandbox.add_to_env(f"conda activate {conda_env_name}")
+
+                # Cleanup
+                conda_install.cleanup_unused_files()
+
             sandbox.build_image(self.image_path)
 
 

@@ -8,7 +8,6 @@ Classes
 Sandbox
 """
 
-from multiprocessing.sharedctypes import Value
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -23,12 +22,11 @@ class Sandbox:
 
     def __enter__(self):
         # Store current directory
-        self.origin = Path(".").absolute()
+        self._origin = Path(".").absolute()
 
         # Create sandbox
-        self.tmp_dir = TemporaryDirectory()
-        self.sandbox_dir = Path(self.tmp_dir.name) / "sandbox"
-        # TODO: handle custom tmp dir placement?
+        self._tmp_dir = TemporaryDirectory()
+        self.sandbox_dir = Path(self._tmp_dir.name) / "sandbox"
         stream_subprocess(
             [
                 "singularity",
@@ -38,7 +36,6 @@ class Sandbox:
                 f"{self.base_image}",
             ]
         )
-        # TODO: handle apptainer? TODO: extra args to singularity?
 
         # Change directory to the sandbox
         os.chdir(self.sandbox_dir)
@@ -46,24 +43,24 @@ class Sandbox:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        os.chdir(self.origin)
-        self.tmp_dir.cleanup()
+        os.chdir(self._origin)
+        self._tmp_dir.cleanup()
         self.sandbox_dir = None
 
     def add_to_env(self, shell_script):
-        if self.sandbox_dir is None:
-            raise ValueError("Operation only available inside sandbox context.")
+        self._assert_within_sandbox_context()
 
         env_file = self.sandbox_dir / "environment"
         with env_file.open(mode="a") as f:
-            f.write(shell_script)
+            f.write(shell_script + "\n")
 
     def build_image(self, path):
-        if self.sandbox_dir is None:
-            raise ValueError("Operation only available inside sandbox context.")
-
-        # TODO: gracefully handle not overwriting existing image file
+        self._assert_within_sandbox_context()
 
         stream_subprocess(
             ["singularity", "build", "--force", f"{path}", f"{self.sandbox_dir}"]
         )
+
+    def _assert_within_sandbox_context(self):
+        if self.sandbox_dir is None:
+            raise ValueError("The operation is only valid inside a sandbox context.")
