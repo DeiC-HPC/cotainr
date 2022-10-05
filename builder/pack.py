@@ -51,8 +51,8 @@ class CondaInstall:
         # Run Conda installer
         stream_subprocess(
             (
-                f"bash {shlex.quote(conda_installer_path.as_posix())} -b -s"
-                f"-p {shlex.quote(self.install_dir.as_posix())}"
+                f"bash {shlex.quote(str(conda_installer_path))} -b -s"
+                f"-p {shlex.quote(str(self.install_dir))}"
             ),
             shell=True,
         )
@@ -72,6 +72,7 @@ class CondaInstall:
         self.cleanup_unused_files()
 
     def run_command(self, conda_cmd):
+        # TODO: Some sort of sanity check of `conda_cmd` is required
         process = stream_subprocess(
             f"{self._conda_install_bootstrap_source} {conda_cmd}",
             shell=True,

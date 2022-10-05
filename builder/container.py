@@ -10,6 +10,7 @@ Sandbox
 
 import os
 from pathlib import Path
+import shlex
 from tempfile import TemporaryDirectory
 
 from util import stream_subprocess
@@ -32,8 +33,8 @@ class Sandbox:
                 "singularity",
                 "build",
                 "--sandbox",
-                f"{self.sandbox_dir}",
-                f"{self.base_image}",
+                f"{shlex.quote(str(self.sandbox_dir))}",
+                f"{shlex.quote(self.base_image)}",
             ]
         )
 
@@ -58,7 +59,13 @@ class Sandbox:
         self._assert_within_sandbox_context()
 
         stream_subprocess(
-            ["singularity", "build", "--force", f"{path}", f"{self.sandbox_dir}"]
+            [
+                "singularity",
+                "build",
+                "--force",
+                f"{shlex.quote(str(path))}",
+                f"{shlex.quote(str(self.sandbox_dir))}",
+            ]
         )
 
     def _assert_within_sandbox_context(self):
