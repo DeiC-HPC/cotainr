@@ -20,24 +20,17 @@ class CondaInstall:
     def __init__(self, install_root, prefix="/opt/conda"):
         self.prefix = prefix
         self.install_root = Path(install_root).absolute()
-        self.install_dir = self.install_root / self.prefix.lstrip("/")
+
+        # Setup fakechroot vars
+        # TODO: exclude everything but prefix parent... ?
+        self._fakechroot_exclude_path = f"FAKECHROOT_EXCLUDE_PATH=/dev:/proc:/sys:{Path(shutil.which('bash')).parent}"
+        self._fakechroot_cmd = (
+            f"fakechroot chroot {shlex.quote(str(self.install_root))}"
+        )
 
         # Set Conda bootstrap variables
-        #    At container runtime
-        self._conda_runtime_source_script = (
-            self.prefix + "/etc/profile.d/conda.sh"
-        )
-        self.conda_runtime_bootstrap_script = (
-            f"source {shlex.quote(self._conda_runtime_source_script)}"
-        )
-        #    During installation / container build
-        self._conda_install_source_script = (
-            self.install_dir / "etc/profile.d/conda.sh"
-        ).as_posix()
-        self._conda_install_bootstrap_source = (
-            f"source {shlex.quote(self._conda_install_source_script)};"
-        )
-        #TODO: Needs conda-pack...
+        self._conda_source_script = self.prefix + "/etc/profile.d/conda.sh"
+        self.conda_bootstrap_cmd = f"source {shlex.quote(self._conda_source_script)}"
 
         # Download Conda installer
         conda_installer_url = (
@@ -51,15 +44,17 @@ class CondaInstall:
         # Run Conda installer
         stream_subprocess(
             (
-                f"bash {shlex.quote(str(conda_installer_path))} -b -s"
-                f"-p {shlex.quote(str(self.install_dir))}"
+                f"{self._fakechroot_exclude_path} {self._fakechroot_cmd} "
+                f"bash {shlex.quote(str(conda_installer_path.name))} -b -s "
+                f"-p {shlex.quote(str(self.prefix))}"
             ),
             shell=True,
         )
+        conda_installer_path.unlink()  # ... and remove the installer
 
         # Check that we correctly use the newly installed Conda from now on
         source_check_process = self.run_command("conda info --base")
-        if source_check_process.stdout.strip() != f"{self.install_dir}":
+        if source_check_process.stdout.strip() != f"{self.prefix}":
 
             raise RuntimeError(
                 "Multiple local Conda installs interfere. "
@@ -74,9 +69,11 @@ class CondaInstall:
     def run_command(self, conda_cmd):
         # TODO: Some sort of sanity check of `conda_cmd` is required
         process = stream_subprocess(
-            f"{self._conda_install_bootstrap_source} {conda_cmd}",
+            (
+                f"{self._fakechroot_exclude_path} {self._fakechroot_cmd} "
+                f"bash -c '{self.conda_bootstrap_cmd}; {conda_cmd}'"
+            ),
             shell=True,
-            executable=shutil.which("bash"),
         )
         return process
 
