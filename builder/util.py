@@ -9,7 +9,9 @@ stream_subprocess(args, **kwargs)
     Run a the command described by `args` while streaming stdout and stderr.
 """
 
+from concurrent.futures import ThreadPoolExecutor
 import subprocess
+import sys
 
 
 def stream_subprocess(args, **kwargs):
@@ -35,7 +37,6 @@ def stream_subprocess(args, **kwargs):
     subprocess.CalledProcessError
         If the subprocess returned a non-zero status code.
     """
-    captured_stdout = []
     with subprocess.Popen(
         args,
         text=True,
@@ -44,19 +45,36 @@ def stream_subprocess(args, **kwargs):
         bufsize=1,
         **kwargs,
     ) as process:
-        for line in process.stdout:
-            print(line, end="")
-            captured_stdout.append(line)
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            # (Attempt to) pass the process stdout and stderr to the terminal in real
+            # time while also storing it for later inspection.
+            stdout_future = executor.submit(
+                _print_and_capture_stream, process.stdout, sys.stdout
+            )
+            stderr_future = executor.submit(
+                _print_and_capture_stream, process.stderr, sys.stderr
+            )
+            captured_stdout = stdout_future.result()
+            captured_stderr = stderr_future.result()
 
-        #TODO find a way to also print stderr to stderr (possibly using threads)
+        # TODO find a way to also print stderr to stderr (possibly using threads)
 
         completed_process = subprocess.CompletedProcess(
             process.args,
             process.returncode,
             stdout="\n".join(captured_stdout),
-            stderr=process.stderr,
+            stderr="\n".join(captured_stderr),
         )
 
     completed_process.check_returncode()
 
     return completed_process
+
+
+def _print_and_capture_stream(stream_handle, print_stream):
+    captured_stream = []
+    for line in stream_handle:
+        print(line, end="", file=print_stream)
+        captured_stream.append(line)
+
+    return captured_stream
