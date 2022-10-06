@@ -33,8 +33,8 @@ class Sandbox:
                 "singularity",
                 "build",
                 "--sandbox",
-                f"{shlex.quote(str(self.sandbox_dir))}",
-                f"{shlex.quote(self.base_image)}",
+                self.sandbox_dir,
+                self.base_image,
             ]
         )
 
@@ -63,10 +63,19 @@ class Sandbox:
                 "singularity",
                 "build",
                 "--force",
-                f"{shlex.quote(str(path))}",
-                f"{shlex.quote(str(self.sandbox_dir))}",
+                path,
+                self.sandbox_dir,
             ]
         )
+
+    def run_command_in_container(self, cmd):
+        self._assert_within_sandbox_context()
+
+        process = stream_subprocess(
+            ["singularity", "exec", "--writable", self.sandbox_dir, *shlex.split(cmd)]
+        )
+
+        return process
 
     def _assert_within_sandbox_context(self):
         if self.sandbox_dir is None:

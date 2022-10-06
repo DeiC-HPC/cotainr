@@ -46,10 +46,7 @@ class Build:
         """Create the "build" subcommand."""
         self.image_path = image_path.absolute()
         self.base_image = base_image
-        if conda_env is not None:
-            self.conda_env = conda_env.absolute()
-        else:
-            self.conda_env = None
+        self.conda_env = conda_env.absolute() if conda_env is not None else None
 
     @classmethod
     def add_arguments(cls, parser):
@@ -84,15 +81,8 @@ class Build:
                 # Install supplied conda env
                 conda_install = pack.CondaInstall(sandbox)
                 conda_env_name = "conda_container_env"
-                conda_install.run_command(
-                    f"conda env create -f {self.conda_env.as_posix()} "
-                    f"-n {conda_env_name}"
-                )
-
-                # Activate env on container startup
+                conda_install.add_environment(self.conda_env, conda_env_name)
                 sandbox.add_to_env(f"conda activate {conda_env_name}")
-
-                # Cleanup
                 conda_install.cleanup_unused_files()
 
             sandbox.build_image(self.image_path)
