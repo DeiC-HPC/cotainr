@@ -57,8 +57,6 @@ def stream_subprocess(args, **kwargs):
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
 
-        # TODO find a way to also print stderr to stderr (possibly using threads)
-
         completed_process = subprocess.CompletedProcess(
             process.args,
             process.returncode,
