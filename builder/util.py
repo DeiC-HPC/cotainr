@@ -40,7 +40,7 @@ def stream_subprocess(args, **kwargs):
         args,
         text=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stderr=subprocess.PIPE,
         bufsize=1,
         **kwargs,
     ) as process:
@@ -48,8 +48,13 @@ def stream_subprocess(args, **kwargs):
             print(line, end="")
             captured_stdout.append(line)
 
+        #TODO find a way to also print stderr to stderr (possibly using threads)
+
         completed_process = subprocess.CompletedProcess(
-            process.args, process.returncode, stdout="\n".join(captured_stdout)
+            process.args,
+            process.returncode,
+            stdout="\n".join(captured_stdout),
+            stderr=process.stderr,
         )
 
     completed_process.check_returncode()

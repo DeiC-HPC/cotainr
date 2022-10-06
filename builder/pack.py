@@ -17,16 +17,9 @@ from util import stream_subprocess
 
 
 class CondaInstall:
-    def __init__(self, install_root, prefix="/opt/conda"):
+    def __init__(self, sandbox, prefix="/opt/conda"):
         self.prefix = prefix
-        self.install_root = Path(install_root).absolute()
-
-        # Setup fakechroot vars
-        # TODO: exclude everything but prefix parent... ?
-        self._fakechroot_exclude_path = f"FAKECHROOT_EXCLUDE_PATH=/dev:/proc:/sys:{Path(shutil.which('bash')).parent}"
-        self._fakechroot_cmd = (
-            f"fakechroot chroot {shlex.quote(str(self.install_root))}"
-        )
+        self.install_root = Path(sandbox.sandbox_dir).absolute()
 
         # Set Conda bootstrap variables
         self._conda_source_script = self.prefix + "/etc/profile.d/conda.sh"
@@ -43,23 +36,30 @@ class CondaInstall:
 
         # Run Conda installer
         stream_subprocess(
-            (
-                f"{self._fakechroot_exclude_path} {self._fakechroot_cmd} "
-                f"bash {shlex.quote(str(conda_installer_path.name))} -b -s "
-                f"-p {shlex.quote(str(self.prefix))}"
-            ),
-            shell=True,
+            [
+                "singularity",
+                "exec",
+                "--writable",
+                f"{shlex.quote(str(self.install_root))}",
+                *shlex.split(
+                    f"bash {shlex.quote(str(conda_installer_path.name))} "
+                    f"-b -s -p {shlex.quote(str(self.prefix))}"
+                ),
+            ]
         )
         conda_installer_path.unlink()  # ... and remove the installer
+
+        # Add Conda to container sandbox env
+        sandbox.add_to_env(self.conda_bootstrap_cmd)
 
         # Check that we correctly use the newly installed Conda from now on
         source_check_process = self.run_command("conda info --base")
         if source_check_process.stdout.strip() != f"{self.prefix}":
 
             raise RuntimeError(
-                "Multiple local Conda installs interfere. "
+                "Multiple Conda installs interfere. "
                 "We risk destroying the Conda install in "
-                f"{source_check_process.strip()}. Aborting!"
+                f"{source_check_process.stdout.strip()}. Aborting!"
             )
 
         # Update the installed Conda package manager to the latest version
@@ -69,11 +69,13 @@ class CondaInstall:
     def run_command(self, conda_cmd):
         # TODO: Some sort of sanity check of `conda_cmd` is required
         process = stream_subprocess(
-            (
-                f"{self._fakechroot_exclude_path} {self._fakechroot_cmd} "
-                f"bash -c '{self.conda_bootstrap_cmd}; {conda_cmd}'"
-            ),
-            shell=True,
+            [
+                "singularity",
+                "exec",
+                "--writable",
+                f"{shlex.quote(str(self.install_root))}",
+                *shlex.split(conda_cmd)
+            ]
         )
         return process
 

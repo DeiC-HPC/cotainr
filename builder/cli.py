@@ -82,7 +82,7 @@ class Build:
         with container.Sandbox(self.base_image) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
-                conda_install = pack.CondaInstall(sandbox.sandbox_dir)
+                conda_install = pack.CondaInstall(sandbox)
                 conda_env_name = "conda_container_env"
                 conda_install.run_command(
                     f"conda env create -f {self.conda_env.as_posix()} "
@@ -90,7 +90,6 @@ class Build:
                 )
 
                 # Activate env on container startup
-                sandbox.add_to_env(conda_install.conda_runtime_bootstrap_script)
                 sandbox.add_to_env(f"conda activate {conda_env_name}")
 
                 # Cleanup
