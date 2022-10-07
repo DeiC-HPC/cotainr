@@ -6,6 +6,7 @@ Created by DeiC, deic.dk
 Classes
 -------
 CondaInstall
+    A Conda installation in a container sandbox.
 """
 
 from pathlib import Path
@@ -13,7 +14,27 @@ import urllib.request
 
 
 class CondaInstall:
-    def __init__(self, sandbox, prefix="/opt/conda"):
+    """
+    A Conda installation in a container sandbox.
+
+    Bootstraps a miniforge based Conda installation in a container sandbox.
+
+    Parameters
+    ----------
+    sandbox : pack.SingularitySandbox
+        The sandbox in which Conda should be installed.
+    prefix : str
+        The Conda prefix to use for the Conda install.
+
+    Attributes
+    ----------
+    sandbox : pack.SingularitySandbox
+        The sandbox in which Conda is installed.
+    prefix : str
+        The Conda prefix used for the Conda install.
+    """
+
+    def __init__(self, *, sandbox, prefix="/opt/conda"):
         self.sandbox = sandbox
         self.prefix = prefix
 
@@ -30,15 +51,17 @@ class CondaInstall:
 
         # Run Conda installer
         self.sandbox.run_command_in_container(
-            f"bash {conda_installer_path.name} -b -s -p {self.prefix}"
+            cmd=f"bash {conda_installer_path.name} -b -s -p {self.prefix}"
         )
 
         # Add Conda to container sandbox env
-        self.sandbox.add_to_env(f"source {self.prefix + '/etc/profile.d/conda.sh'}")
+        self.sandbox.add_to_env(
+            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}"
+        )
 
         # Check that we correctly use the newly installed Conda from now on
         source_check_process = self.sandbox.run_command_in_container(
-            "conda info --base"
+            cmd="conda info --base"
         )
         if source_check_process.stdout.strip() != f"{self.prefix}":
             raise RuntimeError(
@@ -49,17 +72,35 @@ class CondaInstall:
 
         # Update the installed Conda package manager to the latest version
         self.sandbox.run_command_in_container(
-            "conda update -y -n base -c conda-forge conda"
+            cmd="conda update -y -n base -c conda-forge conda"
         )
 
         # Remove unneeded files
         conda_installer_path.unlink()
         self.cleanup_unused_files()
 
-    def add_environment(self, env_file_path, name):
+    def add_environment(self, *, path, name):
+        """
+        Add an exported Conda environment to the Conda install.
+
+        Equivalent to calling "conda env create -f `path` -n `name`".
+
+        Parameters
+        ----------
+        path : os.PathLike
+            The path to the exported env.yml file describing the Conda
+            environment to install.
+        name : str
+            The name to use for the installed Conda environment.
+        """
         self.sandbox.run_command_in_container(
-            f"conda env create -f {env_file_path} -n {name}"
+            cmd=f"conda env create -f {path} -n {name}"
         )
 
     def cleanup_unused_files(self):
-        self.sandbox.run_command_in_container("conda clean -y -a")
+        """
+        Remove all unused Conda files.
+
+        Equivalent to calling "conda clean -a".
+        """
+        self.sandbox.run_command_in_container(cmd="conda clean -y -a")

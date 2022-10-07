@@ -5,7 +5,7 @@ Created by DeiC, deic.dk
 
 Functions
 ---------
-stream_subprocess(args, **kwargs)
+stream_subprocess(*, args, **kwargs)
     Run a the command described by `args` while streaming stdout and stderr.
 """
 
@@ -14,7 +14,7 @@ import subprocess
 import sys
 
 
-def stream_subprocess(args, **kwargs):
+def stream_subprocess(*, args, **kwargs):
     """
     Run a the command described by `args` while streaming stdout and stderr.
 
@@ -49,10 +49,14 @@ def stream_subprocess(args, **kwargs):
             # (Attempt to) pass the process stdout and stderr to the terminal in real
             # time while also storing it for later inspection.
             stdout_future = executor.submit(
-                _print_and_capture_stream, process.stdout, sys.stdout
+                _print_and_capture_stream,
+                stream_handle=process.stdout,
+                print_stream=sys.stdout,
             )
             stderr_future = executor.submit(
-                _print_and_capture_stream, process.stderr, sys.stderr
+                _print_and_capture_stream,
+                stream_handle=process.stderr,
+                print_stream=sys.stderr,
             )
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
@@ -69,7 +73,17 @@ def stream_subprocess(args, **kwargs):
     return completed_process
 
 
-def _print_and_capture_stream(stream_handle, print_stream):
+def _print_and_capture_stream(*, stream_handle, print_stream):
+    """
+    Print a text stream while also storing it.
+
+    Parameters
+    ----------
+    stream_handle : io.TextIOWrapper
+        The text stream to print and capture.
+    print_stream : file object implementing write(string) method.
+        The file object to print the stream to.
+    """
     captured_stream = []
     for line in stream_handle:
         print(line, end="", file=print_stream)
