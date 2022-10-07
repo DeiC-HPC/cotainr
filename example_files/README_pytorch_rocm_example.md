@@ -10,7 +10,7 @@ conda env export --override-channels -c conda-forge -n py39_pytorch_rocm | sed "
 [//]: # (In the above we modify the conda env file to include the pip --extra-index-url, based on https://stackoverflow.com/a/73288251, otherwise pip fails when installing the exported environment)
 
 ## Create container which includes the conda environment (on laptop)
- python3 builder/cli.py build py39_pytorch_rocm.sif --base-image=docker://ubuntu:22.04 --conda-env=example_files/py39_pytorch_rocm.ym
+ python3 builder/cli.py build py39_pytorch_rocm.sif --base-image=docker://ubuntu:22.04 --conda-env=example_files/py39_pytorch_rocm.yml
  
 ## Move everything to raxos for testing
 scp example_files/pytorch_gpu_availability_check.py raxos:~/pytorch_singularity_test/
