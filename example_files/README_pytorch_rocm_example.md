@@ -29,3 +29,55 @@ Traceback (most recent call last):
     from torch._C import *  # noqa: F403
 ImportError: librocm_smi64.so.5: cannot open shared object file: No such file or directory
 
+
+## Running on LUMI
+`rocm/dev-ubuntu-20.04` packages work, if you choose the `complete` versions:
+`python3 builder/cli.py build py39_pytorch_rocm5.3-complete.sif --base-image=docker://rocm/dev-ubuntu-20.04:5.3-complete --conda-env=example_files/py39_pytorch_rocm.yml`
+
+You cannot run with the `--rocm` flag on LUMI. It gives errors.
+
+Slurm script for test:
+```bash
+#!/usr/bin/env bash
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --output="output_%j.txt"
+#SBATCH --partition=pilot
+#SBATCH --time=00:05:00
+#SBATCH --account=project_462000008
+
+#module load PrgEnv-amd
+
+#echo "HOST"
+#ls -la /dev/dri
+#echo "CONTAINER"
+#singularity exec py39_pytorch_rocm.sif ls -la /dev/dri
+#singularity exec py39_pytorch_rocm.sif python pytorch_gpu_availability_check.py 
+#rocm-smi
+#rocminfo
+singularity exec py39_pytorch_rocm5.3-complete.sif python pytorch_gputest.py
+#singularity exec py39_pytorch_rocm5.3-complete.sif python pytorch_multigpu.py
+```
+
+gpu test output
+```
+True
+Number of GPUs: 8, GPU 0 name:
+```
+
+`rocm-smi` output:
+```
+======================= ROCm System Management Interface =======================
+================================= Concise Info =================================
+GPU  Temp   AvgPwr  SCLK    MCLK     Fan  Perf  PwrCap  VRAM%  GPU%
+0    45.0c  92.0W   800Mhz  1600Mhz  0%   auto  560.0W    0%   0%
+1    44.0c  N/A     800Mhz  1600Mhz  0%   auto  0.0W      0%   0%
+2    45.0c  89.0W   800Mhz  1600Mhz  0%   auto  560.0W    0%   0%
+3    44.0c  N/A     800Mhz  1600Mhz  0%   auto  0.0W      0%   0%
+4    45.0c  88.0W   800Mhz  1600Mhz  0%   auto  560.0W    0%   0%
+5    45.0c  N/A     800Mhz  1600Mhz  0%   auto  0.0W      0%   0%
+6    42.0c  89.0W   800Mhz  1600Mhz  0%   auto  560.0W    0%   0%
+7    42.0c  N/A     800Mhz  1600Mhz  0%   auto  0.0W      0%   0%
+================================================================================
+============================= End of ROCm SMI Log ==============================
+```
