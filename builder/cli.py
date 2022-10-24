@@ -22,6 +22,7 @@ Info
 from abc import ABC, abstractmethod
 import argparse
 import pathlib
+import shutil
 
 import container
 import pack
@@ -98,9 +99,11 @@ class Build(BuilderSubcommand):
         with container.SingularitySandbox(base_image=self.base_image) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
-                conda_install = pack.CondaInstall(sandbox=sandbox)
                 conda_env_name = "conda_container_env"
-                conda_install.add_environment(path=self.conda_env, name=conda_env_name)
+                conda_env_file = sandbox.sandbox_dir / self.conda_env.name
+                shutil.copyfile(self.conda_env, conda_env_file)
+                conda_install = pack.CondaInstall(sandbox=sandbox)
+                conda_install.add_environment(path=conda_env_file, name=conda_env_name)
                 sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
                 conda_install.cleanup_unused_files()
 
