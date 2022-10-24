@@ -1,5 +1,5 @@
 """
-Command line interface for user space Apptainer/Singularity container builder.
+Command line interface for Cotainr
 Created by DeiC, deic.dk
 
 The classes in this module implements the command line main command and
@@ -24,8 +24,8 @@ import argparse
 import pathlib
 import shutil
 
-import container
-import pack
+from . import container
+from . import pack
 
 
 class BuilderSubcommand(ABC):
@@ -68,10 +68,10 @@ class Build(BuilderSubcommand):
     """
 
     def __init__(self, *, image_path, base_image=None, conda_env=None):
-        self.image_path = image_path.absolute()
+        self.image_path = image_path.resolve()
         self.base_image = base_image
         if conda_env is not None:
-            self.conda_env = conda_env.absolute()
+            self.conda_env = conda_env.resolve()
             if not self.conda_env.exists():
                 raise FileNotFoundError(
                     f"The provided Conda env file '{self.conda_env}' does not exist."
@@ -171,6 +171,14 @@ class BuilderCLI:
             self.subcommand = NoSubcommand()
 
 
+def main(*args, **kwargs):
+    """Main CLI entrypoint."""
+    # Create BuilderCLI to parse command line args and run the specified
+    # subcommand
+    cli = BuilderCLI()
+    cli.subcommand.execute()
+
+
 def _extract_help_from_docstring(*, arg, docstring):
     """
     Extract the description of `arg` in `string`.
@@ -203,10 +211,3 @@ def _extract_help_from_docstring(*, arg, docstring):
     else:
         # We didn't find the arg in the docstring
         raise KeyError(f"The docstring does not include {arg=}")
-
-
-if __name__ == "__main__":
-    # Create BuilderCLI to parse command line args and run the specified
-    # subcommand
-    cli = BuilderCLI()
-    cli.subcommand.execute()

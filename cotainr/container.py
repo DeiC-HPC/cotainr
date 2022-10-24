@@ -1,6 +1,5 @@
 """
-Container tools for user space Apptainer/Singularity container builder.
-
+Container tools for Cotainr
 Created by DeiC, deic.dk
 
 Classes
@@ -14,7 +13,7 @@ from pathlib import Path
 import shlex
 from tempfile import TemporaryDirectory
 
-from util import stream_subprocess
+from .util import stream_subprocess
 
 
 class SingularitySandbox:
@@ -55,7 +54,7 @@ class SingularitySandbox:
             The sandbox context.
         """
         # Store current directory
-        self._origin = Path(".").absolute()
+        self._origin = Path(".").resolve()
 
         # Create sandbox
         self._tmp_dir = TemporaryDirectory()

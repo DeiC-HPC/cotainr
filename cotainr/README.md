@@ -19,8 +19,8 @@ There are 2 supported commands:
 
 The idea is to invoke the commands like
 
-- `python builder/cli.py build <positional_arg> <non-positional args>`
-- `python builder/cli.py info`
+- `./bin/cotainr build <positional_arg> <non-positional args>`
+- `./bin/cotainr info`
 
 Each subcommand then supports a set of options. They all support `--help` for displaying a help message.
 
