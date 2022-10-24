@@ -22,7 +22,7 @@ Info
 from abc import ABC, abstractmethod
 import argparse
 import pathlib
-import shutil
+
 import container
 import pack
 
@@ -80,20 +80,17 @@ class Build(BuilderSubcommand):
     def add_arguments(cls, *, parser):
         parser.add_argument(
             "image_path",
-            help=_extract_help_from_docstring(
-                arg="image_path", docstring=cls.__doc__),
+            help=_extract_help_from_docstring(arg="image_path", docstring=cls.__doc__),
             type=pathlib.Path,
         )
         parser.add_argument(
             "--base-image",
             required=True,
-            help=_extract_help_from_docstring(
-                arg="base_image", docstring=cls.__doc__),
+            help=_extract_help_from_docstring(arg="base_image", docstring=cls.__doc__),
         )
         parser.add_argument(
             "--conda-env",
-            help=_extract_help_from_docstring(
-                arg="conda_env", docstring=cls.__doc__),
+            help=_extract_help_from_docstring(arg="conda_env", docstring=cls.__doc__),
             type=pathlib.Path,
         )
 
@@ -103,13 +100,8 @@ class Build(BuilderSubcommand):
                 # Install supplied conda env
                 conda_install = pack.CondaInstall(sandbox=sandbox)
                 conda_env_name = "conda_container_env"
-                conda_container_file = pathlib.Path("env.yml")
-                shutil.copyfile(
-                    self.conda_env, sandbox.sandbox_dir/conda_container_file)
-                conda_install.add_environment(
-                    path=conda_container_file.absolute(), name=conda_env_name)
-                sandbox.add_to_env(
-                    shell_script=f"conda activate {conda_env_name}")
+                conda_install.add_environment(path=self.conda_env, name=conda_env_name)
+                sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
                 conda_install.cleanup_unused_files()
 
             sandbox.build_image(path=self.image_path)
@@ -150,8 +142,7 @@ class BuilderCLI:
         # Add subcommands parsers
         subcommands = [Build, Info]
         for subcommand_cls in subcommands:
-            subcommand_doc_summary = subcommand_cls.__doc__.strip().splitlines()[
-                0]
+            subcommand_doc_summary = subcommand_cls.__doc__.strip().splitlines()[0]
             sub_parser = subparsers.add_parser(
                 name=subcommand_cls.__name__.lower(),
                 help=subcommand_doc_summary,

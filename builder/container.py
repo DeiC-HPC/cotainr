@@ -132,8 +132,6 @@ class SingularitySandbox:
         Wraps `singularity exec` of the `cmd` in the container sandbox`
         allowing for running commands inside the container sandbox context,
         e.g. for installing software in the container sandbox.
-        Uses `--no-home` flag for compatibility reasons. This means every file
-        needed must copied into the container.
 
         Parameters
         ----------
@@ -152,7 +150,6 @@ class SingularitySandbox:
                 "singularity",
                 "exec",
                 "--writable",
-                "--no-home",
                 self.sandbox_dir,
                 *shlex.split(cmd),
             ]
@@ -163,5 +160,4 @@ class SingularitySandbox:
     def _assert_within_sandbox_context(self):
         """Raise a ValueError if we are not inside the sandbox context."""
         if self.sandbox_dir is None:
-            raise ValueError(
-                "The operation is only valid inside a sandbox context.")
+            raise ValueError("The operation is only valid inside a sandbox context.")
