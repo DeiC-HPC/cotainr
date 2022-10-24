@@ -1,6 +1,5 @@
 """
-Packaging for user space Apptainer/Singularity container builder.
-
+Packaging for Cotainr
 Created by DeiC, deic.dk
 
 Classes

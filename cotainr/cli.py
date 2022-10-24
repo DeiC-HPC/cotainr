@@ -1,5 +1,5 @@
 """
-Command line interface for user space Apptainer/Singularity container builder.
+Command line interface for Cotainr
 Created by DeiC, deic.dk
 
 The classes in this module implements the command line main command and
@@ -23,8 +23,8 @@ from abc import ABC, abstractmethod
 import argparse
 import pathlib
 
-import container
-import pack
+from . import container
+from . import pack
 
 
 class BuilderSubcommand(ABC):
@@ -168,6 +168,14 @@ class BuilderCLI:
             self.subcommand = NoSubcommand()
 
 
+def main(*args, **kwargs):
+    """Main CLI entrypoint."""
+    # Create BuilderCLI to parse command line args and run the specified
+    # subcommand
+    cli = BuilderCLI()
+    cli.subcommand.execute()
+
+
 def _extract_help_from_docstring(*, arg, docstring):
     """
     Extract the description of `arg` in `string`.
@@ -200,10 +208,3 @@ def _extract_help_from_docstring(*, arg, docstring):
     else:
         # We didn't find the arg in the docstring
         raise KeyError(f"The docstring does not include {arg=}")
-
-
-if __name__ == "__main__":
-    # Create BuilderCLI to parse command line args and run the specified
-    # subcommand
-    cli = BuilderCLI()
-    cli.subcommand.execute()
