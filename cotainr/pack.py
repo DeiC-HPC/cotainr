@@ -43,7 +43,7 @@ class CondaInstall:
             "Miniforge3-Linux-x86_64.sh"
         )
         conda_installer_path = (
-            Path(self.sandbox.sandbox_dir).absolute() / "conda_installer.sh"
+            Path(self.sandbox.sandbox_dir).resolve() / "conda_installer.sh"
         )
         with urllib.request.urlopen(conda_installer_url) as url:
             conda_installer_path.write_bytes(url.read())

@@ -54,7 +54,7 @@ class SingularitySandbox:
             The sandbox context.
         """
         # Store current directory
-        self._origin = Path(".").absolute()
+        self._origin = Path(".").resolve()
 
         # Create sandbox
         self._tmp_dir = TemporaryDirectory()

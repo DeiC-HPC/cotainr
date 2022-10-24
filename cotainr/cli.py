@@ -67,10 +67,10 @@ class Build(BuilderSubcommand):
     """
 
     def __init__(self, *, image_path, base_image=None, conda_env=None):
-        self.image_path = image_path.absolute()
+        self.image_path = image_path.resolve()
         self.base_image = base_image
         if conda_env is not None:
-            self.conda_env = conda_env.absolute()
+            self.conda_env = conda_env.resolve()
             if not self.conda_env.exists():
                 raise FileNotFoundError(
                     f"The provided Conda env file '{self.conda_env}' does not exist."
