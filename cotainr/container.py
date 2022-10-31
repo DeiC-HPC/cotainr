@@ -1,6 +1,5 @@
 """
-Container tools for user space Apptainer/Singularity container builder.
-
+Container tools for Cotainr
 Created by DeiC, deic.dk
 
 Classes
@@ -14,7 +13,7 @@ from pathlib import Path
 import shlex
 from tempfile import TemporaryDirectory
 
-from util import stream_subprocess
+from .util import stream_subprocess
 
 
 class SingularitySandbox:
@@ -55,7 +54,7 @@ class SingularitySandbox:
             The sandbox context.
         """
         # Store current directory
-        self._origin = Path(".").absolute()
+        self._origin = Path(".").resolve()
 
         # Create sandbox
         self._tmp_dir = TemporaryDirectory()
@@ -142,6 +141,14 @@ class SingularitySandbox:
         -------
         process : subprocess.CompletedProcess
             Information about the process that ran in the container sandbox.
+
+        Notes
+        -----
+        The command is run with `--no-home` for maximum compatibility (e.g.
+        trying to mount the home folder on LUMI causes problems). Thus, when
+        running a command in the container, you cannot reference files in your
+        home directory. Instead you must copy all files into the container
+        sandbox and then reference the files relative to the container root.
         """
         self._assert_within_sandbox_context()
 
@@ -150,6 +157,7 @@ class SingularitySandbox:
                 "singularity",
                 "exec",
                 "--writable",
+                "--no-home",
                 self.sandbox_dir,
                 *shlex.split(cmd),
             ]

@@ -1,5 +1,5 @@
 """
-Command line interface for user space Apptainer/Singularity container builder.
+Command line interface for Cotainr
 Created by DeiC, deic.dk
 
 The classes in this module implements the command line main command and
@@ -22,9 +22,10 @@ Info
 from abc import ABC, abstractmethod
 import argparse
 import pathlib
+import shutil
 
-import container
-import pack
+from . import container
+from . import pack
 
 
 class BuilderSubcommand(ABC):
@@ -67,10 +68,10 @@ class Build(BuilderSubcommand):
     """
 
     def __init__(self, *, image_path, base_image=None, conda_env=None):
-        self.image_path = image_path.absolute()
+        self.image_path = image_path.resolve()
         self.base_image = base_image
         if conda_env is not None:
-            self.conda_env = conda_env.absolute()
+            self.conda_env = conda_env.resolve()
             if not self.conda_env.exists():
                 raise FileNotFoundError(
                     f"The provided Conda env file '{self.conda_env}' does not exist."
@@ -98,9 +99,11 @@ class Build(BuilderSubcommand):
         with container.SingularitySandbox(base_image=self.base_image) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
-                conda_install = pack.CondaInstall(sandbox=sandbox)
                 conda_env_name = "conda_container_env"
-                conda_install.add_environment(path=self.conda_env, name=conda_env_name)
+                conda_env_file = sandbox.sandbox_dir / self.conda_env.name
+                shutil.copyfile(self.conda_env, conda_env_file)
+                conda_install = pack.CondaInstall(sandbox=sandbox)
+                conda_install.add_environment(path=conda_env_file, name=conda_env_name)
                 sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
                 conda_install.cleanup_unused_files()
 
@@ -168,6 +171,14 @@ class BuilderCLI:
             self.subcommand = NoSubcommand()
 
 
+def main(*args, **kwargs):
+    """Main CLI entrypoint."""
+    # Create BuilderCLI to parse command line args and run the specified
+    # subcommand
+    cli = BuilderCLI()
+    cli.subcommand.execute()
+
+
 def _extract_help_from_docstring(*, arg, docstring):
     """
     Extract the description of `arg` in `string`.
@@ -200,10 +211,3 @@ def _extract_help_from_docstring(*, arg, docstring):
     else:
         # We didn't find the arg in the docstring
         raise KeyError(f"The docstring does not include {arg=}")
-
-
-if __name__ == "__main__":
-    # Create BuilderCLI to parse command line args and run the specified
-    # subcommand
-    cli = BuilderCLI()
-    cli.subcommand.execute()
