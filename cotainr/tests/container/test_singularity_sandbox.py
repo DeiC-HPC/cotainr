@@ -1,3 +1,5 @@
+import pytest
+
 from cotainr.container import SingularitySandbox
 
 
@@ -7,6 +9,7 @@ class TestConstructor:
 
 
 class TestContext:
+    # mock stream_subprocess
     def test_singularity_sandbox_creation(self):
         raise NotImplementedError("Test not implemented'")
 
@@ -18,6 +21,7 @@ class TestContext:
 
 
 class TestAddToEnv:
+    # mock stream_subprocess
     def test_newline_encapsulation(self):
         raise NotImplementedError("Test not implemented'")
 
@@ -25,6 +29,7 @@ class TestAddToEnv:
         raise NotImplementedError("Test not implemented'")
 
 
+@pytest.mark.singularity_integration
 class TestBuildImage:
     def test_overwrite_existing_image(self):
         raise NotImplementedError("Test not implemented'")
@@ -33,20 +38,18 @@ class TestBuildImage:
         raise NotImplementedError("Test not implemented'")
 
 
+@pytest.mark.singularity_integration
 class TestRunCommandInContainer:
     def test_error_handling(self):
+        # test error in cmd
         raise NotImplementedError("Test not implemented'")
 
     def test_no_home(self):
-        raise NotImplementedError("Test not implemented'")
-
-    def test_stdout_passing(self):
-        raise NotImplementedError("Test not implemented'")
-
-    def test_stderr_passing(self):
+        # test that no home is present
         raise NotImplementedError("Test not implemented'")
 
     def test_writeable(self):
+        # test that sandbox is writable
         raise NotImplementedError("Test not implemented'")
 
 
