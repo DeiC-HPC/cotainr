@@ -1,0 +1,8 @@
+{
+  "some_system_6021": {
+    "base-image": "some_base_image_6021"
+  },
+  "another_system_6021": {
+    "base-image": "another_base_image_6021"
+  }
+}

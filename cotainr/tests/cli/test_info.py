@@ -3,16 +3,22 @@ import argparse
 import pytest
 
 from cotainr.cli import CotainrCLI, Info
+from ..system.patches import patch_empty_system, patch_system_with_actual_file
 
 
 class TestExecute:
-    def test_not_implemented_message(self, capsys):
+    def test_not_implemented_message(self, capsys, patch_empty_system):
         Info().execute()
         stdout = capsys.readouterr().out
         assert (
             stdout.strip()
             == "Sorry, no information about your system is available at this time."
         )
+
+    def test_with_systems(self, capsys, patch_system_with_actual_file):
+        Info().execute()
+        stdout = capsys.readouterr().out
+        assert "some_system_6021" in stdout and "another_system_6021" in stdout
 
 
 class TestAddArguments:
