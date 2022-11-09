@@ -4,7 +4,7 @@ import subprocess
 import pytest
 
 from cotainr.container import SingularitySandbox
-from cotainr.tests.container.data import data_singularity_image
+from cotainr.tests.container.data import data_singularity_alpine_image
 from cotainr.tests.util.patches import patch_stream_subprocess
 
 
@@ -18,8 +18,8 @@ class TestConstructor:
 
 class TestContext:
     @pytest.mark.singularity_integration
-    def test_singularity_sandbox_creation(self, data_singularity_image):
-        with SingularitySandbox(base_image=data_singularity_image) as sandbox:
+    def test_singularity_sandbox_creation(self, data_singularity_alpine_image):
+        with SingularitySandbox(base_image=data_singularity_alpine_image) as sandbox:
             # Check that the sandbox contains the expected singularity files
             assert (sandbox.sandbox_dir / "environment").exists()
             assert (sandbox.sandbox_dir / "singularity").exists()
@@ -62,12 +62,14 @@ class TestAddToEnv:
 
 @pytest.mark.singularity_integration
 class TestBuildImage:
-    def test_overwrite_existing_image(self, data_singularity_image, tmp_path):
+    def test_overwrite_existing_image(self, data_singularity_alpine_image, tmp_path):
         existing_singularity_image_path = tmp_path / "existing_image_6021"
-        existing_singularity_image_path.write_bytes(data_singularity_image.read_bytes())
+        existing_singularity_image_path.write_bytes(
+            data_singularity_alpine_image.read_bytes()
+        )
         existing_singularity_image_stats = existing_singularity_image_path.stat()
         assert existing_singularity_image_path.exists()
-        with SingularitySandbox(base_image=data_singularity_image) as sandbox:
+        with SingularitySandbox(base_image=data_singularity_alpine_image) as sandbox:
             sandbox.build_image(path=existing_singularity_image_path)
 
         # Check that the image file has been overwritten
@@ -75,9 +77,9 @@ class TestBuildImage:
             existing_singularity_image_path.stat() != existing_singularity_image_stats
         )
 
-    def test_sandbox_image_equality(self, data_singularity_image, tmp_path):
+    def test_sandbox_image_equality(self, data_singularity_alpine_image, tmp_path):
         built_image_path = tmp_path / "built_image_6021"
-        with SingularitySandbox(base_image=data_singularity_image) as sandbox:
+        with SingularitySandbox(base_image=data_singularity_alpine_image) as sandbox:
             sandbox.build_image(path=built_image_path)
 
         def get_container_os_release(path):
@@ -91,29 +93,29 @@ class TestBuildImage:
 
         # Simple test of equality based on OS release of base image and built container
         assert get_container_os_release(
-            data_singularity_image
+            data_singularity_alpine_image
         ) == get_container_os_release(built_image_path)
 
 
 @pytest.mark.singularity_integration
 class TestRunCommandInContainer:
-    def test_error_handling(self, data_singularity_image):
+    def test_error_handling(self, data_singularity_alpine_image):
         cmd = "some6021 non-meaningful command"
-        with SingularitySandbox(base_image=data_singularity_image) as sandbox:
+        with SingularitySandbox(base_image=data_singularity_alpine_image) as sandbox:
             with pytest.raises(ValueError) as exc_info:
                 sandbox.run_command_in_container(cmd=cmd)
             assert str(exc_info.value).startswith(
                 f"Invalid command {cmd=} passed to Singularity"
             )
 
-    def test_no_home(self, data_singularity_image):
-        with SingularitySandbox(base_image=data_singularity_image) as sandbox:
+    def test_no_home(self, data_singularity_alpine_image):
+        with SingularitySandbox(base_image=data_singularity_alpine_image) as sandbox:
             process = sandbox.run_command_in_container(cmd="ls -l /home")
         assert process.stdout.strip() == "total 0"
 
-    def test_writeable(self, data_singularity_image):
+    def test_writeable(self, data_singularity_alpine_image):
         test_file = "test_file_6021"
-        with SingularitySandbox(base_image=data_singularity_image) as sandbox:
+        with SingularitySandbox(base_image=data_singularity_alpine_image) as sandbox:
             sandbox.run_command_in_container(cmd=f"touch /{test_file}")
             assert (sandbox.sandbox_dir / test_file).exists()
 
