@@ -11,9 +11,10 @@ Sandbox
 import os
 from pathlib import Path
 import shlex
+import subprocess
 from tempfile import TemporaryDirectory
 
-from .util import stream_subprocess
+from . import util
 
 
 class SingularitySandbox:
@@ -54,15 +55,17 @@ class SingularitySandbox:
             The sandbox context.
         """
         # Store current directory
-        self._origin = Path(".").resolve()
+        self._origin = Path().resolve()
 
         # Create sandbox
         self._tmp_dir = TemporaryDirectory()
-        self.sandbox_dir = Path(self._tmp_dir.name) / "sandbox"
-        stream_subprocess(
+        self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
+        self.sandbox_dir.mkdir(exist_ok=False)
+        util.stream_subprocess(
             args=[
                 "singularity",
                 "build",
+                "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
                 "--sandbox",
                 self.sandbox_dir,
                 self.base_image,
@@ -114,7 +117,7 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        stream_subprocess(
+        util.stream_subprocess(
             args=[
                 "singularity",
                 "build",
@@ -152,16 +155,25 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        process = stream_subprocess(
-            args=[
-                "singularity",
-                "exec",
-                "--writable",
-                "--no-home",
-                self.sandbox_dir,
-                *shlex.split(cmd),
-            ]
-        )
+        try:
+            process = util.stream_subprocess(
+                args=[
+                    "singularity",
+                    "exec",
+                    "--writable",
+                    "--no-home",
+                    self.sandbox_dir,
+                    *shlex.split(cmd),
+                ]
+            )
+        except subprocess.CalledProcessError as e:
+            singularity_fatal_error = "\n".join(
+                [line for line in e.stderr.split("\n") if line.startswith("FATAL")]
+            )
+            raise ValueError(
+                f"Invalid command {cmd=} passed to Singularity "
+                f"resulted in the FATAL error: {singularity_fatal_error}"
+            ) from e
 
         return process
 
