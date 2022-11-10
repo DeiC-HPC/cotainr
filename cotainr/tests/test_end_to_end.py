@@ -1,5 +1,3 @@
-import subprocess
-
 import pytest
 
 from cotainr.cli import Build
@@ -7,7 +5,7 @@ from cotainr.tests.container.data import data_singularity_ubuntu_image
 
 
 @pytest.mark.endtoend
-def test_conda_env_build(data_singularity_ubuntu_image, tmp_path):
+def test_conda_env_build(data_singularity_ubuntu_image, singularity_exec, tmp_path):
     """Test build command when including simple conda environment."""
     build_container_path = tmp_path / "conda_container.sif"
     conda_env_path = tmp_path / "conda_env.yml"
@@ -20,19 +18,8 @@ def test_conda_env_build(data_singularity_ubuntu_image, tmp_path):
     )
     build.execute()
 
-    container_python_process = subprocess.run(
-        [
-            "singularity",
-            "exec",
-            f"{build_container_path}",
-            "python",
-            "-c",
-            "import sys; print(sys.executable)",
-        ],
-        capture_output=True,
-        check=True,
-        text=True,
+    container_python_process = singularity_exec(
+        f"{build_container_path} python -c 'import sys; print(sys.executable)'"
     )
-
-    for conda_identifier in ['conda', '/envs/']:
+    for conda_identifier in ["conda", "/envs/"]:
         assert conda_identifier in container_python_process.stdout

@@ -1,5 +1,4 @@
 from pathlib import Path
-import subprocess
 
 import pytest
 
@@ -77,24 +76,21 @@ class TestBuildImage:
             existing_singularity_image_path.stat() != existing_singularity_image_stats
         )
 
-    def test_sandbox_image_equality(self, data_singularity_alpine_image, tmp_path):
+    def test_sandbox_image_equality(
+        self, data_singularity_alpine_image, singularity_exec, tmp_path
+    ):
         built_image_path = tmp_path / "built_image_6021"
         with SingularitySandbox(base_image=data_singularity_alpine_image) as sandbox:
             sandbox.build_image(path=built_image_path)
 
-        def get_container_os_release(path):
-            process = subprocess.run(
-                ["singularity", "exec", f"{path}", "cat", "/etc/os-release"],
-                capture_output=True,
-                check=True,
-                text=True,
-            )
-            return process.stdout
-
         # Simple test of equality based on OS release of base image and built container
-        assert get_container_os_release(
-            data_singularity_alpine_image
-        ) == get_container_os_release(built_image_path)
+        base_image_os_release = singularity_exec(
+            f"{data_singularity_alpine_image} cat /etc/os-release"
+        ).stdout
+        built_image_os_release = singularity_exec(
+            f"{built_image_path} cat /etc/os-release"
+        ).stdout
+        assert base_image_os_release == built_image_os_release
 
 
 @pytest.mark.singularity_integration

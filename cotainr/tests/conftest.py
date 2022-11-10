@@ -1,7 +1,26 @@
 import os
 from pathlib import Path
+import shlex
+import subprocess
 
 import pytest
+
+
+@pytest.fixture
+def singularity_exec():
+    """Provide a function wrapping a "singularity exec" call."""
+
+    def _singularity_exec(cmd):
+        singularity_process = subprocess.run(
+            ["singularity", "exec", *shlex.split(cmd)],
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+
+        return singularity_process
+
+    return _singularity_exec
 
 
 @pytest.fixture(autouse=True)
