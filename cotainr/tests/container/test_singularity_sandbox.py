@@ -122,7 +122,7 @@ class TestRunCommandInContainer:
             assert (sandbox.sandbox_dir / test_file).exists()
 
 
-class TestAssertWithinSandboxContext:
+class Test_AssertWithinSandboxContext:
     def test_pass_inside_sandbox(self):
         sandbox = SingularitySandbox(base_image="my_base_image_6021")
         sandbox.sandbox_dir = Path()

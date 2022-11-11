@@ -5,8 +5,8 @@ import cotainr.container
 
 @pytest.fixture
 def patch_sandbox_run_command_in_container(monkeypatch):
-    def mock_run_command_in_container(self, *args, **kwargs):
-        print(f"Ran command: {kwargs['cmd']}")
+    def mock_run_command_in_container(self, *, cmd):
+        return f"Ran command in container: {cmd}"
 
     monkeypatch.setattr(
         cotainr.container.SingularitySandbox,

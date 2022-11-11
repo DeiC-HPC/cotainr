@@ -70,7 +70,7 @@ class TestStreamSubprocess:
         assert process.stderr == stderr_text
 
 
-class TestPrintAndCaptureStream:
+class Test_PrintAndCaptureStream:
     def test_print_stdout_roundtrip(self, capsys):
         stdout_lines = ["Test line 1", "Test line 2", "Test line 3"]
         input_stream = io.StringIO("\n".join(stdout_lines))

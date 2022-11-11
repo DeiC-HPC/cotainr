@@ -19,6 +19,7 @@ def data_cached_alpine_sif(tmp_path_factory):
         check=True,
         text=True,
     )
+    assert singularity_image_path.exists()
 
     return singularity_image_path
 
@@ -39,5 +40,6 @@ def data_cached_ubuntu_sif(tmp_path_factory):
         check=True,
         text=True,
     )
+    assert singularity_image_path.exists()
 
     return singularity_image_path
