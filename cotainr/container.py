@@ -61,7 +61,7 @@ class SingularitySandbox:
         self._tmp_dir = TemporaryDirectory()
         self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
         self.sandbox_dir.mkdir(exist_ok=False)
-        util.stream_subprocess(
+        self._subprocess_runner(
             args=[
                 "singularity",
                 "build",
@@ -117,7 +117,7 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        util.stream_subprocess(
+        self._subprocess_runner(
             args=[
                 "singularity",
                 "build",
@@ -156,7 +156,7 @@ class SingularitySandbox:
         self._assert_within_sandbox_context()
 
         try:
-            process = util.stream_subprocess(
+            process = self._subprocess_runner(
                 args=[
                     "singularity",
                     "exec",
@@ -181,3 +181,7 @@ class SingularitySandbox:
         """Raise a ValueError if we are not inside the sandbox context."""
         if self.sandbox_dir is None:
             raise ValueError("The operation is only valid inside a sandbox context.")
+
+    def _subprocess_runner(self, *, args, **kwargs):
+        """Wrap the choice of subprocess runner."""
+        return util.stream_subprocess(args=args, **kwargs)

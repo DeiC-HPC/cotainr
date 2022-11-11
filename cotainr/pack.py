@@ -77,6 +77,15 @@ class CondaInstall:
         self.sandbox.run_command_in_container(cmd="conda clean -y -a")
 
     def _bootstrap_conda(self, *, installer_path):
+        """
+        Install Conda and at its source script to the sandbox env.
+
+        Parameters
+        ----------
+        installer_path : pathlib.Path
+            The path of the Conda installer to run to bootstrap Conda.
+        """
+
         # Run Conda installer
         self.sandbox.run_command_in_container(
             cmd=f"bash {installer_path.name} -b -s -p {self.prefix}"
@@ -96,6 +105,7 @@ class CondaInstall:
         )
 
     def _check_conda_bootstrap_integrity(self):
+        """Raise RuntimeError if multiple interfering Conda installs are found."""
         source_check_process = self.sandbox.run_command_in_container(
             cmd="conda info --base"
         )
@@ -107,6 +117,14 @@ class CondaInstall:
             )
 
     def _download_conda_installer(self, *, path):
+        """
+        Download the Conda installer to `path`.
+
+        Parameters
+        ----------
+        path : pathlib.Path
+            The path to download the conda installer to.
+        """
         conda_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
             "Miniforge3-Linux-x86_64.sh"

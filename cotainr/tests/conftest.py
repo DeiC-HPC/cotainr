@@ -1,9 +1,29 @@
+import contextlib
+import io
 import os
 from pathlib import Path
 import shlex
 import subprocess
+import urllib.request
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def safedir(tmp_path):
+    """
+    Always safe guard tests by running in a temporary directory.
+
+    A lot of the functionality in cotainr manipulates directories. In order to
+    provide some protection against messing up the current working directory by
+    running a test, we force all tests to run from a temporary directory.
+    """
+    origin = Path().resolve()
+    safe_dir = tmp_path / "safe_dir"
+    safe_dir.mkdir()
+    os.chdir(safe_dir)
+    yield
+    os.chdir(origin)
 
 
 @pytest.fixture
@@ -23,18 +43,10 @@ def singularity_exec():
     return _singularity_exec
 
 
-@pytest.fixture(autouse=True)
-def safedir(tmp_path):
-    """
-    Always safe guard tests by running in a temporary directory.
+@pytest.fixture
+def patch_urllib_urlopen_as_bytes_stream(monkeypatch):
+    @contextlib.contextmanager
+    def mock_urlopen(url, *args, **kwargs):
+        yield io.BytesIO(f"PATCH: Bytes returned by urlopen for {url=}".encode())
 
-    A lot of the functionality in cotainr manipulates directories. In order to
-    provide some protection against messing up the current working directory by
-    running a test, we force all tests to run from a temporary directory.
-    """
-    origin = Path().resolve()
-    safe_dir = tmp_path / "safe_dir"
-    safe_dir.mkdir()
-    os.chdir(safe_dir)
-    yield
-    os.chdir(origin)
+    monkeypatch.setattr(urllib.request, "urlopen", mock_urlopen)
