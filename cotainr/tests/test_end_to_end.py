@@ -1,11 +1,11 @@
 import pytest
 
 from cotainr.cli import Build
-from cotainr.tests.container.data import data_singularity_ubuntu_image
+from .container.data import data_cached_ubuntu_sif
 
 
 @pytest.mark.endtoend
-def test_conda_env_build(data_singularity_ubuntu_image, singularity_exec, tmp_path):
+def test_conda_env_build(data_cached_ubuntu_sif, singularity_exec, tmp_path):
     """Test build command when including simple conda environment."""
     build_container_path = tmp_path / "conda_container.sif"
     conda_env_path = tmp_path / "conda_env.yml"
@@ -13,7 +13,7 @@ def test_conda_env_build(data_singularity_ubuntu_image, singularity_exec, tmp_pa
 
     build = Build(
         image_path=build_container_path,
-        base_image=data_singularity_ubuntu_image,
+        base_image=data_cached_ubuntu_sif,
         conda_env=conda_env_path,
     )
     build.execute()

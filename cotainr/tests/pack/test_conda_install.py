@@ -2,8 +2,8 @@ import pytest
 
 import cotainr.container
 from cotainr.pack import CondaInstall
-from cotainr.tests.util.patches import patch_stream_subprocess
-from cotainr.tests.container.patches import patch_sandbox_run_command_in_container
+from ..util.patches import patch_stream_subprocess
+from ..container.patches import patch_sandbox_run_command_in_container
 
 
 @pytest.fixture(
