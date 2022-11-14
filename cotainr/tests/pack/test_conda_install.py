@@ -1,21 +1,24 @@
+import re
+import urllib.error
+
 import pytest
 
 from cotainr.container import SingularitySandbox
 from cotainr.pack import CondaInstall
-from .integrations import integration_conda_singularity
 from .patches import (
-    patch_conda_install_bootstrap_conda,
-    patch_conda_install_download_conda_installer,
+    patch_disable_conda_install_bootstrap_conda,
+    patch_disable_conda_install_download_conda_installer,
 )
-from ..container.patches import patch_singularity_sandbox_subprocess_runner
+from ..container.data import data_cached_ubuntu_sif
+from ..container.patches import patch_disable_singularity_sandbox_subprocess_runner
 
 
 class TestConstructor:
     def test_attributes(
         self,
-        patch_conda_install_bootstrap_conda,
-        patch_conda_install_download_conda_installer,
-        patch_singularity_sandbox_subprocess_runner,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_conda_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
@@ -25,9 +28,9 @@ class TestConstructor:
     def test_cleanup(
         self,
         capsys,
-        patch_conda_install_bootstrap_conda,
-        patch_conda_install_download_conda_installer,
-        patch_singularity_sandbox_subprocess_runner,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_conda_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
@@ -46,43 +49,76 @@ class TestConstructor:
         # Check that the conda clean (mock) command ran
         assert clean_out.startswith("PATCH: Ran command in sandbox:")
         assert "'conda', 'clean', '-y', '-a'" in clean_out
-        # assert clean_out == "MOCK: Ran command in container: conda clean -y -a"
 
 
-@pytest.mark.usefixtures("integration_conda_singularity")
+@pytest.mark.conda_integration
+@pytest.mark.singularity_integration
 class TestAddEnvironment:
-    def test_env_creation(self):
-        # test environment name and content
-        raise NotImplementedError("Test not implemented'")
+    def test_env_creation(self, tmp_path, data_cached_ubuntu_sif):
+        conda_env_path = tmp_path / "conda_env.yml"
+        conda_env_path.write_text(
+            "channels:\n  - conda-forge\ndependencies:\n  - python"
+        )
+        conda_env_name = "some_env_name_6021"
+        with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox)
+            conda_install.add_environment(path=conda_env_path, name=conda_env_name)
+            process = sandbox.run_command_in_container(cmd="conda info -e")
+            assert re.search(
+                rf"^{conda_env_name}(\s)+/opt/conda/envs/{conda_env_name}$",
+                process.stdout,
+                flags=re.MULTILINE,
+            )
 
 
-@pytest.mark.usefixtures("integration_conda_singularity")
+@pytest.mark.conda_integration
+@pytest.mark.singularity_integration
 class TestCleanupUnusedFiles:
-    def test_all_unneeded_removed(self):
-        # tarballs and ?
-        raise NotImplementedError("Test not implemented'")
+    def test_all_unneeded_removed(self, data_cached_ubuntu_sif):
+        with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
+            CondaInstall(sandbox=sandbox)
+            process = sandbox.run_command_in_container(cmd="conda clean -d -a")
+            clean_msg = "\n".join(
+                [
+                    "There are no unused tarball(s) to remove.",
+                    "There are no index cache(s) to remove.",
+                    "There are no unused package(s) to remove.",
+                    "There are no tempfile(s) to remove.",
+                    "There are no logfile(s) to remove.",
+                ]
+            )
+            assert process.stdout.strip() == clean_msg
 
 
-@pytest.mark.usefixtures("integration_conda_singularity")
+@pytest.mark.conda_integration
+@pytest.mark.singularity_integration
 class Test_BootstrapConda:
-    # refactor to have all bootstrap code in private method
-    def test_conda_installer_bootstrap(
-        self, patch_singularity_sandbox_subprocess_runner
-    ):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            sandbox.run_command_in_container(cmd="EPICCMD")
-        # conda installed
-        # source environment
-        # conda updated
-        raise NotImplementedError("Test not implemented'")
+    def test_correct_conda_installer_bootstrap(self, data_cached_ubuntu_sif):
+        with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
+            conda_install_dir = sandbox.sandbox_dir / "opt/conda"
+            assert not conda_install_dir.exists()
+            CondaInstall(sandbox=sandbox)
+
+            # Check that conda has been installed
+            assert conda_install_dir.exists()
+
+            # Check that we are using our installed conda
+            process = sandbox.run_command_in_container(cmd="conda info --base")
+            assert process.stdout.strip() == "/opt/conda"
+
+            # Check that the installed conda is up-to-date
+            process = sandbox.run_command_in_container(
+                cmd="conda update -n base -d conda"
+            )
+            assert "# All requested packages already installed." in process.stdout
 
 
 class Test_CheckCondaBootstrapIntegrity:
     def test_bail_on_interfering_conda_installs(
         self,
-        patch_conda_install_bootstrap_conda,
-        patch_conda_install_download_conda_installer,
-        patch_singularity_sandbox_subprocess_runner,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_conda_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
@@ -106,8 +142,8 @@ class Test_DownloadCondaInstaller:
     def test_installer_download_success(
         self,
         patch_urllib_urlopen_as_bytes_stream,
-        patch_conda_install_bootstrap_conda,
-        patch_singularity_sandbox_subprocess_runner,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
@@ -120,8 +156,13 @@ class Test_DownloadCondaInstaller:
                 b"'https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh'"
             )
 
-    def test_installer_download_fail(self):
-        # mock urllib.request.urlopen
-        # test exception handling
-        # maybe retry handling
-        raise NotImplementedError("Test not implemented'")
+    def test_installer_download_fail(
+        self,
+        patch_urllib_urlopen_force_fail,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            with pytest.raises(urllib.error.URLError) as exc_info:
+                CondaInstall(sandbox=sandbox)
+            exc_msg = str(exc_info.value.reason)
+            assert exc_msg.startswith("PATCH: urlopen error forced for url=")

@@ -9,6 +9,9 @@ CondaInstall
 """
 
 from pathlib import Path
+import time
+import random
+import urllib.error
 import urllib.request
 
 
@@ -129,5 +132,19 @@ class CondaInstall:
             "Miniforge3-Linux-x86_64.sh"
         )
 
-        with urllib.request.urlopen(conda_installer_url) as url:
-            path.write_bytes(url.read())
+        # Make up to 3 attempts at downloading the installer
+        for retry in range(3):
+            try:
+                with urllib.request.urlopen(conda_installer_url) as url:
+                    path.write_bytes(url.read())
+
+                break
+
+            except urllib.error.URLError as e:
+                url_error = e
+
+                # Exponential backoff
+                time.sleep(2**retry + random.uniform(0.001, 1))
+
+        else:
+            raise url_error

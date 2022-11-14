@@ -4,7 +4,9 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
+import urllib.error
 import urllib.request
+
 
 import pytest
 
@@ -21,6 +23,22 @@ def patch_urllib_urlopen_as_bytes_stream(monkeypatch):
     @contextlib.contextmanager
     def mock_urlopen(url, *args, **kwargs):
         yield io.BytesIO(f"PATCH: Bytes returned by urlopen for {url=}".encode())
+
+    monkeypatch.setattr(urllib.request, "urlopen", mock_urlopen)
+
+
+@pytest.fixture
+def patch_urllib_urlopen_force_fail(monkeypatch):
+    """
+    Force urllib.request.urlopen(...) to raise URLError.
+
+    The `urlopen` contextmanager is replaced by a mock that always raises an
+    `urllib.error.URLError` when entering the contextmanager.
+    """
+
+    @contextlib.contextmanager
+    def mock_urlopen(url, *args, **kwargs):
+        raise urllib.error.URLError(f"PATCH: urlopen error forced for {url=}")
 
     monkeypatch.setattr(urllib.request, "urlopen", mock_urlopen)
 

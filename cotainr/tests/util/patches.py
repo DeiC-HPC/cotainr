@@ -4,7 +4,7 @@ import cotainr.util
 
 
 @pytest.fixture
-def patch_stream_subprocess(monkeypatch):
+def patch_disable_stream_subprocess(monkeypatch):
     """
     Disable stream_subprocess(...).
 

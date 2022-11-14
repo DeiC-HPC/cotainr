@@ -6,7 +6,7 @@ import cotainr.container
 
 
 @pytest.fixture
-def patch_singularity_sandbox_subprocess_runner(monkeypatch):
+def patch_disable_singularity_sandbox_subprocess_runner(monkeypatch):
     """
     Disable SingularitySandbox._subprocess_runner(...).
 

@@ -4,7 +4,7 @@ import cotainr.pack
 
 
 @pytest.fixture
-def patch_conda_install_bootstrap_conda(monkeypatch):
+def patch_disable_conda_install_bootstrap_conda(monkeypatch):
     """
     Disable CondaInstall._bootstrap_conda(...).
 
@@ -24,7 +24,7 @@ def patch_conda_install_bootstrap_conda(monkeypatch):
 
 
 @pytest.fixture
-def patch_conda_install_download_conda_installer(monkeypatch):
+def patch_disable_conda_install_download_conda_installer(monkeypatch):
     """
     Disable CondaInstall._download_conda_installer(...).
 

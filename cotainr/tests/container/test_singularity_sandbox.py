@@ -4,7 +4,7 @@ import pytest
 
 from cotainr.container import SingularitySandbox
 from .data import data_cached_alpine_sif
-from ..util.patches import patch_stream_subprocess
+from ..util.patches import patch_disable_stream_subprocess
 
 
 class TestConstructor:
@@ -24,7 +24,7 @@ class TestContext:
             assert (sandbox.sandbox_dir / "singularity").exists()
             assert (sandbox.sandbox_dir / ".singularity.d").exists()
 
-    def test_tmp_dir_setup_and_teardown(self, patch_stream_subprocess):
+    def test_tmp_dir_setup_and_teardown(self, patch_disable_stream_subprocess):
         test_dir = Path().resolve()
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             # Check that we are in the temporary sandbox directory
@@ -40,7 +40,7 @@ class TestContext:
 
 
 class TestAddToEnv:
-    def test_add_twice(self, patch_stream_subprocess):
+    def test_add_twice(self, patch_disable_stream_subprocess):
         lines = ["first script line", "second script line"]
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             env_file = sandbox.sandbox_dir / "environment"
@@ -48,14 +48,14 @@ class TestAddToEnv:
                 sandbox.add_to_env(shell_script=line)
             assert env_file.read_text() == lines[0] + "\n" + lines[1] + "\n"
 
-    def test_newline_encapsulation(self, patch_stream_subprocess):
+    def test_newline_encapsulation(self, patch_disable_stream_subprocess):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             env_file = sandbox.sandbox_dir / "environment"
             shell_script = "fancy shell_script\nas a double line string"
             sandbox.add_to_env(shell_script=shell_script)
             assert env_file.read_text() == shell_script + "\n"
 
-    def test_shell_script_append(self, patch_stream_subprocess):
+    def test_shell_script_append(self, patch_disable_stream_subprocess):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             env_file = sandbox.sandbox_dir / "environment"
             existing_shell_script = "some existing\nshell script"
