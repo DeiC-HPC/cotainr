@@ -85,7 +85,6 @@ class CondaInstall:
         installer_path : pathlib.Path
             The path of the Conda installer to run to bootstrap Conda.
         """
-
         # Run Conda installer
         self.sandbox.run_command_in_container(
             cmd=f"bash {installer_path.name} -b -s -p {self.prefix}"

@@ -18,4 +18,6 @@ def integration_conda_singularity(request):
     integration to conda and singularity at the same time.
     """
     if request.param == "conda_only":
+        # Disable the singularity subprocess runner when testing the conda
+        # integration only.
         return request.getfixturevalue("patch_singularity_sandbox_subprocess_runner")
