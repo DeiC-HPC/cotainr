@@ -51,6 +51,7 @@ The container is built using a sandbox, for now a Singularity sandbox, i.e. a te
 In general, we:
 
 - Force keyword only arguments to functions and methods.
+- Use relative imports within the `cotainr` package to import functionality from other modules. The imports must be done such that all objects imported are still references (not copies) which allows for monkeypatching objects in their definition module in tests.
 
 ### Formatting
 
@@ -101,12 +102,38 @@ The container sandbox is implemented in the `container.py` module as a context m
 
 Functionality that allows for packing software into the container sandbox is implemented in the `pack.py` module. This packing functionality must interact with a container sandbox from `container.py`.
 
+## Test suite
+
+The test suite is based on `pytest` and uses the `pytest` `coverage` plugin. The test suite is run from repository root directory by issuing:
+
+```bash
+pytest
+```
+
+The following `pytest` marks are implemented:
+
+- `endtoend`: end-to-end tests of workflows using `cotainr` (may take a long time to run)
+- `singularity_integration`: integration tests that require and use singularity (may take a long time to run)
+- `conda_integration`: integration tests that installs and manipulates a conda environment (may take a long time to run)
+
+### Structure of tests
+All tests are placed in the `tests` folder and acts as a sub-package in `cotainr`. The `cotainr.tests` package contains a sub-package for each module in `cotainr` (structured as the modules in `cotainr`.). Each such test sub-package contains a module for each class/function in the corresponding `cotainr` module, e.g. `cotainr/tests/pack/test_conda_install.py` includes all tests of the `cotainr.pack.CondaInstall` class. If the test module relates to a class, it contains one test class with any number of tests cases methods for each method in that class. If the test module relates to a function, it contains one test class for that function and, optionally, one test class for any private helper method function to that function.
+
+- patches/data/...
+- imports in tests
+- conftest.py
+- test_end_to_end.py
+
 ## Dependencies
 
-- The builder tool requires:
+- Running `cotainr` requires:
   - Python, version 3.?, for running the tool
   - Singularity, version ?, for building a container
 - The `CondaInstall` from `pack.py` requires that Bash, version ?, is installed in the base image used for the container.
+- Running the test suite requires:
+  - pytest, version ?
+  - pytest-cov, version ?
+  - coverage, version ?
 
 ## Limitations
 
