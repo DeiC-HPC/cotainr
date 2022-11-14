@@ -139,7 +139,9 @@ class BuilderCLI:
         """Create a command line interface for the container builder."""
         # Setup main command parser
         builder_cli_doc_summary = self.__doc__.strip().splitlines()[0]
-        parser = argparse.ArgumentParser(description=builder_cli_doc_summary)
+        parser = argparse.ArgumentParser(
+            prog="cotainr", description=builder_cli_doc_summary
+        )
         subparsers = parser.add_subparsers(title="subcommands")
 
         # Add subcommands parsers
