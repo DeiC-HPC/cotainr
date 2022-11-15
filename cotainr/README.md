@@ -104,10 +104,10 @@ Functionality that allows for packing software into the container sandbox is imp
 
 ## Test suite
 
-The test suite is based on `pytest` and uses the `pytest` `coverage` plugin. The test suite is run from repository root directory by issuing:
+The test suite is implemented using `pytest` and uses the `pytest` `coverage` plugin. The test suite is run from repository root directory by issuing:
 
 ```bash
-pytest
+$ pytest
 ```
 
 The following `pytest` marks are implemented:
@@ -117,12 +117,29 @@ The following `pytest` marks are implemented:
 - `conda_integration`: integration tests that installs and manipulates a conda environment (may take a long time to run)
 
 ### Structure of tests
-All tests are placed in the `tests` folder and acts as a sub-package in `cotainr`. The `cotainr.tests` package contains a sub-package for each module in `cotainr` (structured as the modules in `cotainr`.). Each such test sub-package contains a module for each class/function in the corresponding `cotainr` module, e.g. `cotainr/tests/pack/test_conda_install.py` includes all tests of the `cotainr.pack.CondaInstall` class. If the test module relates to a class, it contains one test class with any number of tests cases methods for each method in that class. If the test module relates to a function, it contains one test class for that function and, optionally, one test class for any private helper method function to that function.
+All tests are placed in the `tests` folder which acts as a sub-package in `cotainr`. The `cotainr.tests` sub-package contains a sub-package for each module in `cotainr` (structured in the same way as the modules in `cotainr`.). Each such test sub-package contains a module for each class/function in the corresponding `cotainr` module. If the test module relates to a class, it contains, for each method in that class, one test class with any number of tests cases (implemented as methods). If the test module relates to a function, it contains one test class for that function and, optionally, one test class for any private "helper" function to that function. Here are a few examples to illustrate all of this:
 
-- patches/data/...
-- imports in tests
-- conftest.py
-- test_end_to_end.py
+- All tests of the `cotainr.pack.CondaInstall` class are placed in `cotainr/tests/pack/test_conda_install.py` which acts as a python module reachable via `cotainr.tests.pack.test_conda_install`.
+- The tests of the `cotainr.pack.CondaInstall.add_environment(...)` method are implemented in the class `cotainr.tests.pack.test_conda_install.TestAddEnvironment`.
+- The tests of the `cotainr.util.stream_subprocss` function are implemented in the class `cotainr.tests.util.test_stream_subprocess.TestStreamSubprocess`. Specifically, this class implements test cases (methods) like `test_completed_process(...)` or `test_check_returncode(...)`.
+- The module `cotainr.tests.util.test_stream_subprocess` also includes a class, `Test_PrintAndCaptureStream`, implementing the tests of the private "helper" function `cotainr.utils._print_and_capture_stream(...)`.
+
+In addition to the modules implementing the tests of the functions and classes in `cotainr`, the sub-packages in `cotainr.tests` may also include "special" modules implementing test fixtures:
+
+- `patches.py`: Contains all (monkey)patch fixtures related to that sub-package, e.g. the fixture `cotainr.tests.util.patches.patch_disable_stream_subprocess`. All patch fixtures are prefixed with `patch_`.
+- `data.py`: Contains all test data fixtures related to that sub-package, e.g. the fixture `cotainr.tests.container.data.data_cached_ubuntu_sif`. All data fixtures are prefixed with `data_`.
+
+All general purpose fixtures, which do not belong in one of the sub-package specific fixture modules listed above, are defined in the `tests/conftest.py` module.
+
+Finally, the `cotainr.tests.test_end_to_end` module contains all workflow end-to-end test using `cotainr`.
+
+### Imports in test modules
+
+Imports in test modules follow these rules:
+
+- Functions and classes, subject to testing, are imported using absolute imports, e.g. `import cotainr.pack.CondaInstall` in `tests/pack/test_conda_install.py`.
+- Sub-package specific fixtures are explicitly imported using relative imports, e.g. `from ..container.data import data_cached_ubuntu_sif` in `tests/pack/test_conda_install.py`.
+- Fixtures defined in `tests/conftest.py` are not explicitly imported (they are implicitly imported by pytest). Thus, if a fixture is used, but not imported, in a test module, `tests/conftest.py` is the only module in which it can (or at least should) be defined.
 
 ## Dependencies
 
