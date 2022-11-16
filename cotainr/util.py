@@ -25,6 +25,9 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import time
+import re
+
 
 systems_file = (Path(__file__) / "../../systems.json").resolve()
 
@@ -87,21 +90,26 @@ def stream_subprocess(*, args, **kwargs):
         bufsize=1,
         **kwargs,
     ) as process:
-        with ThreadPoolExecutor(max_workers=2) as executor:
+        with ThreadPoolExecutor(max_workers=3) as executor:
             # (Attempt to) pass the process stdout and stderr to the terminal in real
             # time while also storing it for later inspection.
+            progress = ProgressHandler()
             stdout_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stdout,
-                print_stream=sys.stdout,
+                progress=progress,
             )
             stderr_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stderr,
-                print_stream=sys.stderr,
+                progress=progress,
+            )
+            executor.submit(
+                progress.run,
             )
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
+            progress.stop()
 
     completed_process = subprocess.CompletedProcess(
         process.args,
@@ -115,7 +123,7 @@ def stream_subprocess(*, args, **kwargs):
     return completed_process
 
 
-def _print_and_capture_stream(*, stream_handle, print_stream):
+def _print_and_capture_stream(*, stream_handle, progress):
     """
     Print a text stream while also storing it.
 
@@ -123,12 +131,61 @@ def _print_and_capture_stream(*, stream_handle, print_stream):
     ----------
     stream_handle : io.TextIOWrapper
         The text stream to print and capture.
-    print_stream : file object implementing write(string) method.
-        The file object to print the stream to.
+    progress : ProgressHandler
+        The object that prints the output.
     """
     captured_stream = []
     for line in stream_handle:
-        print(line, end="", file=print_stream)
         captured_stream.append(line)
+        progress.change_message(line)
 
     return captured_stream
+
+
+class ProgressHandler:
+    """
+    A class for printing output progress nicely.
+    It needs to run in a separate thread.
+    """
+
+    def __init__(self):
+        """Construct the progress handler"""
+        self._spinner = "⣾⣷⣯⣟⡿⢿⣻⣽"
+        self._index = 0
+        self._msg = ""
+        self._sleep_interval = 0.1
+        self._running = True
+        self._ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+    def stop(self):
+        """Stop the printing process"""
+        self._running = False
+
+    def change_message(self, msg):
+        """
+        Change the message that is being printed.
+
+        Parameters
+        ----------
+        msg : str
+            Change the message that is being printed.
+        """
+        msg = msg.strip(" \r\n")
+        msg = self._ansi_escape.sub("", msg)
+        if len(msg) > 100:
+            msg = msg[:97] + "..."
+        self._msg = msg
+
+    def run(self):
+        """
+        Start the process of printing out the lastest message.
+        It will run until the stop function is being called.
+        """
+        sys.stdout.write("\033[?25l")
+        sys.stdout.flush()
+        while self._running:
+            self._index = (self._index + 1) % len(self._spinner)
+            print(f"\r{self._spinner[self._index]} {self._msg:<100}", end="\r")
+            time.sleep(self._sleep_interval)
+        sys.stdout.write("\033[?25h")
+        sys.stdout.flush()
