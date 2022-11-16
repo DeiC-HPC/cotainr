@@ -27,7 +27,7 @@ jobs:
         name: Downlaod Apptainer ${{ matrix.apptainer-version }}
         run: wget -O singularity_installer.deb https://github.com/apptainer/apptainer/releases/download/v${{ matrix.apptainer-version }}/apptainer_${{ matrix.apptainer-version }}_amd64.deb
       - name: Install Singularity/Apptainer
-        run: sudo dpkg -i singularity_installer.deb
+        run: sudo apt install ./singularity_installer.deb
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
