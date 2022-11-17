@@ -121,6 +121,16 @@ class Info(BuilderSubcommand):
         print("Sorry, no information about your system is available at this time.")
 
 
+class _NoSubcommand(BuilderSubcommand):
+    """A subcommand that simply prints the `parser` help message."""
+
+    def __init__(self, *, parser):
+        self.parser = parser
+
+    def execute(self):
+        self.parser.print_help()
+
+
 class BuilderCLI:
     """
     Build Apptainer/Singularity containers for HPC systems in user space.
@@ -135,7 +145,9 @@ class BuilderCLI:
         The subcommand to run.
     """
 
-    def __init__(self):
+    subcommands = [Build, Info]
+
+    def __init__(self, args=None):
         """Create a command line interface for the container builder."""
         # Setup main command parser
         builder_cli_doc_summary = self.__doc__.strip().splitlines()[0]
@@ -145,8 +157,7 @@ class BuilderCLI:
         subparsers = parser.add_subparsers(title="subcommands")
 
         # Add subcommands parsers
-        subcommands = [Build, Info]
-        for subcommand_cls in subcommands:
+        for subcommand_cls in self.subcommands:
             subcommand_doc_summary = subcommand_cls.__doc__.strip().splitlines()[0]
             sub_parser = subparsers.add_parser(
                 name=subcommand_cls.__name__.lower(),
@@ -157,7 +168,7 @@ class BuilderCLI:
             sub_parser.set_defaults(subcommand_cls=subcommand_cls)
 
         # Parse args
-        self.args = parser.parse_args()
+        self.args = parser.parse_args(args=args)
         subcommand_args = {
             key: val for key, val in vars(self.args).items() if key != "subcommand_cls"
         }
@@ -166,11 +177,7 @@ class BuilderCLI:
             self.subcommand = self.args.subcommand_cls(**subcommand_args)
         except AttributeError:
             # Print help if no subcommand was given
-            class NoSubcommand:
-                def execute(self):
-                    parser.print_help()
-
-            self.subcommand = NoSubcommand()
+            self.subcommand = _NoSubcommand(parser=parser)
 
 
 def main(*args, **kwargs):
