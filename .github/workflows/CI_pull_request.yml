@@ -5,9 +5,6 @@ on:
       - main
   schedule:
       - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
-  push:
-    branches:
-      - github_actions_ci
 jobs:
   run-full-test-suite:
     name: Run full test suite
@@ -26,7 +23,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Attempt restore Singularity/Apptainer installer from cache
+      - name: Attempt to restore Singularity/Apptainer installer from cache
         uses: actions/cache@v3
         id: cache-singularity-installer
         with:

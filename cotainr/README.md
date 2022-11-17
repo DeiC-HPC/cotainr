@@ -148,9 +148,8 @@ Imports in test modules follow these rules:
   - Singularity, version ?, for building a container
 - The `CondaInstall` from `pack.py` requires that Bash, version ?, is installed in the base image used for the container.
 - Running the test suite requires:
-  - pytest, version ?
-  - pytest-cov, version ?
-  - coverage, version ?
+  - pytest, version >=6.0
+  - pytest-cov, version >=2.10
 
 ## Limitations
 
