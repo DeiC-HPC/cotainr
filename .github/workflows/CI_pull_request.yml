@@ -9,10 +9,11 @@ on:
 jobs:
   run-full-test-suite:
     name: Run full test suite
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: ["ubuntu-latest"]
         python-version: ["3.11"] #["3.8", "3.9", "3.10", "3.11"]
         singularity-provider: ["singularity", "apptainer"]
         include:
@@ -28,15 +29,17 @@ jobs:
         id: cache-singularity-installer
         with:
           path: ./singularity_installer.deb
-          key: ${{ runner.os }}-${{ matrix.singularity-provider }}_installer-${{ matrix.singularity-version }}
+          key: ${{ matrix.os }}-${{ matrix.singularity-provider }}_installer-${{ matrix.singularity-version }}
       - name: Download Singularity ${{ matrix.singularity-version }}
         if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && matrix.singularity-provider == 'singularity' }}
         run: wget -O singularity_installer.deb https://github.com/apptainer/singularity/releases/download/v${{ matrix.singularity-version }}/singularity-container_${{ matrix.singularity-version }}_amd64.deb
       - name: Downlaod Apptainer ${{ matrix.apptainer-version }}
         if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && matrix.singularity-provider == 'apptainer' }}
-        run: wget -O singularity_installer.deb https://github.com/apptainer/apptainer/releases/download/v${{ matrix.apptainer-version }}/apptainer_${{ matrix.apptainer-version }}_amd64.deb
-      - name: Install Singularity/Apptainer
-        run: sudo apt install ./singularity_installer.deb
+        run: wget -O singularity_installer.deb https://github.com/apptainer/apptainer/releases/download/v${{ matrix.singularity-version }}/apptainer_${{ matrix.singularity-version }}_amd64.deb
+      - name: Set up Singularity/Apptainer
+        run: |
+          sudo apt install ./singularity_installer.deb
+          singularity --version
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
