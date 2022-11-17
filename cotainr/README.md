@@ -144,7 +144,7 @@ Imports in test modules follow these rules:
 ## Dependencies
 
 - Running `cotainr` requires:
-  - Python, version 3.?, for running the tool
+  - Python, version >=3.8, for running the tool
   - Singularity, version ?, for building a container
 - The `CondaInstall` from `pack.py` requires that Bash, version ?, is installed in the base image used for the container.
 - Running the test suite requires:

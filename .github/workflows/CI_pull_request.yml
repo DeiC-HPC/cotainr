@@ -3,6 +3,8 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+      - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
   push:
     branches:
       - github_actions_ci
@@ -14,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.11"] #["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         singularity-provider: ["singularity", "apptainer"]
         include:
           - singularity-provider: "singularity"
