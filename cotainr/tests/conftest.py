@@ -4,11 +4,25 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
+import sys
 import urllib.error
 import urllib.request
 
-
 import pytest
+
+
+@pytest.fixture
+def argparse_options_line():
+    """
+    Return the help text line for optional arguments in argparse.
+
+    Apparently this line changed from "optional arguments" to "options" in Python 3.10.
+    """
+    py_ver = sys.version_info
+    if py_ver.major > 3 or (py_ver.major == 3 and py_ver.minor >= 10):
+        return "options:\n"
+    else:
+        return "optional arguments:\n"
 
 
 @pytest.fixture

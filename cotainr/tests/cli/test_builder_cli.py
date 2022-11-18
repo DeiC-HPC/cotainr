@@ -5,7 +5,7 @@ from .stubs import StubValidSubcommand, StubInvalidSubcommand
 
 
 class TestConstructor:
-    def test_adding_subcommand(self, capsys, monkeypatch):
+    def test_adding_subcommand(self, capsys, monkeypatch, argparse_options_line):
         monkeypatch.setattr(BuilderCLI, "_subcommands", [StubValidSubcommand])
         with pytest.raises(SystemExit):
             BuilderCLI(args=["stubvalidsubcommand", "-h"])
@@ -14,7 +14,7 @@ class TestConstructor:
             "usage: cotainr stubvalidsubcommand [-h] [--kw-arg KW_ARG] pos_arg\n\n"
             "positional arguments:\n"
             "  pos_arg\n\n"
-            "options:\n"
+            f"{argparse_options_line}"
             "  -h, --help       show this help message and exit\n"
             "  --kw-arg KW_ARG\n"
         )
@@ -60,22 +60,25 @@ class TestConstructor:
 class TestHelpMessage:
     cotainr_main_help_msg = (
         # Capsys apparently assumes an 80 char terminal (?) - thus extra '\n'
-        "usage: cotainr [-h] {build,info} ...\n\n"
+        "usage: cotainr [-h] {{build,info}} ...\n\n"
         "Build Apptainer/Singularity containers for HPC systems in user space.\n\n"
-        "options:\n  -h, --help    show this help message and exit\n\n"
-        "subcommands:\n  {build,info}\n"
+        "{argparse_options_line}"
+        "  -h, --help    show this help message and exit\n\n"
+        "subcommands:\n  {{build,info}}\n"
         "    build       Build a container.\n"
         "    info        Obtain info about the state of all required dependencies for\n"
         "                building a container.\n"
     )
 
-    def test_main_help(self, capsys):
+    def test_main_help(self, capsys, argparse_options_line):
         with pytest.raises(SystemExit):
             BuilderCLI(args=["--help"])
         stdout = capsys.readouterr().out
-        assert stdout == self.cotainr_main_help_msg
+        assert stdout == self.cotainr_main_help_msg.format(
+            argparse_options_line=argparse_options_line
+        )
 
-    def test_subcommand_help(self, capsys):
+    def test_subcommand_help(self, capsys, argparse_options_line):
         with pytest.raises(SystemExit):
             BuilderCLI(args=["build", "--help"])
         stdout = capsys.readouterr().out
@@ -86,7 +89,7 @@ class TestHelpMessage:
             "Build a container.\n\n"
             "positional arguments:\n"
             "  image_path            path to the built container image\n\n"
-            "options:\n"
+            f"{argparse_options_line}"
             "  -h, --help            show this help message and exit\n"
             "  --base-image BASE_IMAGE\n"
             "                        base image to use for the container which may be any\n"
@@ -96,8 +99,10 @@ class TestHelpMessage:
             "                        activate in the container\n"
         )
 
-    def test_missing_subcommand(self, capsys):
+    def test_missing_subcommand(self, capsys, argparse_options_line):
         with pytest.raises(SystemExit):
             BuilderCLI(args=[]).subcommand.execute()
         stdout = capsys.readouterr().out
-        assert stdout == self.cotainr_main_help_msg
+        assert stdout == self.cotainr_main_help_msg.format(
+            argparse_options_line=argparse_options_line
+        )
