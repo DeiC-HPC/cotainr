@@ -225,7 +225,7 @@ def _extract_help_from_docstring(*, arg, docstring):
                 return "".join(arg_desc).strip().lower().rstrip(".")
             else:
                 # Extract line as part of arg description
-                arg_desc.extend([line, " "])
+                arg_desc.extend([line.strip(), " "])
         elif f"{arg} : " in line:
             # We found the requested arg in the docstring
             arg_found = True
