@@ -124,10 +124,11 @@ All tests are placed in the `tests` folder which acts as a sub-package in `cotai
 - The tests of the `cotainr.util.stream_subprocss` function are implemented in the class `cotainr.tests.util.test_stream_subprocess.TestStreamSubprocess`. Specifically, this class implements test cases (methods) like `test_completed_process(...)` or `test_check_returncode(...)`.
 - The module `cotainr.tests.util.test_stream_subprocess` also includes a class, `Test_PrintAndCaptureStream`, implementing the tests of the private "helper" function `cotainr.utils._print_and_capture_stream(...)`.
 
-In addition to the modules implementing the tests of the functions and classes in `cotainr`, the sub-packages in `cotainr.tests` may also include "special" modules implementing test fixtures:
+In addition to the modules implementing the tests of the functions and classes in `cotainr`, the sub-packages in `cotainr.tests` may also include "special" modules implementing test fixtures and stubs:
 
 - `patches.py`: Contains all (monkey)patch fixtures related to that sub-package, e.g. the fixture `cotainr.tests.util.patches.patch_disable_stream_subprocess`. All patch fixtures are prefixed with `patch_`.
 - `data.py`: Contains all test data fixtures related to that sub-package, e.g. the fixture `cotainr.tests.container.data.data_cached_ubuntu_sif`. All data fixtures are prefixed with `data_`.
+- `stubs.py`: Contains all test stubs related to taht sub-package, e.g. the stub `cotainr.tests.cli.stubs.StubValidSubcommand`.
 
 All general purpose fixtures, which do not belong in one of the sub-package specific fixture modules listed above, are defined in the `tests/conftest.py` module.
 

@@ -104,11 +104,10 @@ class TestRunCommandInContainer:
     def test_error_handling(self, data_cached_alpine_sif):
         cmd = "some6021 non-meaningful command"
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
-            with pytest.raises(ValueError) as exc_info:
+            with pytest.raises(
+                ValueError, match=f"^Invalid command {cmd=} passed to Singularity"
+            ):
                 sandbox.run_command_in_container(cmd=cmd)
-            assert str(exc_info.value).startswith(
-                f"Invalid command {cmd=} passed to Singularity"
-            )
 
     def test_no_home(self, data_cached_alpine_sif):
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
@@ -130,9 +129,7 @@ class Test_AssertWithinSandboxContext:
 
     def test_fail_outside_sandbox(self):
         sandbox = SingularitySandbox(base_image="my_base_image_6021")
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(
+            ValueError, match="^The operation is only valid inside a sandbox context.$"
+        ):
             sandbox._assert_within_sandbox_context()
-        assert (
-            str(exc_info.value)
-            == "The operation is only valid inside a sandbox context."
-        )

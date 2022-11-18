@@ -23,6 +23,7 @@ from abc import ABC, abstractmethod
 import argparse
 import pathlib
 import shutil
+import sys
 
 from . import container
 from . import pack
@@ -122,13 +123,14 @@ class Info(BuilderSubcommand):
 
 
 class _NoSubcommand(BuilderSubcommand):
-    """A subcommand that simply prints the `parser` help message."""
+    """A subcommand that simply prints the `parser` help message and exits."""
 
     def __init__(self, *, parser):
         self.parser = parser
 
     def execute(self):
         self.parser.print_help()
+        sys.exit(0)
 
 
 class BuilderCLI:
@@ -145,27 +147,37 @@ class BuilderCLI:
         The subcommand to run.
     """
 
-    subcommands = [Build, Info]
+    _subcommands = [Build, Info]
 
-    def __init__(self, args=None):
+    def __init__(self, *, args=None):
         """Create a command line interface for the container builder."""
+        # Sanity check subcommands
+        for sub_cmd in self._subcommands:
+            if not issubclass(sub_cmd, BuilderSubcommand):
+                raise TypeError(f"{sub_cmd=} must be a cotainr.cli.BuilderSubcommand")
+
         # Setup main command parser
         builder_cli_doc_summary = self.__doc__.strip().splitlines()[0]
         parser = argparse.ArgumentParser(
             prog="cotainr", description=builder_cli_doc_summary
         )
-        subparsers = parser.add_subparsers(title="subcommands")
 
         # Add subcommands parsers
-        for subcommand_cls in self.subcommands:
-            subcommand_doc_summary = subcommand_cls.__doc__.strip().splitlines()[0]
-            sub_parser = subparsers.add_parser(
-                name=subcommand_cls.__name__.lower(),
-                help=subcommand_doc_summary,
-                description=subcommand_doc_summary,
-            )
-            subcommand_cls.add_arguments(parser=sub_parser)
-            sub_parser.set_defaults(subcommand_cls=subcommand_cls)
+        if self._subcommands:
+            subparsers = parser.add_subparsers(title="subcommands")
+            for subcommand_cls in self._subcommands:
+                subcommand_doc_summary = (
+                    subcommand_cls.__doc__.strip().splitlines()[0]
+                    if subcommand_cls.__doc__
+                    else ""
+                )
+                sub_parser = subparsers.add_parser(
+                    name=subcommand_cls.__name__.lower(),
+                    help=subcommand_doc_summary,
+                    description=subcommand_doc_summary,
+                )
+                subcommand_cls.add_arguments(parser=sub_parser)
+                sub_parser.set_defaults(subcommand_cls=subcommand_cls)
 
         # Parse args
         self.args = parser.parse_args(args=args)
@@ -176,7 +188,7 @@ class BuilderCLI:
         try:
             self.subcommand = self.args.subcommand_cls(**subcommand_args)
         except AttributeError:
-            # Print help if no subcommand was given
+            # Print help and exit if no subcommand was given
             self.subcommand = _NoSubcommand(parser=parser)
 
 

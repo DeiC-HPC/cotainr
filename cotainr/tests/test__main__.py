@@ -10,10 +10,8 @@ import cotainr
 
 class Test__main__:
     def test_programmatic_import_run(self, patch_disable_main):
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(SystemExit, match="^PATCH: Ran cotainr.cli main function$"):
             from cotainr import __main__
-        exc_msg = str(exc_info.value)
-        assert exc_msg == "PATCH: Ran cotainr.cli main function"
 
     def test_cli_m_flag(self):
         env = {

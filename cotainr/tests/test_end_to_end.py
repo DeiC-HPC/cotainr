@@ -1,6 +1,8 @@
+import shlex
+
 import pytest
 
-from cotainr.cli import Build
+from cotainr.cli import BuilderCLI
 from .container.data import data_cached_ubuntu_sif
 
 
@@ -11,12 +13,13 @@ def test_conda_env_build(data_cached_ubuntu_sif, singularity_exec, tmp_path):
     conda_env_path = tmp_path / "conda_env.yml"
     conda_env_path.write_text("channels:\n  - conda-forge\ndependencies:\n  - python")
 
-    build = Build(
-        image_path=build_container_path,
-        base_image=data_cached_ubuntu_sif,
-        conda_env=conda_env_path,
-    )
-    build.execute()
+    BuilderCLI(
+        args=shlex.split(
+            f"build {build_container_path} "
+            f"--base-image={data_cached_ubuntu_sif} "
+            f"--conda-env={conda_env_path}"
+        )
+    ).subcommand.execute()
 
     container_python_process = singularity_exec(
         f"{build_container_path} python -c 'import sys; print(sys.executable)'"

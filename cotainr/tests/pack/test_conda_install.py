@@ -162,7 +162,7 @@ class Test_DownloadCondaInstaller:
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            with pytest.raises(urllib.error.URLError) as exc_info:
+            with pytest.raises(
+                urllib.error.URLError, match="PATCH: urlopen error forced for url="
+            ):
                 CondaInstall(sandbox=sandbox)
-            exc_msg = str(exc_info.value.reason)
-            assert exc_msg.startswith("PATCH: urlopen error forced for url=")
