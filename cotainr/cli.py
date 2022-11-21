@@ -7,9 +7,9 @@ subcommands.
 
 Classes
 -------
-BuilderSubcommand(ABC):
-    Abstract base class for `BuilderCLI` subcommands.
-BuilderCLI
+CotainrSubcommand(ABC):
+    Abstract base class for `CotainrCLI` subcommands.
+CotainrCLI
     Build Apptainer/Singularity containers for HPC systems in user space. (The
     main CLI command.)
 Build
@@ -17,6 +17,11 @@ Build
 Info
     Obtain info about the state of all required dependencies for building a
     container. (The "info" subcommand.)
+
+Functions
+---------
+main(*args, *kwargs):
+    Main CLI entrypoint.
 """
 
 from abc import ABC, abstractmethod
@@ -29,8 +34,8 @@ from . import container
 from . import pack
 
 
-class BuilderSubcommand(ABC):
-    """Abstract base class for `BuilderCLI` subcommands."""
+class CotainrSubcommand(ABC):
+    """Abstract base class for `CotainrCLI` subcommands."""
 
     @classmethod
     def add_arguments(cls, *, parser):
@@ -50,7 +55,7 @@ class BuilderSubcommand(ABC):
         pass
 
 
-class Build(BuilderSubcommand):
+class Build(CotainrSubcommand):
     """
     Build a container.
 
@@ -111,7 +116,7 @@ class Build(BuilderSubcommand):
             sandbox.build_image(path=self.image_path)
 
 
-class Info(BuilderSubcommand):
+class Info(CotainrSubcommand):
     """
     Obtain info about the state of all required dependencies for building a container.
 
@@ -122,7 +127,7 @@ class Info(BuilderSubcommand):
         print("Sorry, no information about your system is available at this time.")
 
 
-class _NoSubcommand(BuilderSubcommand):
+class _NoSubcommand(CotainrSubcommand):
     """A subcommand that simply prints the `parser` help message and exits."""
 
     def __init__(self, *, parser):
@@ -133,17 +138,23 @@ class _NoSubcommand(BuilderSubcommand):
         sys.exit(0)
 
 
-class BuilderCLI:
+class CotainrCLI:
     """
     Build Apptainer/Singularity containers for HPC systems in user space.
 
-    The main CLI command.
+    The main cotainr CLI command.
+
+    Parameters
+    ----------
+    args : list of str, optional
+        The input arguments to the CLI (the default is `None`, which implies
+        that the input arguments are taken from `sys.argv`).
 
     Attributes
     ----------
     args : types.SimpleNamespace
-        The parsed arguments to the CLI.
-    subcommand : BuilderSubcommand
+        The namespace holding the converted arguments parsed to the CLI.
+    subcommand : CotainrSubcommand
         The subcommand to run.
     """
 
@@ -153,8 +164,8 @@ class BuilderCLI:
         """Create a command line interface for the container builder."""
         # Sanity check subcommands
         for sub_cmd in self._subcommands:
-            if not issubclass(sub_cmd, BuilderSubcommand):
-                raise TypeError(f"{sub_cmd=} must be a cotainr.cli.BuilderSubcommand")
+            if not issubclass(sub_cmd, CotainrSubcommand):
+                raise TypeError(f"{sub_cmd=} must be a cotainr.cli.CotainrSubcommand")
 
         # Setup main command parser
         builder_cli_doc_summary = self.__doc__.strip().splitlines()[0]
@@ -194,9 +205,9 @@ class BuilderCLI:
 
 def main(*args, **kwargs):
     """Main CLI entrypoint."""
-    # Create BuilderCLI to parse command line args and run the specified
+    # Create CotainrCLI to parse command line args and run the specified
     # subcommand
-    cli = BuilderCLI()
+    cli = CotainrCLI()
     cli.subcommand.execute()
 
 

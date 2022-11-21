@@ -22,7 +22,7 @@ class SingularitySandbox:
     A Singularity container sandbox context manager.
 
     This creates and manipulates a `Singularity sandbox
-    <https://docs.sylabs.io/guides/3.0/user-guide/build_a_container.html#creating-writable-sandbox-directories>`_,
+    <http://apptainer.org/docs/user/main/build_a_container.html#creating-writable-sandbox-directories>`_,
     i.e. a temporary directory representing the container. As a final step, the
     sandbox should be converted into a SIF container image file.
 
@@ -36,7 +36,7 @@ class SingularitySandbox:
     ----------
     base_image : str
         Base image to use for the container.
-    sanbbox_dir : os.PathLike or None
+    sandbox_dir : os.PathLike or None
         The path to the temporary directory containing the sandbox if within a
         sandbox context, otherwise it is None.
     """

@@ -1,11 +1,11 @@
-from cotainr.cli import BuilderSubcommand
+from cotainr.cli import CotainrSubcommand
 
 
 class StubInvalidSubcommand:
     pass
 
 
-class StubValidSubcommand(BuilderSubcommand):
+class StubValidSubcommand(CotainrSubcommand):
     def __init__(self, *, pos_arg, kw_arg=None):
         self.pos_arg = pos_arg
         self.kw_arg = kw_arg

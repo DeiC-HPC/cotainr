@@ -1,14 +1,14 @@
 import pytest
 
-from cotainr.cli import BuilderCLI
+from cotainr.cli import CotainrCLI
 from .stubs import StubValidSubcommand, StubInvalidSubcommand
 
 
 class TestConstructor:
     def test_adding_subcommand(self, capsys, monkeypatch, argparse_options_line):
-        monkeypatch.setattr(BuilderCLI, "_subcommands", [StubValidSubcommand])
+        monkeypatch.setattr(CotainrCLI, "_subcommands", [StubValidSubcommand])
         with pytest.raises(SystemExit):
-            BuilderCLI(args=["stubvalidsubcommand", "-h"])
+            CotainrCLI(args=["stubvalidsubcommand", "-h"])
         stdout = capsys.readouterr().out
         assert stdout == (
             "usage: cotainr stubvalidsubcommand [-h] [--kw-arg KW_ARG] pos_arg\n\n"
@@ -23,19 +23,19 @@ class TestConstructor:
         "subcommands",
         (
             [StubInvalidSubcommand],
-            [StubInvalidSubcommand] + BuilderCLI._subcommands,
-            BuilderCLI._subcommands + [StubInvalidSubcommand],
+            [StubInvalidSubcommand] + CotainrCLI._subcommands,
+            CotainrCLI._subcommands + [StubInvalidSubcommand],
         ),
     )
     def test_invalid_subcommands(self, subcommands, monkeypatch):
-        monkeypatch.setattr(BuilderCLI, "_subcommands", subcommands)
-        with pytest.raises(TypeError, match="must be a cotainr.cli.BuilderSubcommand"):
-            BuilderCLI(args=[])
+        monkeypatch.setattr(CotainrCLI, "_subcommands", subcommands)
+        with pytest.raises(TypeError, match="must be a cotainr.cli.CotainrSubcommand"):
+            CotainrCLI(args=[])
 
     def test_no_subcommands(self, capsys, monkeypatch):
-        monkeypatch.setattr(BuilderCLI, "_subcommands", [])
+        monkeypatch.setattr(CotainrCLI, "_subcommands", [])
         with pytest.raises(SystemExit):
-            BuilderCLI(args=[]).subcommand.execute()
+            CotainrCLI(args=[]).subcommand.execute()
         stdout = capsys.readouterr().out
         assert stdout.startswith("usage: cotainr [-h]\n")
         assert "subcommands:" not in stdout
@@ -50,8 +50,8 @@ class TestConstructor:
         ],
     )
     def test_subcommand_arg_parsing(self, arg, kwarg, capsys, monkeypatch):
-        monkeypatch.setattr(BuilderCLI, "_subcommands", [StubValidSubcommand])
-        cli = BuilderCLI(args=["stubvalidsubcommand", f"{arg}", f"--kw-arg={kwarg}"])
+        monkeypatch.setattr(CotainrCLI, "_subcommands", [StubValidSubcommand])
+        cli = CotainrCLI(args=["stubvalidsubcommand", f"{arg}", f"--kw-arg={kwarg}"])
         cli.subcommand.execute()
         stdout = capsys.readouterr().out
         assert stdout == f"Executed: 'stubvalidsubcommand {arg} --kw-arg={kwarg}'"
@@ -72,7 +72,7 @@ class TestHelpMessage:
 
     def test_main_help(self, capsys, argparse_options_line):
         with pytest.raises(SystemExit):
-            BuilderCLI(args=["--help"])
+            CotainrCLI(args=["--help"])
         stdout = capsys.readouterr().out
         assert stdout == self.cotainr_main_help_msg.format(
             argparse_options_line=argparse_options_line
@@ -80,7 +80,7 @@ class TestHelpMessage:
 
     def test_subcommand_help(self, capsys, argparse_options_line):
         with pytest.raises(SystemExit):
-            BuilderCLI(args=["build", "--help"])
+            CotainrCLI(args=["build", "--help"])
         stdout = capsys.readouterr().out
         assert stdout == (
             # Capsys apparently assumes an 80 char terminal (?) - thus extra '\n'
@@ -101,7 +101,7 @@ class TestHelpMessage:
 
     def test_missing_subcommand(self, capsys, argparse_options_line):
         with pytest.raises(SystemExit):
-            BuilderCLI(args=[]).subcommand.execute()
+            CotainrCLI(args=[]).subcommand.execute()
         stdout = capsys.readouterr().out
         assert stdout == self.cotainr_main_help_msg.format(
             argparse_options_line=argparse_options_line
