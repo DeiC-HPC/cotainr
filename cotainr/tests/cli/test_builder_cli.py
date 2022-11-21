@@ -5,7 +5,7 @@ from .stubs import StubValidSubcommand, StubInvalidSubcommand
 
 
 class TestConstructor:
-    def test_adding_subcommand(self, capsys, monkeypatch, argparse_options_line):
+    def test_adding_subcommand(self, argparse_options_line, capsys, monkeypatch):
         monkeypatch.setattr(CotainrCLI, "_subcommands", [StubValidSubcommand])
         with pytest.raises(SystemExit):
             CotainrCLI(args=["stubvalidsubcommand", "-h"])
@@ -70,7 +70,7 @@ class TestHelpMessage:
         "                building a container.\n"
     )
 
-    def test_main_help(self, capsys, argparse_options_line):
+    def test_main_help(self, argparse_options_line, capsys):
         with pytest.raises(SystemExit):
             CotainrCLI(args=["--help"])
         stdout = capsys.readouterr().out
@@ -78,28 +78,7 @@ class TestHelpMessage:
             argparse_options_line=argparse_options_line
         )
 
-    def test_subcommand_help(self, capsys, argparse_options_line):
-        with pytest.raises(SystemExit):
-            CotainrCLI(args=["build", "--help"])
-        stdout = capsys.readouterr().out
-        assert stdout == (
-            # Capsys apparently assumes an 80 char terminal (?) - thus extra '\n'
-            "usage: cotainr build [-h] --base-image BASE_IMAGE [--conda-env CONDA_ENV]\n"
-            "                     image_path\n\n"
-            "Build a container.\n\n"
-            "positional arguments:\n"
-            "  image_path            path to the built container image\n\n"
-            f"{argparse_options_line}"
-            "  -h, --help            show this help message and exit\n"
-            "  --base-image BASE_IMAGE\n"
-            "                        base image to use for the container which may be any\n"
-            "                        valid apptainer/singularity <build spec>\n"
-            "  --conda-env CONDA_ENV\n"
-            "                        path to a conda environment.yml file to install and\n"
-            "                        activate in the container\n"
-        )
-
-    def test_missing_subcommand(self, capsys, argparse_options_line):
+    def test_missing_subcommand(self, argparse_options_line, capsys):
         with pytest.raises(SystemExit):
             CotainrCLI(args=[]).subcommand.execute()
         stdout = capsys.readouterr().out

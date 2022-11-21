@@ -26,7 +26,7 @@ main(*args, *kwargs):
 
 from abc import ABC, abstractmethod
 import argparse
-import pathlib
+from pathlib import Path
 import shutil
 import sys
 
@@ -74,21 +74,25 @@ class Build(CotainrSubcommand):
     """
 
     def __init__(self, *, image_path, base_image=None, conda_env=None):
-        self.image_path = image_path.resolve()
+        self.image_path = Path(image_path).resolve()
+        if base_image is None:
+            raise ValueError("The `base_image` argument is required.")
         self.base_image = base_image
         if conda_env is not None:
-            self.conda_env = conda_env.resolve()
+            self.conda_env = Path(conda_env).resolve()
             if not self.conda_env.exists():
                 raise FileNotFoundError(
                     f"The provided Conda env file '{self.conda_env}' does not exist."
                 )
+        else:
+            self.conda_env = None
 
     @classmethod
     def add_arguments(cls, *, parser):
         parser.add_argument(
             "image_path",
             help=_extract_help_from_docstring(arg="image_path", docstring=cls.__doc__),
-            type=pathlib.Path,
+            type=Path,
         )
         parser.add_argument(
             "--base-image",
@@ -98,7 +102,7 @@ class Build(CotainrSubcommand):
         parser.add_argument(
             "--conda-env",
             help=_extract_help_from_docstring(arg="conda_env", docstring=cls.__doc__),
-            type=pathlib.Path,
+            type=Path,
         )
 
     def execute(self):

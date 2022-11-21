@@ -130,6 +130,7 @@ class Test_AssertWithinSandboxContext:
     def test_fail_outside_sandbox(self):
         sandbox = SingularitySandbox(base_image="my_base_image_6021")
         with pytest.raises(
-            ValueError, match="^The operation is only valid inside a sandbox context.$"
+            ValueError,
+            match=r"^The operation is only valid inside a sandbox context\.$",
         ):
             sandbox._assert_within_sandbox_context()

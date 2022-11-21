@@ -1,3 +1,4 @@
+import shutil
 from subprocess import CompletedProcess
 
 import pytest
@@ -24,3 +25,28 @@ def patch_disable_singularity_sandbox_subprocess_runner(monkeypatch):
         "_subprocess_runner",
         mock_subprocess_runner,
     )
+
+
+@pytest.fixture
+def patch_save_singularity_sandbox_context(monkeypatch):
+    """
+    Store the SingularitySandbox context for inspection in tests.
+
+    The content on `SingularitySandbox.sandbox_dir` is copied to
+    `saved_sandbox_dir` before being cleaned up.
+    """
+
+    def mock_exit(self, exc_type, exc_value, traceback):
+        # Copy content of _tmp_dir
+        shutil.copytree(self.sandbox_dir, self._origin / "saved_sandbox_dir")
+
+        # Call "true" __exit__ for cleanup
+        self._non_mocked_context_exit(exc_type, exc_value, traceback)
+
+    monkeypatch.setattr(
+        cotainr.container.SingularitySandbox,
+        "_non_mocked_context_exit",
+        cotainr.container.SingularitySandbox.__exit__,
+        raising=False,
+    )
+    monkeypatch.setattr(cotainr.container.SingularitySandbox, "__exit__", mock_exit)
