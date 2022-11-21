@@ -1,6 +1,16 @@
 from cotainr.cli import CotainrSubcommand
 
 
+class StubDummyCLI:
+    class DummySubcommand:
+        def execute(self):
+            print("Executed dummy subcommand.")
+
+    def __init__(self, *, args=None):
+        self.subcommand = self.DummySubcommand()
+        print("Initialized DummyCLI.")
+
+
 class StubInvalidSubcommand:
     pass
 
