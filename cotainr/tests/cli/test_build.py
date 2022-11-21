@@ -105,8 +105,7 @@ class TestExecute:
     ):
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
-        build = Build(image_path=image_path, base_image=base_image)
-        build.execute()
+        Build(image_path=image_path, base_image=base_image).execute()
         sandbox_create_cmd, sandbox_build_cmd = (
             capsys.readouterr().out.strip().split("\n")
         )
@@ -134,8 +133,9 @@ class TestExecute:
         conda_env = "some_conda_env_6021"
         conda_env_content = "Some conda env content 6021"
         Path(conda_env).write_text(conda_env_content)
-        build = Build(image_path=image_path, base_image=base_image, conda_env=conda_env)
-        build.execute()
+        Build(
+            image_path=image_path, base_image=base_image, conda_env=conda_env
+        ).execute()
 
         # Check that conda_env file has been copied to container
         assert Path(f"./saved_sandbox_dir/{conda_env}").read_text() == conda_env_content
