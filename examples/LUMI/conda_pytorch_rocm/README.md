@@ -1,21 +1,23 @@
 # Conda PyTorch ROCm example
 
-This is an example of a container that includes the full ROCm stack and a ROCm PyTorch compatible Conda environment for use with the GPU nodes on LUMI.
+This is an example of a container that includes the full ROCm stack and a ROCm compatible PyTorch Conda environment for use with the GPU nodes on LUMI.
 
 ## Building the container
 
 The container may be built using:
 
 ```bash
-cotainr build lumi.sif --base-image docker://rocm/dev-ubuntu-22.04:5.3.2-complete --conda-env py39_pytorch_rocm.yml
+cotainr build lumi_pytorch_rocm_demo.sif --base-image docker://rocm/dev-ubuntu-22.04:5.3.2-complete --conda-env py39_pytorch_rocm.yml
 ```
 
-## Running the examples
+## Running the PyTorch examples on LUMI using the built container
 
 Copy everything to LUMI and submit one of the SLURM batch scripts:
 
-- `run_gputest.sh`: Run a simple GPU test.
-- `run_multigpu_torchrun.sh`: Run an example of training a neural network.
+- `run_singlegpu_gputest.sh`: Run a simple GPU test on a single GPU.
+- `run_multigpu_torchrun.sh`: Run an example of training a neural network on all GPUs on a single compute node.
+
+**WARNING: These PyTorch examples have been created to showcase the use of the ROCm PyTorch container built using `cotainr`. They may or may not provide optimal performance on LUMI. Please consult official LUMI channels for guidance on performance optimizing code for LUMI.**
 
 ## Notes about the PyTorch ROCm example setup
 

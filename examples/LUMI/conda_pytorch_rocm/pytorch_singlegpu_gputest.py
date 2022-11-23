@@ -43,9 +43,10 @@ import torch
 
 dtype = torch.float
 device = torch.device("cuda:0")
+torch.manual_seed(6021)
 
 # Create random input and output data
-x = torch.linspace(-math.pi, math.pi, 2000, device=device, dtype=dtype)
+x = torch.linspace(-math.pi, math.pi, 2_500, device=device, dtype=dtype)
 y = torch.sin(x)
 
 # Randomly initialize weights
@@ -55,7 +56,7 @@ c = torch.randn((), device=device, dtype=dtype)
 d = torch.randn((), device=device, dtype=dtype)
 
 learning_rate = 1e-6
-for t in range(2000):
+for t in range(5_000):
     # Forward pass: compute predicted y
     y_pred = a + b * x + c * x**2 + d * x**3
 
