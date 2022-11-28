@@ -1,5 +1,8 @@
 """
-This is a modified version of the PyTorch Polynomial Tensor tutorial from
+This is the LUMI PyTorch single GPU test example from
+https://github.com/DeiC-HPC/cotainr
+
+It is a modified version of the PyTorch Polynomial Tensor tutorial from
 https://github.com/pytorch/tutorials/blob/master/beginner_source/examples_tensor/polynomial_tensor.py
 
 It is subject to the below license.

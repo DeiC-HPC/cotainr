@@ -1,5 +1,8 @@
 """
-This is a modified version of the multi GPU torchrun example from
+This is the LUMI PyTorch multi GPU torchrun example from
+https://github.com/DeiC-HPC/cotainr
+
+It is a modified version of the multi GPU torchrun example from
 https://github.com/pytorch/examples/blob/main/distributed/ddp-tutorial-series/multigpu_torchrun.py
 
 It is subject to the below license.

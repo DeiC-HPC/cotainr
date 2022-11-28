@@ -1,6 +1,6 @@
 # Conda PyTorch ROCm example
 
-This is an example of a container that includes the full ROCm stack and a ROCm compatible PyTorch Conda environment for use with the GPU nodes on LUMI.
+This is an example of a container that includes the full ROCm stack and a ROCm compatible PyTorch Conda environment for use with the GPU nodes on LUMI. It uses an official AMD ROCm base image from <https://hub.docker.com/u/rocm> and the official PyTorch ROCm pip wheels from <https://download.pytorch.org/whl/rocm5.2/>.
 
 ## Building the container
 
