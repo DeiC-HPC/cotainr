@@ -11,9 +11,10 @@ Sandbox
 import os
 from pathlib import Path
 import shlex
+import subprocess
 from tempfile import TemporaryDirectory
 
-from .util import stream_subprocess
+from . import util
 
 
 class SingularitySandbox:
@@ -21,7 +22,7 @@ class SingularitySandbox:
     A Singularity container sandbox context manager.
 
     This creates and manipulates a `Singularity sandbox
-    <https://docs.sylabs.io/guides/3.0/user-guide/build_a_container.html#creating-writable-sandbox-directories>`_,
+    <http://apptainer.org/docs/user/main/build_a_container.html#creating-writable-sandbox-directories>`_,
     i.e. a temporary directory representing the container. As a final step, the
     sandbox should be converted into a SIF container image file.
 
@@ -35,7 +36,7 @@ class SingularitySandbox:
     ----------
     base_image : str
         Base image to use for the container.
-    sanbbox_dir : os.PathLike or None
+    sandbox_dir : os.PathLike or None
         The path to the temporary directory containing the sandbox if within a
         sandbox context, otherwise it is None.
     """
@@ -54,15 +55,17 @@ class SingularitySandbox:
             The sandbox context.
         """
         # Store current directory
-        self._origin = Path(".").resolve()
+        self._origin = Path().resolve()
 
         # Create sandbox
         self._tmp_dir = TemporaryDirectory()
-        self.sandbox_dir = Path(self._tmp_dir.name) / "sandbox"
-        stream_subprocess(
+        self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
+        self.sandbox_dir.mkdir(exist_ok=False)
+        self._subprocess_runner(
             args=[
                 "singularity",
                 "build",
+                "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
                 "--sandbox",
                 self.sandbox_dir,
                 self.base_image,
@@ -114,7 +117,7 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        stream_subprocess(
+        self._subprocess_runner(
             args=[
                 "singularity",
                 "build",
@@ -152,16 +155,25 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        process = stream_subprocess(
-            args=[
-                "singularity",
-                "exec",
-                "--writable",
-                "--no-home",
-                self.sandbox_dir,
-                *shlex.split(cmd),
-            ]
-        )
+        try:
+            process = self._subprocess_runner(
+                args=[
+                    "singularity",
+                    "exec",
+                    "--writable",
+                    "--no-home",
+                    self.sandbox_dir,
+                    *shlex.split(cmd),
+                ]
+            )
+        except subprocess.CalledProcessError as e:
+            singularity_fatal_error = "\n".join(
+                [line for line in e.stderr.split("\n") if line.startswith("FATAL")]
+            )
+            raise ValueError(
+                f"Invalid command {cmd=} passed to Singularity "
+                f"resulted in the FATAL error: {singularity_fatal_error}"
+            ) from e
 
         return process
 
@@ -169,3 +181,7 @@ class SingularitySandbox:
         """Raise a ValueError if we are not inside the sandbox context."""
         if self.sandbox_dir is None:
             raise ValueError("The operation is only valid inside a sandbox context.")
+
+    def _subprocess_runner(self, *, args, **kwargs):
+        """Wrap the choice of subprocess runner."""
+        return util.stream_subprocess(args=args, **kwargs)

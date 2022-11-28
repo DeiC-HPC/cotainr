@@ -7,9 +7,9 @@ subcommands.
 
 Classes
 -------
-BuilderSubcommand(ABC):
-    Abstract base class for `BuilderCLI` subcommands.
-BuilderCLI
+CotainrSubcommand(ABC):
+    Abstract base class for `CotainrCLI` subcommands.
+CotainrCLI
     Build Apptainer/Singularity containers for HPC systems in user space. (The
     main CLI command.)
 Build
@@ -17,19 +17,25 @@ Build
 Info
     Obtain info about the state of all required dependencies for building a
     container. (The "info" subcommand.)
+
+Functions
+---------
+main(*args, *kwargs):
+    Main CLI entrypoint.
 """
 
 from abc import ABC, abstractmethod
 import argparse
-import pathlib
+from pathlib import Path
 import shutil
+import sys
 
 from . import container
 from . import pack
 
 
-class BuilderSubcommand(ABC):
-    """Abstract base class for `BuilderCLI` subcommands."""
+class CotainrSubcommand(ABC):
+    """Abstract base class for `CotainrCLI` subcommands."""
 
     @classmethod
     def add_arguments(cls, *, parser):
@@ -49,7 +55,7 @@ class BuilderSubcommand(ABC):
         pass
 
 
-class Build(BuilderSubcommand):
+class Build(CotainrSubcommand):
     """
     Build a container.
 
@@ -67,22 +73,24 @@ class Build(BuilderSubcommand):
         container.
     """
 
-    def __init__(self, *, image_path, base_image=None, conda_env=None):
-        self.image_path = image_path.resolve()
+    def __init__(self, *, image_path, base_image, conda_env=None):
+        self.image_path = Path(image_path).resolve()
         self.base_image = base_image
         if conda_env is not None:
-            self.conda_env = conda_env.resolve()
+            self.conda_env = Path(conda_env).resolve()
             if not self.conda_env.exists():
                 raise FileNotFoundError(
                     f"The provided Conda env file '{self.conda_env}' does not exist."
                 )
+        else:
+            self.conda_env = None
 
     @classmethod
     def add_arguments(cls, *, parser):
         parser.add_argument(
             "image_path",
             help=_extract_help_from_docstring(arg="image_path", docstring=cls.__doc__),
-            type=pathlib.Path,
+            type=Path,
         )
         parser.add_argument(
             "--base-image",
@@ -92,7 +100,7 @@ class Build(BuilderSubcommand):
         parser.add_argument(
             "--conda-env",
             help=_extract_help_from_docstring(arg="conda_env", docstring=cls.__doc__),
-            type=pathlib.Path,
+            type=Path,
         )
 
     def execute(self):
@@ -110,7 +118,7 @@ class Build(BuilderSubcommand):
             sandbox.build_image(path=self.image_path)
 
 
-class Info(BuilderSubcommand):
+class Info(CotainrSubcommand):
     """
     Obtain info about the state of all required dependencies for building a container.
 
@@ -121,41 +129,71 @@ class Info(BuilderSubcommand):
         print("Sorry, no information about your system is available at this time.")
 
 
-class BuilderCLI:
+class _NoSubcommand(CotainrSubcommand):
+    """A subcommand that simply prints the `parser` help message and exits."""
+
+    def __init__(self, *, parser):
+        self.parser = parser
+
+    def execute(self):
+        self.parser.print_help()
+        sys.exit(0)
+
+
+class CotainrCLI:
     """
     Build Apptainer/Singularity containers for HPC systems in user space.
 
-    The main CLI command.
+    The main cotainr CLI command.
+
+    Parameters
+    ----------
+    args : list of str, optional
+        The input arguments to the CLI (the default is `None`, which implies
+        that the input arguments are taken from `sys.argv`).
 
     Attributes
     ----------
     args : types.SimpleNamespace
-        The parsed arguments to the CLI.
-    subcommand : BuilderSubcommand
+        The namespace holding the converted arguments parsed to the CLI.
+    subcommand : CotainrSubcommand
         The subcommand to run.
     """
 
-    def __init__(self):
+    _subcommands = [Build, Info]
+
+    def __init__(self, *, args=None):
         """Create a command line interface for the container builder."""
+        # Sanity check subcommands
+        for sub_cmd in self._subcommands:
+            if not issubclass(sub_cmd, CotainrSubcommand):
+                raise TypeError(f"{sub_cmd=} must be a cotainr.cli.CotainrSubcommand")
+
         # Setup main command parser
         builder_cli_doc_summary = self.__doc__.strip().splitlines()[0]
-        parser = argparse.ArgumentParser(description=builder_cli_doc_summary)
-        subparsers = parser.add_subparsers(title="subcommands")
+        parser = argparse.ArgumentParser(
+            prog="cotainr", description=builder_cli_doc_summary
+        )
 
         # Add subcommands parsers
-        subcommands = [Build, Info]
-        for subcommand_cls in subcommands:
-            subcommand_doc_summary = subcommand_cls.__doc__.strip().splitlines()[0]
-            sub_parser = subparsers.add_parser(
-                name=subcommand_cls.__name__.lower(),
-                help=subcommand_doc_summary,
-                description=subcommand_doc_summary,
-            )
-            subcommand_cls.add_arguments(parser=sub_parser)
-            sub_parser.set_defaults(subcommand_cls=subcommand_cls)
+        if self._subcommands:
+            subparsers = parser.add_subparsers(title="subcommands")
+            for subcommand_cls in self._subcommands:
+                subcommand_doc_summary = (
+                    subcommand_cls.__doc__.strip().splitlines()[0]
+                    if subcommand_cls.__doc__
+                    else ""
+                )
+                sub_parser = subparsers.add_parser(
+                    name=subcommand_cls.__name__.lower(),
+                    help=subcommand_doc_summary,
+                    description=subcommand_doc_summary,
+                )
+                subcommand_cls.add_arguments(parser=sub_parser)
+                sub_parser.set_defaults(subcommand_cls=subcommand_cls)
 
         # Parse args
-        self.args = parser.parse_args()
+        self.args = parser.parse_args(args=args)
         subcommand_args = {
             key: val for key, val in vars(self.args).items() if key != "subcommand_cls"
         }
@@ -163,19 +201,15 @@ class BuilderCLI:
         try:
             self.subcommand = self.args.subcommand_cls(**subcommand_args)
         except AttributeError:
-            # Print help if no subcommand was given
-            class NoSubcommand:
-                def execute(self):
-                    parser.print_help()
-
-            self.subcommand = NoSubcommand()
+            # Print help and exit if no subcommand was given
+            self.subcommand = _NoSubcommand(parser=parser)
 
 
 def main(*args, **kwargs):
     """Main CLI entrypoint."""
-    # Create BuilderCLI to parse command line args and run the specified
+    # Create CotainrCLI to parse command line args and run the specified
     # subcommand
-    cli = BuilderCLI()
+    cli = CotainrCLI()
     cli.subcommand.execute()
 
 
@@ -204,7 +238,7 @@ def _extract_help_from_docstring(*, arg, docstring):
                 return "".join(arg_desc).strip().lower().rstrip(".")
             else:
                 # Extract line as part of arg description
-                arg_desc.extend([line, " "])
+                arg_desc.extend([line.strip(), " "])
         elif f"{arg} : " in line:
             # We found the requested arg in the docstring
             arg_found = True

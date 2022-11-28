@@ -51,6 +51,7 @@ The container is built using a sandbox, for now a Singularity sandbox, i.e. a te
 In general, we:
 
 - Force keyword only arguments to functions and methods.
+- Use relative imports within the `cotainr` package to import functionality from other modules. The imports must be done such that all objects imported are still references (not copies) which allows for monkeypatching objects in their definition module in tests.
 
 ### Formatting
 
@@ -60,19 +61,19 @@ In general, we:
 
 ### Implementation of command line interface
 
-The command line interface is implemented in the `builder.py` module. It consists of the `BuilderCLI` class that implements the main CLI command. When instantiated, it exposes the follow two attributes:
+The command line interface is implemented in the `builder.py` module. It consists of the `CotainrCLI` class that implements the main CLI command. When instantiated, it exposes the follow two attributes:
 
 - `args`: A `SimpleNamespace` containing the parsed CLI arguments.
 - `subcommand`: An instance of the subcommand that is requested when the script was invoked.
 
-The `BuilderCLI` is intended to be used as:
+The `CotainrCLI` is intended to be used as:
 
 ```python
-cli = BuilderCLI()
+cli = CotainrCLI()
 cli.subcommand.execute()
 ```
 
-Each of the subcommands is implemented as a separate subclass of the `BuilderSubcommand` in the `builder.py` module with the following interface:
+Each of the subcommands is implemented as a separate subclass of the `CotainrSubcommand` in the `builder.py` module with the following interface:
 
 - `__init__(self, *, ...)`: Constructor that assigns all parameters as instance attributes and performs any check/verification and parsing of the parameters beyond simple checks and parsing implemented by the `ArgumentParser.add_argument(...)` method.
 - `add_arguments(cls, *, parser)`: Classmethod that implements the relevant `add_arguments(...)` CLI arguments corresponding to the constructor arguments.
@@ -83,13 +84,13 @@ In order to add a new subcommand, one has to:
 - Implement a class that:
   - Is named as the desired subcommand name.
   - Implements the above subcommands interface.
-- Add the class to the `subcommands` list in the `BuilderCLI.__init__()` constructor.
+- Add the class to the `subcommands` list in the `CotainrCLI.__init__()` constructor.
 
 This implementation was inspired by https://gist.github.com/vineethguna/d72a8f071a783de2d7ca.
 
 Throughout the implementation, we try to avoid repeating help messages for the CLI by (ab)using the `__doc__` dunder to automatically extract such help messages from a single place of definition. Specifically, we automatically extract:
 
-- The main CLI description text from the `BuilderCLI` short summary.
+- The main CLI description text from the `CotainrCLI` short summary.
 - The subcommands help summary from their class short summary.
 - The subcommands help texts from the `Parameters` section in the class docstring. For easing this, we have the `_extract_help_from_docstring(arg, docstring)` function in `builder.py`. Note that this utility function relies on the assumption that the docstrings are formatted according to the numpydoc format.
 
@@ -101,12 +102,55 @@ The container sandbox is implemented in the `container.py` module as a context m
 
 Functionality that allows for packing software into the container sandbox is implemented in the `pack.py` module. This packing functionality must interact with a container sandbox from `container.py`.
 
+## Test suite
+
+The test suite is implemented using `pytest` and uses the `pytest` `coverage` plugin. The test suite is run from repository root directory by issuing:
+
+```bash
+$ pytest
+```
+
+The following `pytest` marks are implemented:
+
+- `endtoend`: end-to-end tests of workflows using `cotainr` (may take a long time to run)
+- `singularity_integration`: integration tests that require and use singularity (may take a long time to run)
+- `conda_integration`: integration tests that installs and manipulates a conda environment (may take a long time to run)
+
+### Structure of tests
+All tests are placed in the `tests` folder which acts as a sub-package in `cotainr`. The `cotainr.tests` sub-package contains a sub-package for each module in `cotainr` (structured in the same way as the modules in `cotainr`.). Each such test sub-package contains a module for each class/function in the corresponding `cotainr` module. If the test module relates to a class, it contains, for each method in that class, one test class with any number of tests cases (implemented as methods). If the test module relates to a function, it contains one test class for that function and, optionally, one test class for any private "helper" function to that function. Here are a few examples to illustrate all of this:
+
+- All tests of the `cotainr.pack.CondaInstall` class are placed in `cotainr/tests/pack/test_conda_install.py` which acts as a python module reachable via `cotainr.tests.pack.test_conda_install`.
+- The tests of the `cotainr.pack.CondaInstall.add_environment(...)` method are implemented in the class `cotainr.tests.pack.test_conda_install.TestAddEnvironment`.
+- The tests of the `cotainr.util.stream_subprocss` function are implemented in the class `cotainr.tests.util.test_stream_subprocess.TestStreamSubprocess`. Specifically, this class implements test cases (methods) like `test_completed_process(...)` or `test_check_returncode(...)`.
+- The module `cotainr.tests.util.test_stream_subprocess` also includes a class, `Test_PrintAndCaptureStream`, implementing the tests of the private "helper" function `cotainr.utils._print_and_capture_stream(...)`.
+
+In addition to the modules implementing the tests of the functions and classes in `cotainr`, the sub-packages in `cotainr.tests` may also include "special" modules implementing test fixtures and stubs:
+
+- `patches.py`: Contains all (monkey)patch fixtures related to that sub-package, e.g. the fixture `cotainr.tests.util.patches.patch_disable_stream_subprocess`. All patch fixtures are prefixed with `patch_`.
+- `data.py`: Contains all test data fixtures related to that sub-package, e.g. the fixture `cotainr.tests.container.data.data_cached_ubuntu_sif`. All data fixtures are prefixed with `data_`.
+- `stubs.py`: Contains all test stubs related to taht sub-package, e.g. the stub `cotainr.tests.cli.stubs.StubValidSubcommand`.
+
+All general purpose fixtures, which do not belong in one of the sub-package specific fixture modules listed above, are defined in the `tests/conftest.py` module.
+
+Finally, the `cotainr.tests.test_end_to_end` module contains all workflow end-to-end test using `cotainr`.
+
+### Imports in test modules
+
+Imports in test modules follow these rules:
+
+- Functions and classes, subject to testing, are imported using absolute imports, e.g. `import cotainr.pack.CondaInstall` in `tests/pack/test_conda_install.py`.
+- Sub-package specific fixtures are explicitly imported using relative imports, e.g. `from ..container.data import data_cached_ubuntu_sif` in `tests/pack/test_conda_install.py`.
+- Fixtures defined in `tests/conftest.py` are not explicitly imported (they are implicitly imported by pytest). Thus, if a fixture is used, but not imported, in a test module, `tests/conftest.py` is the only module in which it can (or at least should) be defined.
+
 ## Dependencies
 
-- The builder tool requires:
-  - Python, version 3.?, for running the tool
+- Running `cotainr` requires:
+  - Python, version >=3.8, for running the tool
   - Singularity, version ?, for building a container
 - The `CondaInstall` from `pack.py` requires that Bash, version ?, is installed in the base image used for the container.
+- Running the test suite requires:
+  - pytest, version >=6.0
+  - pytest-cov, version >=2.10
 
 ## Limitations
 

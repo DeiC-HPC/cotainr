@@ -9,6 +9,9 @@ CondaInstall
 """
 
 from pathlib import Path
+import time
+import random
+import urllib.error
 import urllib.request
 
 
@@ -38,41 +41,13 @@ class CondaInstall:
         self.prefix = prefix
 
         # Download Conda installer
-        conda_installer_url = (
-            "https://github.com/conda-forge/miniforge/releases/latest/download/"
-            "Miniforge3-Linux-x86_64.sh"
-        )
         conda_installer_path = (
             Path(self.sandbox.sandbox_dir).resolve() / "conda_installer.sh"
         )
-        with urllib.request.urlopen(conda_installer_url) as url:
-            conda_installer_path.write_bytes(url.read())
+        self._download_conda_installer(path=conda_installer_path)
 
-        # Run Conda installer
-        self.sandbox.run_command_in_container(
-            cmd=f"bash {conda_installer_path.name} -b -s -p {self.prefix}"
-        )
-
-        # Add Conda to container sandbox env
-        self.sandbox.add_to_env(
-            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}"
-        )
-
-        # Check that we correctly use the newly installed Conda from now on
-        source_check_process = self.sandbox.run_command_in_container(
-            cmd="conda info --base"
-        )
-        if source_check_process.stdout.strip() != f"{self.prefix}":
-            raise RuntimeError(
-                "Multiple Conda installs interfere. "
-                "We risk destroying the Conda install in "
-                f"{source_check_process.stdout.strip()}. Aborting!"
-            )
-
-        # Update the installed Conda package manager to the latest version
-        self.sandbox.run_command_in_container(
-            cmd="conda update -y -n base -c conda-forge conda"
-        )
+        # Bootstrap Conda environment in container
+        self._bootstrap_conda(installer_path=conda_installer_path)
 
         # Remove unneeded files
         conda_installer_path.unlink()
@@ -103,3 +78,73 @@ class CondaInstall:
         Equivalent to calling "conda clean -a".
         """
         self.sandbox.run_command_in_container(cmd="conda clean -y -a")
+
+    def _bootstrap_conda(self, *, installer_path):
+        """
+        Install Conda and at its source script to the sandbox env.
+
+        Parameters
+        ----------
+        installer_path : pathlib.Path
+            The path of the Conda installer to run to bootstrap Conda.
+        """
+        # Run Conda installer
+        self.sandbox.run_command_in_container(
+            cmd=f"bash {installer_path.name} -b -s -p {self.prefix}"
+        )
+
+        # Add Conda to container sandbox env
+        self.sandbox.add_to_env(
+            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}"
+        )
+
+        # Check that we correctly use the newly installed Conda from now on
+        self._check_conda_bootstrap_integrity()
+
+        # Update the installed Conda package manager to the latest version
+        self.sandbox.run_command_in_container(
+            cmd="conda update -y -n base -c conda-forge conda"
+        )
+
+    def _check_conda_bootstrap_integrity(self):
+        """Raise RuntimeError if multiple interfering Conda installs are found."""
+        source_check_process = self.sandbox.run_command_in_container(
+            cmd="conda info --base"
+        )
+        if source_check_process.stdout.strip() != f"{self.prefix}":
+            raise RuntimeError(
+                "Multiple Conda installs interfere. "
+                "We risk destroying the Conda install in "
+                f"{source_check_process.stdout.strip()}. Aborting!"
+            )
+
+    def _download_conda_installer(self, *, path):
+        """
+        Download the Conda installer to `path`.
+
+        Parameters
+        ----------
+        path : pathlib.Path
+            The path to download the conda installer to.
+        """
+        conda_installer_url = (
+            "https://github.com/conda-forge/miniforge/releases/latest/download/"
+            "Miniforge3-Linux-x86_64.sh"
+        )
+
+        # Make up to 3 attempts at downloading the installer
+        for retry in range(3):
+            try:
+                with urllib.request.urlopen(conda_installer_url) as url:
+                    path.write_bytes(url.read())
+
+                break
+
+            except urllib.error.URLError as e:
+                url_error = e
+
+                # Exponential backoff
+                time.sleep(2**retry + random.uniform(0.001, 1))
+
+        else:
+            raise url_error

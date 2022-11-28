@@ -61,12 +61,12 @@ def stream_subprocess(*, args, **kwargs):
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
 
-        completed_process = subprocess.CompletedProcess(
-            process.args,
-            process.returncode,
-            stdout="\n".join(captured_stdout),
-            stderr="\n".join(captured_stderr),
-        )
+    completed_process = subprocess.CompletedProcess(
+        process.args,
+        process.returncode,
+        stdout="".join(captured_stdout),
+        stderr="".join(captured_stderr),
+    )
 
     completed_process.check_returncode()
 
