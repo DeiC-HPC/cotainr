@@ -27,13 +27,6 @@ class TestConstructor:
         assert exc_msg.endswith("' does not exist.")
         assert conda_env in exc_msg
 
-    def test_not_specifying_base_image(self):
-        # See also the matching TestAddArguments test below
-        with pytest.raises(
-            ValueError, match="^The `base_image` argument is required.$"
-        ):
-            Build(image_path="some_image_path_6021")
-
     def test_only_specifying_required_args(self):
         # See also the matching TestAddArguments test below
         image_path = "some_image_path_6021"

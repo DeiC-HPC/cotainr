@@ -73,10 +73,8 @@ class Build(CotainrSubcommand):
         container.
     """
 
-    def __init__(self, *, image_path, base_image=None, conda_env=None):
+    def __init__(self, *, image_path, base_image, conda_env=None):
         self.image_path = Path(image_path).resolve()
-        if base_image is None:
-            raise ValueError("The `base_image` argument is required.")
         self.base_image = base_image
         if conda_env is not None:
             self.conda_env = Path(conda_env).resolve()
