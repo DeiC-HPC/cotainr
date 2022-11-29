@@ -114,7 +114,7 @@ $ rm -rf /tmp/sandbox_dir
 ## Ideally - and soon - a much more readable one-liner
 
 ```bash
-$ cotainr build lumi_pytorch_rocm_demo.sif --system=lumi-g --conda-env py39_pytorch_rocm.yml
+$ cotainr build lumi_pytorch_rocm_demo.sif --system lumi-g --conda-env py39_pytorch_rocm.yml
 ```
 
 kind of similar to
