@@ -1,0 +1,56 @@
+# Preparation
+
+## Preparation
+singularity pull docker://rocm/dev-ubuntu-22.04:5.3.2-complete
+
+## Setup
+# make the terminal window a lot higher and slightly wider
+# use deic VPN
+ssh lumi-deic
+ssh lumi-deic
+ssh lumi-deic  # remove MOTD
+
+export SINGULARITY_TMPDIR=/tmp
+
+# Demo
+
+## Build container and inspect it
+ssh schouoxv@lumi.csc.fi
+ls
+emacs py39_pytorch_rocm.yml
+cotainr build lumi_pytorch_rocm_demo.sif --base-image docker://rocm/dev-ubuntu-22.04:5.3.2-complete --conda-env py39_pytorch_rocm.yml
+
+ctrl-l
+
+ls
+singularity shell lumi_pytorch_rocm_demo.sif
+
+which python
+
+python
+
+import torch
+torch.version.hip
+
+ctrl-l
+
+## Run PyTorch gputest
+emacs pytorch_singlegpu_gputest.py
+emacs run_singlegpu_gputest.sh
+sbatch run_singlegpu_gputest.sh
+
+watch squeue --me
+ls
+cat output_singlegpu_example_%.txt
+
+## Run PyTorch training demo
+emacs pytorch_multigpu_torchrun.py
+emacs run_multigpu_torchrun.sh
+sbatch run_multigpu_torchrun.sh
+
+watch queue --me
+
+tail -f output_multigpu_torchrun_example_%j.txt
+srun --jobid=<jobid> --interactive --pty $SHELL
+
+watch -n0.1 rocm-smi
