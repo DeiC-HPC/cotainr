@@ -133,3 +133,6 @@ dmypy.json
 
 # VSCode
 *.code-workspace
+
+# Sphinx
+_build/
