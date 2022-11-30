@@ -1,4 +1,4 @@
-.. module:: cotainr
+:html_theme.sidebar_secondary.remove:
 
 Cotainr documentation
 =====================
@@ -20,13 +20,12 @@ Cotainr - a user space Apptainer/Singularity container builder.
 
 .. grid:: 2
 
-    .. grid-item-card::
-        :img-top: _static/index_getting_started.png
+    .. grid-item-card:: Getting Started
+        :text-align: center
 
-        Getting started
-        ^^^^^^^^^^^^^^^
+        :material-outlined:`directions_run;5em;sd-text-info`
 
-        Getting started description
+        Quickly get up and running with `cotainr`
 
         +++
 
@@ -37,51 +36,48 @@ Cotainr - a user space Apptainer/Singularity container builder.
 
             To the getting started guides
 
-    .. grid-item-card::
-        :img-top: _static/index_user_guide.png
+    .. grid-item-card:: User Guide
+        :text-align: center
 
-        User guide
-        ^^^^^^^^^^
+        :material-outlined:`menu_book;5em;sd-text-info`
 
-        User guide description
+        In-depth information about ways to use `cotainr`
 
         +++
 
-        .. button-ref:: user_guide
+        .. button-ref:: user_guide/index
             :expand:
             :color: secondary
             :click-parent:
 
             To the user guide
 
-    .. grid-item-card::
-        :img-top: _static/index_api.png
+    .. grid-item-card:: API reference
+        :text-align: center
 
-        API reference
-        ^^^^^^^^^^^^^
+        :material-outlined:`api;5em;sd-text-info`
 
-        API reference description
+        Detailed description of the `cotainr` Python API
 
         +++
 
-        .. button-ref:: api_reference
+        .. button-ref:: api_reference/index
             :expand:
             :color: secondary
             :click-parent:
 
-            To the reference guide
+            To the API reference guide
 
-    .. grid-item-card::
-        :img-top: _static/index_contribute.png
+    .. grid-item-card:: Development
+        :text-align: center
 
-        Developer guide
-        ^^^^^^^^^^^^^^^
+        :material-outlined:`developer_mode;5em;sd-text-info`
 
-        Developer guide description
+        Guides for hacking on `cotainr`
 
         +++
 
-        .. button-ref:: development
+        .. button-ref:: development/index
             :expand:
             :color: secondary
             :click-parent:
