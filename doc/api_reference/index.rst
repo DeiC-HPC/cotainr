@@ -1,7 +1,7 @@
-Cotainr API
-===========
+API reference
+=============
 
-The full public cotianr API is listed below.
+The full public cotainr API is listed below.
 
 .. toctree::
    :maxdepth: 4

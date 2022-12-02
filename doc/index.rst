@@ -1,11 +1,11 @@
 :html_theme.sidebar_secondary.remove:
 
-Cotainr documentation
+cotainr documentation
 =====================
 
 **Date**: |today| **Version**: |version|
 
-Cotainr - a user space Apptainer/Singularity container builder.
+**cotainr** - a user space Apptainer/Singularity container builder.
 
 .. toctree::
    :maxdepth: 1

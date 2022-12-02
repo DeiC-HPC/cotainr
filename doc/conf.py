@@ -22,9 +22,15 @@ version = cotainr.__version__
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 # https://numpydoc.readthedocs.io/en/latest/install.html#configuration
 
-extensions = ["sphinx.ext.autodoc", "sphinx_design", "numpydoc"]
-templates_path = ["_templates"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.duration",
+    "sphinx.ext.intersphinx",
+    "sphinx_design",
+    "numpydoc",
+]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 numpydoc_class_members_toctree = False
 
 # -- Options for HTML output -------------------------------------------------
@@ -32,8 +38,8 @@ numpydoc_class_members_toctree = False
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
-html_title = project
 html_css_files = ["css/cotainr.css"]
+html_title = project
 html_context = {
     "github_user": "DeiC-HPC",
     "github_repo": project,

@@ -1,4 +1,4 @@
-Cotainr User Guide
-==================
+User Guide
+==========
 
 TODO
