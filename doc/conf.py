@@ -13,9 +13,9 @@ sys.path.insert(0, f'{Path("..").resolve()}')
 
 import cotainr
 
-project = "cotainr"
-copyright = f"2022-{time.strftime('%Y')}, DeiC"
+project = cotainr.__name__
 author = "DeiC"
+copyright = f"2022-{time.strftime('%Y')}, {author}"
 version = cotainr.__version__
 
 # -- General configuration ---------------------------------------------------
@@ -32,9 +32,17 @@ numpydoc_class_members_toctree = False
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
+html_title = project
+html_css_files = ["css/cotainr.css"]
+html_context = {
+    "github_user": "DeiC-HPC",
+    "github_repo": project,
+    "github_version": "main",
+    "doc_path": "doc",
+}
 html_theme_options = {
-    "secondary_sidebar_items": ["page-toc", "edit-this-page"],
-    "github_url": "https://github.com/DeiC-HPC/cotainr",
+    "github_url": f"https://github.com/{html_context['github_user']}/{html_context['github_repo']}",
+    "use_edit_page_button": True,
 }
 
 # -- Autodoc configuration ----------------------------------------------------
