@@ -7,7 +7,7 @@ subcommands.
 
 Classes
 -------
-CotainrSubcommand(ABC):
+CotainrSubcommand(ABC)
     Abstract base class for `CotainrCLI` subcommands.
 CotainrCLI
     Build Apptainer/Singularity containers for HPC systems in user space. (The
@@ -20,7 +20,7 @@ Info
 
 Functions
 ---------
-main(*args, *kwargs):
+main(\*args, \*\*kwargs)
     Main CLI entrypoint.
 """
 
@@ -44,7 +44,7 @@ class CotainrSubcommand(ABC):
 
         Parameters
         ----------
-        parser : argparse.ArgumentParser
+        parser : :class:`argparse.ArgumentParser`
             The argument parser to add arguments to.
         """
         pass
@@ -63,12 +63,12 @@ class Build(CotainrSubcommand):
 
     Parameters
     ----------
-    image_path : os.PathLike
+    image_path : :class:`os.PathLike`
         Path to the built container image.
     base_image : str
         Base image to use for the container which may be any valid
         Apptainer/Singularity <BUILD SPEC>.
-    conda_env : os.PathLike, optional
+    conda_env : :class:`os.PathLike`, optional
         Path to a Conda environment.yml file to install and activate in the
         container.
     """
@@ -154,9 +154,9 @@ class CotainrCLI:
 
     Attributes
     ----------
-    args : types.SimpleNamespace
+    args : :class:`types.SimpleNamespace`
         The namespace holding the converted arguments parsed to the CLI.
-    subcommand : CotainrSubcommand
+    subcommand : :class:`CotainrSubcommand`
         The subcommand to run.
     """
 

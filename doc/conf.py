@@ -61,6 +61,7 @@ def add_api_headline_to_module_docs(app, what, name, obj, options, lines):
     auto modules.
     """
     if what == "module":
+        lines.append('\n')
         lines.append("API reference")
         lines.append("-------------")
 

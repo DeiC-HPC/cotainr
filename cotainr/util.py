@@ -5,7 +5,7 @@ Created by DeiC, deic.dk
 
 Functions
 ---------
-stream_subprocess(*, args, **kwargs)
+stream_subprocess(\*, args, \*\*kwargs)
     Run a the command described by `args` while streaming stdout and stderr.
 """
 
@@ -24,17 +24,18 @@ def stream_subprocess(*, args, **kwargs):
 
     Parameters
     ----------
-    args : sequence or str or path_like
-        Program arguments. See the docstring for subprocess.Popen for details.
+    args : list or str
+        Program arguments. See the docstring for :class:`subprocess.Popen` for
+        details.
 
     Returns
     -------
-    completed_process : subprocess.CompletedProcess
+    completed_process : :class:`subprocess.CompletedProcess`
         Information about the completed subprocess.
 
     Raises
     ------
-    subprocess.CalledProcessError
+    :class:`subprocess.CalledProcessError`
         If the subprocess returned a non-zero status code.
     """
     with subprocess.Popen(
