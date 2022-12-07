@@ -1,6 +1,7 @@
+.. _section_api_reference:
+
 API reference
 =============
-
 The full public cotainr API is listed below.
 
 .. toctree::

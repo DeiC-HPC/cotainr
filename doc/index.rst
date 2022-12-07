@@ -1,5 +1,7 @@
 :html_theme.sidebar_secondary.remove:
 
+.. _cotainr_documentation:
+
 cotainr documentation
 =====================
 
@@ -10,6 +12,7 @@ cotainr documentation
 .. toctree::
    :maxdepth: 1
    :hidden:
+   :includehidden:
    
    Getting started <getting_started>
    User Guide <user_guide/index>
