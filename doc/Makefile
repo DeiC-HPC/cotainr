@@ -5,7 +5,7 @@
 # from the environment for the first two.
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
-SPHINXDOCAPI  ?= sphinx-apidoc
+SPHINXAPIDOC  ?= sphinx-apidoc
 SOURCEDIR     = .
 BUILDDIR      = _build
 PACKAGENAME   = cotainr
@@ -18,7 +18,7 @@ help:
 .PHONY: help apidoc Makefile
 
 apidoc:
-	@$(SPHINXDOCAPI) --force --separate --no-toc -o api_reference $(SOURCEDIR)/../$(PACKAGENAME) $(SOURCEDIR)/../$(PACKAGENAME)/tests/*
+	@$(SPHINXAPIDOC) --force --separate --no-toc -o api_reference $(SOURCEDIR)/../$(PACKAGENAME) $(SOURCEDIR)/../$(PACKAGENAME)/tests/*
 	@echo "Removing file api_reference/cotainr.rst"
 	@rm api_reference/cotainr.rst
 
