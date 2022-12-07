@@ -182,6 +182,10 @@ The `make apidoc` command generates restructured text files for the API referenc
 - Running the test suite requires:
   - pytest, version >=6.0
   - pytest-cov, version >=2.10
+- Building the HTML rendered version of the documentation requires:
+  - numpydoc, version >=1.5.0
+  - pydata-sphinx-theme, version >=0.12
+  - sphinx-design, version >=0.3.0
 
 ## Limitations
 
