@@ -1,0 +1,12 @@
+.index-card {
+    padding: 10px 10px 10px 10px;
+    margin: 5px 0px;
+}
+  
+html[data-theme="light"] {
+    --pst-color-secondary: #6c757d;
+}
+
+html[data-theme="dark"] {
+    --pst-color-secondary: #6c757d;
+}

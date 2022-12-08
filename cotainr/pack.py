@@ -23,14 +23,14 @@ class CondaInstall:
 
     Parameters
     ----------
-    sandbox : pack.SingularitySandbox
+    sandbox : :class:`~cotainr.container.SingularitySandbox`
         The sandbox in which Conda should be installed.
     prefix : str
         The Conda prefix to use for the Conda install.
 
     Attributes
     ----------
-    sandbox : pack.SingularitySandbox
+    sandbox : :class:`~cotainr.container.SingularitySandbox`
         The sandbox in which Conda is installed.
     prefix : str
         The Conda prefix used for the Conda install.
@@ -61,7 +61,7 @@ class CondaInstall:
 
         Parameters
         ----------
-        path : os.PathLike
+        path : :class:`os.PathLike`
             The path to the exported env.yml file describing the Conda
             environment to install.
         name : str

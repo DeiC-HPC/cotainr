@@ -36,7 +36,7 @@ class SingularitySandbox:
     ----------
     base_image : str
         Base image to use for the container.
-    sandbox_dir : os.PathLike or None
+    sandbox_dir : :class:`os.PathLike` or None
         The path to the temporary directory containing the sandbox if within a
         sandbox context, otherwise it is None.
     """
@@ -51,7 +51,7 @@ class SingularitySandbox:
 
         Returns
         -------
-        self : SingularitySandbox
+        self : :class:`SingularitySandbox`
             The sandbox context.
         """
         # Store current directory
@@ -112,7 +112,7 @@ class SingularitySandbox:
 
         Parameters
         ----------
-        path : os.PathLike
+        path : :class:`os.PathLike`
             Path to the built container image.
         """
         self._assert_within_sandbox_context()
@@ -142,7 +142,7 @@ class SingularitySandbox:
 
         Returns
         -------
-        process : subprocess.CompletedProcess
+        process : :class:`subprocess.CompletedProcess`
             Information about the process that ran in the container sandbox.
 
         Notes
