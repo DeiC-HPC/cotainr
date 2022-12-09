@@ -21,11 +21,11 @@ cotainr documentation
    Release Notes <release_notes>
 
 .. grid:: 2
+    :gutter: 4
 
     .. grid-item-card:: Getting Started
         :text-align: center
         :class-card: sd-rounded-0 sd-shadow-sm
-        :class-item: index-card
 
         :material-outlined:`directions_run;5em;sd-text-info`
 
@@ -43,7 +43,6 @@ cotainr documentation
     .. grid-item-card:: User Guide
         :text-align: center
         :class-card: sd-rounded-0 sd-shadow-sm
-        :class-item: index-card
 
         :material-outlined:`menu_book;5em;sd-text-info`
 
@@ -61,7 +60,6 @@ cotainr documentation
     .. grid-item-card:: API reference
         :text-align: center
         :class-card: sd-rounded-0 sd-shadow-sm
-        :class-item: index-card
 
         :material-outlined:`api;5em;sd-text-info`
 
@@ -79,7 +77,6 @@ cotainr documentation
     .. grid-item-card:: Development
         :text-align: center
         :class-card: sd-rounded-0 sd-shadow-sm
-        :class-item: index-card
 
         :material-outlined:`developer_mode;5em;sd-text-info`
 

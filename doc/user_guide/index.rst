@@ -14,6 +14,7 @@ The two main reasons to use `cotainr` are:
 
 In order to achieve this, the scope of `cotainr` is deliberately limited - focus is on making it easy to build reasonably performant containers for :ref:`common HPC use cases <use_cases>`. If you need a general purpose solution for building containers that achieve the absolute maximum performance, you should stick with Apptainer/Singularity instead of `cotainr`.
 
+.. _command_line_interface:
 
 Command line interface
 ----------------------
@@ -39,6 +40,10 @@ which would create the container `my_container.sif` based on the official `Ubunt
     $ cotainr build --help
 
 Also, take a look at the :ref:`list of use cases <use_cases>` for further inspiration to building containers using `cotainr`.
+
+.. _hpc_systems_information:
+
+TODO: Decsribe the idea in the :code:`--system` flag.
 
 
 Python interface
