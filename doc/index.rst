@@ -18,7 +18,7 @@ cotainr documentation
    User Guide <user_guide/index>
    API reference <api_reference/index>
    Development <development/index>
-   Release Notes <release_notes>
+   Release Notes <release_notes/index>
 
 .. grid:: 2
     :gutter: 4
