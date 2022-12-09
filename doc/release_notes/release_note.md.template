@@ -1,0 +1,17 @@
+# __year.month.minor_version__
+
+**Released on __Month__ __day__, __year__**
+
+__short summary__
+
+## New features
+
+- __new feature (externals) description__, __link to GitHub PR__
+
+## Bug fixes
+
+- __bug fix description__, __link to GitHub PR__
+
+## Maintenance updates
+
+- __maintenance update (internals) description__, __link to GitHub PR__

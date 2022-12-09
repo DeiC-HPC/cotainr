@@ -28,9 +28,10 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_design",
     "numpydoc",
+    "myst_parser",
 ]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 numpydoc_class_members_toctree = False
 
 # -- Options for HTML output -------------------------------------------------
@@ -61,10 +62,18 @@ def add_api_headline_to_module_docs(app, what, name, obj, options, lines):
     auto modules.
     """
     if what == "module":
-        lines.append('\n')
+        lines.append("\n")
         lines.append("API reference")
         lines.append("-------------")
 
 
 def setup(app):
     app.connect("autodoc-process-docstring", add_api_headline_to_module_docs)
+
+
+# -- Automatically generate the list of release notes -------------------------
+
+with Path("release_notes/release_list.rst").open(mode="w") as f:
+    for path in sorted(Path("release_notes").glob("*.md"), reverse=True):
+        f.write(f".. include:: {path.name}\n")
+        f.write("    :parser: myst_parser.sphinx_\n\n")
