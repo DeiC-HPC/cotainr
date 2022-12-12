@@ -1,3 +1,12 @@
+---
+marp: true
+headingDivider: 2
+---
+
+# Cotainr
+
+DeiC
+
 # My AI software environment on my laptop
 
 ```yaml
@@ -71,14 +80,11 @@ dependencies:
     - torchvision==0.14.0+rocm5.2
 ```
 
-<br />
 
 # Moving to LUMI
 I would like to transfer my Python Conda environment to LUMI. What to do?
 
 `conda env create --file py39_pytorch_rocm.yml` on LUMI?
-
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 
 ## Official LUMI answer
 
@@ -88,9 +94,6 @@ I would like to transfer my Python Conda environment to LUMI. What to do?
 3. Figure out how to create an appropriate Singularity build recipe
 4. Build your container locally
 5. Copy your container to LUMI
-
-<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
-
 
 ## The not so well known alternative which makes it possible to build the container on LUMI
 
@@ -109,8 +112,6 @@ $ singularity build lumi_pytorch_rocm_demo.sif /tmp/sandbox_dir
 $ rm -rf /tmp/sandbox_dir
 ```
 
-<br /><br /><br /><br /><br /><br /><br /><br /><br />
-
 ## Ideally - and soon - a much more readable one-liner
 
 ```bash
@@ -121,12 +122,4 @@ kind of similar to
 
 ```bash
 $ conda env create --file py39_pytorch_rocm.yml
-```
-
-<br /><br /><br /><br /><br /><br /><br /><br /><br />
-
-## In demo video
-
-```bash
-$ cotainr build lumi_pytorch_rocm_demo.sif --base-image docker://rocm/dev-ubuntu-22.04:5.3.2-complete --conda-env py39_pytorch_rocm.yml
 ```
