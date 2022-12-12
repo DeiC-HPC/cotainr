@@ -47,6 +47,15 @@ DeiC
   - Other workarounds *may* be needed
   - Contact DeiC and/or LUST for more info if needed
 
+## Storing and loading data on LUMI
+
+- Performance of the Lustre filesystem on LUMI plummets (for all users) when you load large datasets consisting of many small files
+- No "solution" yet - on the DeiC HPC 2023 roadmap
+- Possible solutions/workarounds:
+  - Just load from `/scratch` as you would normally do - but beware that it might be a bottleneck
+  - Copy data to node local in-memory `/tmp` - but remember to allocate enough memory for it and manually clean-up when done
+  - Use a single file "storage format" on `/scratch` (e.g. Tarball, Zarr ZipStore/..., or HDF5)
+
 # Getting started on LUMI
 
 - Getting Started guide on LUMI documentation: https://docs.lumi-supercomputer.eu/
