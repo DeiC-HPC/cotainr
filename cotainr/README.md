@@ -142,6 +142,37 @@ Imports in test modules follow these rules:
 - Sub-package specific fixtures are explicitly imported using relative imports, e.g. `from ..container.data import data_cached_ubuntu_sif` in `tests/pack/test_conda_install.py`.
 - Fixtures defined in `tests/conftest.py` are not explicitly imported (they are implicitly imported by pytest). Thus, if a fixture is used, but not imported, in a test module, `tests/conftest.py` is the only module in which it can (or at least should) be defined.
 
+## Continuous Integration (CI)
+
+Continuous integration is handled via GitHub Actions. The tests run on the GitHub Actions "ubuntu-latest" runner. When running the CI test matrix, we differentiate between the following (meta)versions of dependencies:
+
+- *stable*: The minimum supported version of the dependency.
+- *latest*: The latest released version of the dependency.
+- *all*: All supported versions of the dependency.
+
+### Workflows
+
+- `CI_pull_requests.yml`: Runs the unit tests, integration tests, and end-to-end tests on pull requests to the *main* branch. *All* Python versions and *stable* Singularity as well as *stable* Apptainer versions are tested.
+- `CI_push.yml`: Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions.
+
+### Scheduled tests
+
+We run a scheduled test (weekly, every Tuesday night) in order to continuously test `cotainr` against *all* versions of its dependencies. That way we proactively monitor for changes in the dependencies that break `cotainr`.
+
+Currently, this is simply implemented as a scheduled trigger in the `CI_pull_requests.yml` workflow which tests the most recent point releases of Python (as provided by GitHub Actions) as well as the most recent Conda version. Ideally, this should be separated into its own workflow that also includes the *latest* versions of Python and Singularity/Apptainer in the test matrix.
+
+## Documentation
+
+The `cotainr` documentation is included in the "doc" folder as restructured text files. An HTML version of the documentation may be rendered using the Sphinx configuration included in the "doc" folder. Simply run the following commands from the "doc" folder:
+
+```bash
+$ make apidoc
+$ make html
+```
+
+The `make apidoc` command generates restructured text files for the API reference documentation. These files include `sphinx.ext.autodoc` directives that automatically generates the API reference documentation from the docstrings of the modules/classes/functions/... in `cotainr`.
+
+
 ## Dependencies
 
 - Running `cotainr` requires:
@@ -151,6 +182,10 @@ Imports in test modules follow these rules:
 - Running the test suite requires:
   - pytest, version >=6.0
   - pytest-cov, version >=2.10
+- Building the HTML rendered version of the documentation requires:
+  - numpydoc, version >=1.5.0
+  - pydata-sphinx-theme, version >=0.12
+  - sphinx-design, version >=0.3.0
 
 ## Limitations
 
