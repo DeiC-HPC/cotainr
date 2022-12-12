@@ -1,16 +1,30 @@
 # Preparation
 
-## Preparation
+## Prepare cotainr archive
+tar -czvf ../cotainr-0.1.tar.gz cotainr  # full cotainr repo dir - based on main branch zip download
+scp cotainr-0.1.tar.gz  lumi-deic:~/
+
+## EB install on LUMI
+### In .bashrc
+export EBU_USER_PREFIX=/project/project_465000238/EasyBuild
+export SINGULARITY_TMPDIR=/tmp
+
+### Install
+module load LUMI
+module load EasyBuild-user
+eb . cotainr.eb  # https://github.com/DeiC-HPC/container-builder/blob/65ddef78facaff716603aa17c658bf8c809ab367/cotainr.eb
+mv cotainr* .cotainr_install/
+
+### Pre-pull docker image
 singularity pull docker://rocm/dev-ubuntu-22.04:5.3.2-complete
 
-## Setup
+## Local warm-up
 # make the terminal window a lot higher and slightly wider
 # use deic VPN
 ssh lumi-deic
 ssh lumi-deic
 ssh lumi-deic  # remove MOTD
 
-export SINGULARITY_TMPDIR=/tmp
 
 # Demo
 
@@ -18,6 +32,8 @@ export SINGULARITY_TMPDIR=/tmp
 ssh schouoxv@lumi.csc.fi
 ls
 emacs py39_pytorch_rocm.yml
+module load LUMI
+module load cotainr
 cotainr build lumi_pytorch_rocm_demo.sif --base-image docker://rocm/dev-ubuntu-22.04:5.3.2-complete --conda-env py39_pytorch_rocm.yml
 
 ctrl-l
