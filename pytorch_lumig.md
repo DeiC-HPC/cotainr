@@ -24,6 +24,7 @@ DeiC
 - Occasional problems with login nodes
 - Some SLURM resource requests result in strange errors
 - CPU core #0 reserved for "low noise mode" on LUMI-G nodes
+- No internet connectivity on compute nodes (yet)
 
 ## Specific PyTorch related issues and workarounds
 
