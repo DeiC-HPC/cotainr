@@ -13,7 +13,7 @@ from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_conda_installer,
 )
-from ..system.patches import patch_system_with_actual_file, patch_empty_system
+from ..util.patches import patch_system_with_actual_file, patch_empty_system
 
 
 class TestConstructor:
@@ -72,7 +72,7 @@ class TestConstructor:
     def test_specifying_non_existing_system(self, patch_empty_system):
         image_path = "some_image_path_6021"
         system = "some_system_6021"
-        with pytest.raises(KeyError):
+        with pytest.raises(KeyError, match="System does not exist"):
             Build(image_path=image_path, system=system)
 
 
@@ -88,7 +88,7 @@ class TestAddArguments:
             "some_prog_name_6021: error: one of the arguments --base-image --system is required"
         )
 
-    def test_only_specifying_required_args(self):
+    def test_only_specifying_required_args_base_image(self):
         # See also the matching TestConstructor test above
         parser = argparse.ArgumentParser()
         Build.add_arguments(parser=parser)
@@ -102,7 +102,7 @@ class TestAddArguments:
         assert isinstance(args.base_image, str)
         assert args.base_image == base_image
 
-    def test_only_specifying_required_args2(self, patch_system_with_actual_file):
+    def test_only_specifying_required_args_system(self, patch_system_with_actual_file):
         # See also the matching TestConstructor test above
         parser = argparse.ArgumentParser()
         Build.add_arguments(parser=parser)

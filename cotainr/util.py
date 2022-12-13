@@ -12,6 +12,10 @@ stream_subprocess(\*, args, \*\*kwargs)
 from concurrent.futures import ThreadPoolExecutor
 import subprocess
 import sys
+import json
+from pathlib import Path
+
+systems_file = (Path(__file__) / "../../systems.json").resolve()
 
 
 def stream_subprocess(*, args, **kwargs):
@@ -91,3 +95,29 @@ def _print_and_capture_stream(*, stream_handle, print_stream):
         captured_stream.append(line)
 
     return captured_stream
+
+
+def get_systems():
+    """
+    Get a dictionary of predefined systems, defined in systems.json
+
+    Returns
+    -------
+    systems : Dict
+        A dictionary of predefined systems
+
+    Raises
+    ------
+    :class:`subprocess.CalledProcessError`
+        If the subprocess returned a non-zero status code.
+    """
+    if systems_file.is_file():
+        systems = json.loads(systems_file.read_text())
+        for system in systems:
+            if "base-image" not in systems[system]:
+                raise NameError(
+                    f"Error in systems.json: {system} missing argument base-image"
+                )
+        return systems
+    else:
+        return {}

@@ -3,7 +3,7 @@ import argparse
 import pytest
 
 from cotainr.cli import CotainrCLI, Info
-from ..system.patches import patch_empty_system, patch_system_with_actual_file
+from ..util.patches import patch_empty_system, patch_system_with_actual_file
 
 
 class TestExecute:

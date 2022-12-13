@@ -32,7 +32,7 @@ import sys
 
 from . import container
 from . import pack
-from .system import SystemData
+from . import util
 
 
 class CotainrSubcommand(ABC):
@@ -82,7 +82,7 @@ class Build(CotainrSubcommand):
     def __init__(self, *, image_path, base_image=None, conda_env=None, system=None):
         self.image_path = Path(image_path).resolve()
         self.base_image = base_image
-        systems = SystemData().get_systems()
+        systems = util.get_systems()
         if system is not None:
             if system in systems:
                 self.system = systems[system]
@@ -99,7 +99,7 @@ class Build(CotainrSubcommand):
             self.conda_env = None
 
     @classmethod
-    def add_arguments(cls, *, parser: argparse.ArgumentParser):
+    def add_arguments(cls, *, parser):
         parser.add_argument(
             "image_path",
             help=_extract_help_from_docstring(arg="image_path", docstring=cls.__doc__),
@@ -143,8 +143,8 @@ class Info(CotainrSubcommand):
     """
 
     def execute(self):
-        systems = SystemData().get_systems()
-        if len(systems) != 0:
+        systems = util.get_systems()
+        if systems:
             print("Available system configurations:")
             for system in systems:
                 print(f"\t- {system}")
