@@ -7,14 +7,14 @@ cotainr documentation
 
 **Date**: |today| **Version**: |version|
 
-**cotainr** - a user space Apptainer/Singularity container builder.
+**cotainr** - a user space `Apptainer`_/`Singularity`_ container builder.
 
 .. toctree::
    :maxdepth: 1
    :hidden:
    :includehidden:
    
-   Getting started <getting_started>
+   Getting Started <getting_started>
    User Guide <user_guide/index>
    API reference <api_reference/index>
    Development <development/index>
@@ -90,3 +90,6 @@ cotainr documentation
             :click-parent:
 
             To the development guide
+
+.. _Apptainer: https://apptainer.org/
+.. _Singularity: https://sylabs.io/singularity/
