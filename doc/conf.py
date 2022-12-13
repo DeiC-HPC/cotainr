@@ -69,11 +69,3 @@ def add_api_headline_to_module_docs(app, what, name, obj, options, lines):
 
 def setup(app):
     app.connect("autodoc-process-docstring", add_api_headline_to_module_docs)
-
-
-# -- Automatically generate the list of release notes -------------------------
-
-with Path("release_notes/release_list.rst").open(mode="w") as f:
-    for path in sorted(Path("release_notes").glob("*.md"), reverse=True):
-        f.write(f".. include:: {path.name}\n")
-        f.write("    :parser: myst_parser.sphinx_\n\n")
