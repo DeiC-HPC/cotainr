@@ -108,8 +108,8 @@ def get_systems():
 
     Raises
     ------
-    :class:`subprocess.CalledProcessError`
-        If the subprocess returned a non-zero status code.
+    :class:`NameError`
+        If some required arguments are missing in the systems.json file.
     """
     if systems_file.is_file():
         systems = json.loads(systems_file.read_text())
