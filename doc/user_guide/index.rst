@@ -5,14 +5,16 @@ User Guide
 
 The User Guide covers a basic introduction to `cotainr` (this page) along with separate in-depth pages describing :ref:`typical uses of cotainr <use_cases>`. See the :ref:`Getting Started <section_getting_started>` guide for information about installing `cotainr`.
 
-Why would I wan't to use `cotainr`?
------------------------------------
+.. _why_cotainr:
+
+Why would I want to use `cotainr`?
+----------------------------------
 The two main reasons to use `cotainr` are:
 
 1. It runs entirely in :ref:`user space <cotainr_technical_motivation>`, i.e. you don't need root/sudo priviledges (or `fake them <https://apptainer.org/docs/user/1.0/fakeroot.html>`_) to use `cotainr`.
-2. It makes it a lot easier to build Singularity/Apptainer containers for certain :ref:`HPC use cases <use_cases>`.
+2. It makes it a lot easier to build `Singularity`_/`Apptainer`_ containers for certain :ref:`HPC use cases <use_cases>`.
 
-In order to achieve this, the scope of `cotainr` is deliberately limited - focus is on making it easy to build reasonably performant containers for :ref:`common HPC use cases <use_cases>`. If you need a general purpose solution for building containers that achieve the absolute maximum performance, you should stick with Apptainer/Singularity instead of `cotainr`.
+In order to achieve this, the scope of `cotainr` is deliberately limited - focus is on making it easy to build reasonably performant containers for :ref:`common HPC use cases <use_cases>`. If you need a general purpose solution for building containers that achieve the absolute maximum performance, you should stick with `Apptainer`_/`Singularity`_ instead of `cotainr`.
 
 .. _command_line_interface:
 
@@ -71,3 +73,7 @@ Examples
 Further examples of using `cotainr` are included with the source code, https://github.com/DeiC-HPC/cotainr/tree/main/examples:
 
 - `Building a ROCm compatible PyTorch container for use on LUMI <https://github.com/DeiC-HPC/cotainr/tree/main/examples/LUMI/conda_pytorch_rocm>`_
+
+
+.. _Apptainer: https://apptainer.org/
+.. _Singularity: https://sylabs.io/singularity/
