@@ -37,7 +37,9 @@ def patch_empty_system(monkeypatch):
 @pytest.fixture
 def patch_system_with_actual_file(monkeypatch):
     """
-    Change filename in SystemData to a file with 2 entries
+    Fake a JSON file with 2 entries.
+    
+    Used to patch `cotainr.util.systems_file` with two entries.
     """
     monkeypatch.setattr(pathlib.Path, "is_file", lambda _: True)
     monkeypatch.setattr(
