@@ -13,7 +13,10 @@ from pathlib import Path
 import shlex
 import subprocess
 from tempfile import TemporaryDirectory
+import sys
+import json
 
+from . import __version__
 from . import util
 
 
@@ -176,6 +179,17 @@ class SingularitySandbox:
             ) from e
 
         return process
+
+    def add_metadata(self):
+        labels_path = self.sandbox_dir / ".singularity.d/labels.json"
+        with open(labels_path, "r+") as f:
+            metadata = json.load(f)
+            metadata["cotainr.command"] = " ".join(sys.argv)
+            metadata["cotainr.version"] = __version__
+            metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
+            f.seek(0)
+            json.dump(metadata, f)
+        print(labels_path.read_text())
 
     def _assert_within_sandbox_context(self):
         """Raise a ValueError if we are not inside the sandbox context."""

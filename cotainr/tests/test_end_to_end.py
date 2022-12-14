@@ -3,11 +3,14 @@ import shlex
 import pytest
 
 from cotainr.cli import CotainrCLI
+from cotainr import __version__
 from .container.data import data_cached_ubuntu_sif
 
 
 @pytest.mark.endtoend
-def test_conda_env_build(data_cached_ubuntu_sif, singularity_exec, tmp_path):
+def test_conda_env_build(
+    data_cached_ubuntu_sif, singularity_exec, singularity_inspect, tmp_path
+):
     """Test build command when including simple conda environment."""
     build_container_path = tmp_path / "conda_container.sif"
     conda_env_path = tmp_path / "conda_env.yml"
@@ -20,6 +23,10 @@ def test_conda_env_build(data_cached_ubuntu_sif, singularity_exec, tmp_path):
             f"--conda-env={conda_env_path}"
         )
     ).subcommand.execute()
+
+    container_metadata = singularity_inspect(build_container_path)
+    assert __version__ in container_metadata.stdout
+    assert "https://github.com/DeiC-HPC/cotainr" in container_metadata.stdout
 
     container_python_process = singularity_exec(
         f"{build_container_path} python -c 'import sys; print(sys.executable)'"
