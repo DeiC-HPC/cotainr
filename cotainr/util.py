@@ -10,10 +10,10 @@ stream_subprocess(\*, args, \*\*kwargs)
 """
 
 from concurrent.futures import ThreadPoolExecutor
-import subprocess
-import sys
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 systems_file = (Path(__file__) / "../../systems.json").resolve()
 
