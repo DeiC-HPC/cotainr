@@ -65,7 +65,9 @@ def patch_system_with_non_existing_file(monkeypatch):
 @pytest.fixture
 def patch_system_with_badly_formatted_file(monkeypatch):
     """
-    Change filename in SystemData to a file with 2 entries
+    Fake a badly formatted JSON file.
+    
+    Used to patch `cotainr.util.systems_file` as badly formatted.
     """
     monkeypatch.setattr(pathlib.Path, "is_file", lambda _: True)
     monkeypatch.setattr(
