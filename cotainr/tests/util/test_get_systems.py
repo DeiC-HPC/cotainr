@@ -10,7 +10,7 @@ from .patches import (
 import cotainr.util
 
 
-class TestSystemData:
+class TestGetSystems:
     def test_non_existing(self, patch_system_with_non_existing_file):
         systems = cotainr.util.get_systems()
 
