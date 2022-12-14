@@ -25,7 +25,9 @@ def patch_disable_stream_subprocess(monkeypatch):
 @pytest.fixture
 def patch_empty_system(monkeypatch):
     """
-    Change filename in SystemData to an empty file
+    Fake an empty JSON file.
+    
+    Used to patch `cotainr.util.systems_file` as empty.
     """
     monkeypatch.setattr(pathlib.Path, "is_file", lambda _: True)
     monkeypatch.setattr(pathlib.Path, "read_text", lambda _: "{}")
