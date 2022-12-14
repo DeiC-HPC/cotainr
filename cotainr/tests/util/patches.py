@@ -50,7 +50,7 @@ def patch_system_with_actual_file(monkeypatch):
 @pytest.fixture
 def patch_system_with_non_existing_file(monkeypatch):
     """
-    Change filename in SystemData to a non-existing file
+    Set `cotainr.util.systems_file` to an empty path.
     """
     monkeypatch.setattr(
         cotainr.util, "systems_file", Path("/some_non_existing_file_6021")
