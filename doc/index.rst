@@ -7,25 +7,25 @@ cotainr documentation
 
 **Date**: |today| **Version**: |version|
 
-**cotainr** - a user space Apptainer/Singularity container builder.
+**cotainr** - a user space `Apptainer`_/`Singularity`_ container builder.
 
 .. toctree::
    :maxdepth: 1
    :hidden:
    :includehidden:
    
-   Getting started <getting_started>
+   Getting Started <getting_started>
    User Guide <user_guide/index>
    API reference <api_reference/index>
    Development <development/index>
    Release Notes <release_notes>
 
 .. grid:: 2
+    :gutter: 4
 
     .. grid-item-card:: Getting Started
         :text-align: center
         :class-card: sd-rounded-0 sd-shadow-sm
-        :class-item: index-card
 
         :material-outlined:`directions_run;5em;sd-text-info`
 
@@ -43,7 +43,6 @@ cotainr documentation
     .. grid-item-card:: User Guide
         :text-align: center
         :class-card: sd-rounded-0 sd-shadow-sm
-        :class-item: index-card
 
         :material-outlined:`menu_book;5em;sd-text-info`
 
@@ -61,7 +60,6 @@ cotainr documentation
     .. grid-item-card:: API reference
         :text-align: center
         :class-card: sd-rounded-0 sd-shadow-sm
-        :class-item: index-card
 
         :material-outlined:`api;5em;sd-text-info`
 
@@ -79,7 +77,6 @@ cotainr documentation
     .. grid-item-card:: Development
         :text-align: center
         :class-card: sd-rounded-0 sd-shadow-sm
-        :class-item: index-card
 
         :material-outlined:`developer_mode;5em;sd-text-info`
 
@@ -93,3 +90,6 @@ cotainr documentation
             :click-parent:
 
             To the development guide
+
+.. _Apptainer: https://apptainer.org/
+.. _Singularity: https://sylabs.io/singularity/
