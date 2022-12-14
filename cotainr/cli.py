@@ -75,6 +75,13 @@ class Build(CotainrSubcommand):
 
     def __init__(self, *, image_path, base_image, conda_env=None):
         self.image_path = Path(image_path).resolve()
+        if self.image_path.exists():
+            val = input(
+                f"{self.image_path} already exists. Would you like to overwrite it? (y/N) "
+            ).lower()
+            if val != "y":
+                sys.exit(0)
+
         self.base_image = base_image
         if conda_env is not None:
             self.conda_env = Path(conda_env).resolve()

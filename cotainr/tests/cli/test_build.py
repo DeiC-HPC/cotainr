@@ -47,6 +47,24 @@ class TestConstructor:
         assert build.conda_env.is_absolute()
         assert build.conda_env.name == conda_env
 
+    @pytest.mark.parametrize("answer", ["n", "N", "", "some_answer_6021"])
+    def test_already_existing_file_but_no(self, answer, monkeypatch):
+        monkeypatch.setattr("builtins.input", lambda _: answer)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        Path(image_path).touch()
+        with pytest.raises(SystemExit):
+            Build(image_path=image_path, base_image=base_image)
+
+    @pytest.mark.parametrize("answer", ["y", "Y"])
+    def test_already_existing_file(self, answer, monkeypatch):
+        monkeypatch.setattr("builtins.input", lambda _: answer)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        Path(image_path).touch()
+        build = Build(image_path=image_path, base_image=base_image)
+        assert build.base_image == base_image
+
 
 class TestAddArguments:
     def test_not_specifying_base_image(self, capsys):
