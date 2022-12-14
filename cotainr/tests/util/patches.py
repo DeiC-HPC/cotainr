@@ -1,7 +1,8 @@
-import pytest
+import pathlib
 from pathlib import Path
 
-import pathlib
+import pytest
+
 import cotainr.util
 
 
