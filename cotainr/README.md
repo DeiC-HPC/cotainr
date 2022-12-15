@@ -167,10 +167,11 @@ The `cotainr` documentation is included in the "doc" folder as restructured text
 
 ```bash
 $ make apidoc
+$ make relnotes
 $ make html
 ```
 
-The `make apidoc` command generates restructured text files for the API reference documentation. These files include `sphinx.ext.autodoc` directives that automatically generates the API reference documentation from the docstrings of the modules/classes/functions/... in `cotainr`.
+The `make apidoc` command generates restructured text files for the API reference documentation. These files include `sphinx.ext.autodoc` directives that automatically generates the API reference documentation from the docstrings of the modules/classes/functions/... in `cotainr`. The `make relnotes` command generates the list of release notes from the markdown files in the `doc/release_notes` folder.
 
 
 ## Dependencies

@@ -28,9 +28,10 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_design",
     "numpydoc",
+    "myst_parser",
 ]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 numpydoc_class_members_toctree = False
 
 # -- Options for HTML output -------------------------------------------------
@@ -61,7 +62,7 @@ def add_api_headline_to_module_docs(app, what, name, obj, options, lines):
     auto modules.
     """
     if what == "module":
-        lines.append('\n')
+        lines.append("\n")
         lines.append("API reference")
         lines.append("-------------")
 
