@@ -178,12 +178,21 @@ class TestAddArguments:
 
 class TestExecute:
     def test_default_container_build(
+<<<<<<< HEAD
         self,
         patch_disable_singularity_sandbox_subprocess_runner,
         # add_metadata fails as there is no sandbox_dir and labels.json since
         # we request patch_disable_singularity_sandbox_subprocess_runner.
         patch_disable_add_metadata,
         capsys,
+||||||| parent of f915087 (Fix failing tests)
+        self, patch_disable_singularity_sandbox_subprocess_runner, capsys
+=======
+        self,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        patch_disable_add_metadata,
+        capsys,
+>>>>>>> f915087 (Fix failing tests)
     ):
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
