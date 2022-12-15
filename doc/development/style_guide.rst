@@ -3,7 +3,7 @@
 Style guide
 ===========
 
-- We follow the `PEP8 <https://peps.python.org/pep-0008/>`_ style guide.
+- We follow the :pep:`8` style guide.
 - The Python source code is formatted using `black <https://black.readthedocs.io/en/stable/>`_ .
 - All `docstrings <https://peps.python.org/pep-0257/>`_ are formatted according to the `numpydoc format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
@@ -16,4 +16,4 @@ When hacking on `cotainr`, we generally try to:
 Specifically, we use the following conventions:
 
 - Force keyword only arguments to functions and methods.
-- Use relative imports within the `cotainr` package when importing functionality from other modules. The imports must be done such that all objects imported are still references (not copies) which allows for monkeypatching objects in their definition module in tests.
+- Use relative imports within the `cotainr` package when importing functionality from other modules. The imports must be done such that all objects imported are still references (not copies) which allows for monkey patching objects in their definition module in tests.
