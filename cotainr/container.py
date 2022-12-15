@@ -189,7 +189,6 @@ class SingularitySandbox:
             metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
             f.seek(0)
             json.dump(metadata, f)
-        print(labels_path.read_text())
 
     def _assert_within_sandbox_context(self):
         """Raise a ValueError if we are not inside the sandbox context."""

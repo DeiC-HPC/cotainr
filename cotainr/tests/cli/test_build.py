@@ -8,6 +8,7 @@ from cotainr.cli import Build, CotainrCLI
 from ..container.patches import (
     patch_save_singularity_sandbox_context,
     patch_disable_singularity_sandbox_subprocess_runner,
+    patch_disable_add_metadata,
 )
 from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -68,7 +69,6 @@ class TestConstructor:
         )
         assert build.conda_env.is_absolute()
         assert build.conda_env.name == conda_env
-
 
     def test_specifying_non_existing_system(self, patch_empty_system):
         image_path = "some_image_path_6021"
@@ -169,7 +169,10 @@ class TestAddArguments:
 
 class TestExecute:
     def test_default_container_build(
-        self, patch_disable_singularity_sandbox_subprocess_runner, capsys
+        self,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        patch_disable_add_metadata,
+        capsys,
     ):
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
@@ -194,6 +197,7 @@ class TestExecute:
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_conda_installer,
         patch_save_singularity_sandbox_context,
+        patch_disable_add_metadata,
         capsys,
     ):
         image_path = "some_image_path_6021"
