@@ -148,24 +148,29 @@ class Info(CotainrSubcommand):
 
     The "info" subcommand.
     """
-    def __self__(self):
-        self._checkmark = u'\N{check mark}'
-        self._nocheckmark = u'\N{minus sign}'
-        self._min_python = (3,8)
-        self.path_check = {"env":["/bin/env","/usr/bin/env"]}
-        self.singularity_version = (3,2)
-        self.apptainer_version = (3,3)
 
-
-
+    def __init__(self):
+        self._checkmark = "\N{check mark}"
+        self._nocheckmark = "\N{minus sign}"
+        self._min_python = (3, 8)
+        self.path_check = {"env": ["/bin/env", "/usr/bin/env"]}
+        self.singularity_version = (3, 2)
+        self.apptainer_version = (3, 3)
 
     def execute(self):
         print("Checking needed dependencies for running cotainr")
-        print('\t- python version +' + self._checkmark if util.check_python(self._min_python) else self._nocheckmark)
-        for k,v in self.path_check.items():
-            print('\t- path of ' + k  + ' ' + self._checkmark if util.check_path(v) else self._nocheckmark)
+        print(
+            "\t- python version " + self._checkmark
+            if util.check_python(self._min_python)
+            else self._nocheckmark
+        )
+        for k, v in self.path_check.items():
+            print(
+                "\t- path of " + k + " " + self._checkmark
+                if any(util.check_path(x) for x in v)
+                else self._nocheckmark
+            )
 
-        
         systems = util.get_systems()
         if systems:
             print("Available system configurations:")
