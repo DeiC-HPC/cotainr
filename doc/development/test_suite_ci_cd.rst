@@ -3,7 +3,7 @@
 Test suite & CI/CD
 ==================
 
-`cotainr` comes with an extensive test suite which is run automatically via continuous integration when code is committed to the `cotainr` GitHub repository.
+`cotainr` comes with an extensive test suite which is run automatically via continuous integration when code is committed to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr
 
 The test suite
 --------------
@@ -79,8 +79,15 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
 - `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_: Runs the unit tests, integration tests, and end-to-end tests on pull requests to the *main* branch. *All* Python versions and *stable* Singularity as well as *stable* Apptainer versions are tested.
 - `CI_push.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml>`_: Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions.
 
+
+.. _continuous_delivery:
+
+Continuous Delivery (CD)
+------------------------
+TODO: Describe CD
+
 Scheduled tests
-~~~~~~~~~~~~~~~
+---------------
 We run a scheduled test (weekly, every Tuesday night) in order to continuously test `cotainr` against *all* versions of its dependencies. That way we proactively monitor for changes in dependencies that end up breaking `cotainr`.
 
 Currently, this is simply implemented as a scheduled trigger in the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow which tests the most recent point releases of Python (as provided by GitHub Actions) as well as the most recent Conda version. Ideally, this should be separated into its own workflow that also includes the *latest* versions of Python and Singularity/Apptainer in the test matrix.

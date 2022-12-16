@@ -16,7 +16,7 @@ All contributions, including bug reports, bug fixes, documentation, new features
 
 Feedback & bug reports
 ~~~~~~~~~~~~~~~~~~~~~~
-If you would like to report a bug, request a new features, or provide feedback and/or ideas for improving `cotainr`, please create an issue on the `cotainr` issue tracker: https://github.com/DeiC-HPC/cotainr/issues. A guide for creating an issue on GitHub is available in the `GitHub issue docs <https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue>`_ Before doing so, please check if somebody else has already opened a similar issue. If so, please contribute your thoughts and experiences to the discussion in that issues instead of opening a new one. If reporting a bug, please provide a `minimal reproducible example <https://stackoverflow.com/help/minimal-reproducible-example>`_ of the problem.
+If you would like to report a bug, request a new features, or provide feedback and/or ideas for improving `cotainr`, please create an issue on the `cotainr` issue tracker: https://github.com/DeiC-HPC/cotainr/issues. A guide for creating an issue on GitHub is available in the `GitHub issue docs <https://docs.github.com/en/issues/tracking-your-work-with-issues/creating-an-issue>`_. Before creating a new issue, please check if somebody else has already opened a similar issue. If so, please contribute your thoughts and experiences to the discussion in that issues instead of opening a new one. If reporting a bug, please provide a `minimal reproducible example <https://stackoverflow.com/help/minimal-reproducible-example>`_ of the problem.
 
 Code & documentation contributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,7 +29,7 @@ If you would like to contribute changes to the `cotainr` codebase or documentati
     :hidden:
 
     style_guide
-    test_suite
+    test_suite_ci_cd
     documentation
     technical_motivation
     cli_internals
