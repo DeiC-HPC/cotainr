@@ -1,6 +1,10 @@
 """
-Cotainr - a user space Apptainer/Singularity container builder.
-Created by DeiC, deic.dk
+cotainr - a user space Apptainer/Singularity container builder.
+
+Copyright DeiC, deic.dk
+Licensed under the European Union Public License (EUPL) 1.2
+- see the LICENSE file for details.
+
 """
 
 import sys

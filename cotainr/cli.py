@@ -1,19 +1,21 @@
 """
-Command line interface for Cotainr
-Created by DeiC, deic.dk
+cotainr - a user space Apptainer/Singularity container builder.
 
-The classes in this module implements the command line main command and
-subcommands.
+Copyright DeiC, deic.dk
+Licensed under the European Union Public License (EUPL) 1.2
+- see the LICENSE file for details.
+
+This module implements the command line main command and subcommands.
 
 Classes
 -------
 CotainrSubcommand(ABC)
     Abstract base class for `CotainrCLI` subcommands.
+Build
+    Build a container. (The "build" subcommand.)
 CotainrCLI
     Build Apptainer/Singularity containers for HPC systems in user space. (The
     main CLI command.)
-Build
-    Build a container. (The "build" subcommand.)
 Info
     Obtain info about the state of all required dependencies for building a
     container. (The "info" subcommand.)
