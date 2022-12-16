@@ -15,7 +15,7 @@ The HTML version of the documentation may be built by running the following comm
     $ make relnotes
     $ make html
 
-The HTML output is available in the `doc/_build` folder. The :code:`make apidoc` command generates reStructuredText files for the API reference documentation. These files include :code:`sphinx.ext.autodoc` directives that automatically generates the API reference documentation from the docstrings of the modules/classes/functions/... in `cotainr`. The :code:`make relnotes` command generates the list of release notes from the markdown files in the `doc/release_notes` folder.
+The HTML output is available in the `doc/_build` folder. The :code:`make apidoc` command generates reStructuredText files for the API reference documentation. These files include :code:`sphinx.ext.autodoc` directives that automatically generate the API reference documentation from the docstrings of the modules/classes/functions/... in `cotainr`. The :code:`make relnotes` command generates the list of release notes from the markdown files in the `doc/release_notes` folder.
 
 The HTML version of the documentation is based on the `PyData Spinx Theme <https://pydata-sphinx-theme.readthedocs.io/>`_ and its design and layout is heavily inspired by the `NumPy <https://numpy.org/doc/stable/>`_, `SciPy <https://docs.scipy.org/doc/scipy/>`_, and `Pandas <https://pandas.pydata.org/docs>`_ documentations - a big shout-out to the people who created those documentation designs!
 

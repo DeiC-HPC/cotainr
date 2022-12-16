@@ -2,6 +2,7 @@
 
 Style guide
 ===========
+We aim to keep the `cotainr` code base and documentation consistent by following the style guides listed here.
 
 - We follow the :pep:`8` style guide.
 - The Python source code is formatted using `black <https://black.readthedocs.io/en/stable/>`_ .
