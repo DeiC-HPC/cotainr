@@ -32,6 +32,7 @@ import sys
 
 from . import container
 from . import pack
+from . import util
 
 
 class CotainrSubcommand(ABC):
@@ -71,9 +72,14 @@ class Build(CotainrSubcommand):
     conda_env : :class:`os.PathLike`, optional
         Path to a Conda environment.yml file to install and activate in the
         container.
+    system : str
+        Which system/partition you will be running the container on, will set base
+        image and other parameters for a simpler container creation.
+        Running the info command will tell you more about the system and what is
+        available.
     """
 
-    def __init__(self, *, image_path, base_image, conda_env=None):
+    def __init__(self, *, image_path, base_image=None, conda_env=None, system=None):
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
             val = input(
@@ -83,6 +89,13 @@ class Build(CotainrSubcommand):
                 sys.exit(0)
 
         self.base_image = base_image
+        systems = util.get_systems()
+        if system is not None:
+            if system in systems:
+                self.system = systems[system]
+                self.base_image = self.system["base-image"]
+            else:
+                raise KeyError("System does not exist")
         if conda_env is not None:
             self.conda_env = Path(conda_env).resolve()
             if not self.conda_env.exists():
@@ -99,10 +112,14 @@ class Build(CotainrSubcommand):
             help=_extract_help_from_docstring(arg="image_path", docstring=cls.__doc__),
             type=Path,
         )
-        parser.add_argument(
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument(
             "--base-image",
-            required=True,
             help=_extract_help_from_docstring(arg="base_image", docstring=cls.__doc__),
+        )
+        group.add_argument(
+            "--system",
+            help=_extract_help_from_docstring(arg="system", docstring=cls.__doc__),
         )
         parser.add_argument(
             "--conda-env",
@@ -133,7 +150,13 @@ class Info(CotainrSubcommand):
     """
 
     def execute(self):
-        print("Sorry, no information about your system is available at this time.")
+        systems = util.get_systems()
+        if systems:
+            print("Available system configurations:")
+            for system in systems:
+                print(f"\t- {system}")
+        else:
+            print("Sorry, no information about your system is available at this time.")
 
 
 class _NoSubcommand(CotainrSubcommand):
