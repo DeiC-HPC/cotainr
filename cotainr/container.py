@@ -166,14 +166,14 @@ class SingularitySandbox:
                     *shlex.split(cmd),
                 ]
             )
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError as subp_error:
             singularity_fatal_error = "\n".join(
-                [line for line in e.stderr.split("\n") if line.startswith("FATAL")]
+                [line for line in subp_error.stderr.split("\n") if line.startswith("FATAL")]
             )
             raise ValueError(
                 f"Invalid command {cmd=} passed to Singularity "
                 f"resulted in the FATAL error: {singularity_fatal_error}"
-            ) from e
+            ) from subp_error
 
         return process
 

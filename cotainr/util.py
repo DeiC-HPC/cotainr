@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import os
 
 systems_file = (Path(__file__) / "../../systems.json").resolve()
 
@@ -77,7 +78,6 @@ def stream_subprocess(*, args, **kwargs):
 
     return completed_process
 
-
 def _print_and_capture_stream(*, stream_handle, print_stream):
     """
     Print a text stream while also storing it.
@@ -121,3 +121,34 @@ def get_systems():
         return systems
     else:
         return {}
+
+
+def check_python(version_to_check):
+    """
+    Check python version for running version of python with minimum requried version.
+
+    Parameters
+    ----------
+    vesion_to_check : tuple
+        A version tuple with major and minor versions
+    """
+    try:
+        assert sys.version_info >= version_to_check
+    except AssertionError:
+        return False
+    return True
+
+def check_path(path_to_check):
+    """
+    Check if a path exist on the system running containr.
+
+    Parameters
+    ----------
+    path_to_check : list of string
+        path on the system to cehck if exist.
+    """
+    
+    for r in path_to_check:
+        if os.path.exists(path_to_check):
+            return True
+    return False
