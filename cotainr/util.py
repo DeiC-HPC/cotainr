@@ -167,8 +167,9 @@ def check_container_version(version_to_check):
                     "singularity",
                     "version"]
             )
-        print(str(p))
-        v = tuple(map(int, str(p).split('.')))
+        s = p.decode()
+        print(s)
+        v = tuple(map(int, s.split('.')))
         assert version_to_check >= v
         return True
     except ValueError:
