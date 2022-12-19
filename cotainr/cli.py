@@ -158,7 +158,6 @@ class Info(CotainrSubcommand):
         self.apptainer_version = (3, 3)
 
     def execute(self):
-        util.check_container_version("1.2.2")
         print("Checking needed dependencies for running cotainr")
         print(
             "\t- python version " + self._checkmark
@@ -172,6 +171,11 @@ class Info(CotainrSubcommand):
                 else self._nocheckmark
             )
 
+        print("Check for Singularity/Apptainer version")
+        print ("\t- Singularity/Apptainer version " + self._checkmark
+              if util.check_container_version((1,1,3))
+              else self._nocheckmark           
+              )
         systems = util.get_systems()
         if systems:
             print("Available system configurations:")
