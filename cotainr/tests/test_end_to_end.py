@@ -3,7 +3,7 @@ import shlex
 import pytest
 
 from cotainr.cli import CotainrCLI
-from cotainr import __version__
+from cotainr import __version__ as _cotainr_version
 from .container.data import data_cached_ubuntu_sif
 
 
