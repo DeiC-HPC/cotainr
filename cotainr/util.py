@@ -154,11 +154,32 @@ def check_path(path_to_check):
     return False
 
 def check_container_version(version_to_check):
-   p = stream_subprocess(
-            args=[
-                "singularity",
-                "version",
-            ]
-        )
-    print(p.stdout)
+    """
+    check for singularity version for minimum version.
+
+    Paramesters
+    ---------
+    version_to_check : tuple of int
+        minimum version of singularity.
+    """
+    try:
+        p = stream_subprocess(
+                args=[
+                    "singularity",
+                    "version",
+                ]
+        
+            )
+        v = tuple(map(int, p.stdout.split('.')))
+        assert version_to_check >= v
+        return True
+    except ValueError:
+        return False
+    except FileNotFoundError:
+        return False
+    except AssertionError:
+        return False
+    
+    return True
+    
     
