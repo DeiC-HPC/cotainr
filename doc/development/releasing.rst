@@ -21,7 +21,7 @@ with:
 
 Release process
 ---------------
-In order ot release a new version of `cotainr`, one must:
+In order to release a new version of `cotainr`, one must:
 
 1. Update the :attr:`cotainr.__version__` string in `cotianr/__init__.py`.
 2. Create the associated release notes, i.e. create a `YYYY.MM.MINOR.md` file in the `doc/release_notes` folder based on the template `doc/release_notes/release_note.md.template`.
