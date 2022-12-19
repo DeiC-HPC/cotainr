@@ -168,7 +168,6 @@ def check_container_version(version_to_check):
                     "version"]
             )
         s = p.decode()
-        print(s)
         v = tuple(map(int, s.split('.')))
         assert version_to_check >= v
         return True
