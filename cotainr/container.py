@@ -16,7 +16,7 @@ from tempfile import TemporaryDirectory
 import sys
 import json
 
-from . import __version__
+from . import __version__ as _cotainr_version
 from . import util
 
 
