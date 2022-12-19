@@ -163,14 +163,11 @@ def check_container_version(version_to_check):
         minimum version of singularity.
     """
     try:
-        p = stream_subprocess(
-                args=[
+        p = subprocess.check_output([
                     "singularity",
-                    "version",
-                ]
-        
+                    "version"]
             )
-        v = tuple(map(int, p.stdout.split('.')))
+        v = tuple(map(int, p.split('.')))
         assert version_to_check >= v
         return True
     except ValueError:
