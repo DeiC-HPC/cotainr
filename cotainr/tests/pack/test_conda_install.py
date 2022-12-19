@@ -74,6 +74,28 @@ class TestAddEnvironment:
             conda_install.add_environment(path=conda_env_path, name=conda_env_name)
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
+                # We expect to find a line in the list of environments similar to:
+                # some_env_name_6021         /opt/conda/envs/some_env_name_6021
+                rf"^{conda_env_name}(\s)+/opt/conda/envs/{conda_env_name}$",
+                process.stdout,
+                flags=re.MULTILINE,
+            )
+
+    def test_other_conda_channels_than_condaforge(
+        self, tmp_path, data_cached_ubuntu_sif
+    ):
+        conda_env_path = tmp_path / "conda_env.yml"
+        conda_env_path.write_text(
+            "channels:\n  - bioconda\ndependencies:\n  - samtools"
+        )
+        conda_env_name = "some_bioconda_env_6021"
+        with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox)
+            conda_install.add_environment(path=conda_env_path, name=conda_env_name)
+            process = sandbox.run_command_in_container(cmd="conda info -e")
+            assert re.search(
+                # We expect to find a line in the list of environments similar to:
+                # some_env_name_6021         /opt/conda/envs/some_env_name_6021
                 rf"^{conda_env_name}(\s)+/opt/conda/envs/{conda_env_name}$",
                 process.stdout,
                 flags=re.MULTILINE,
