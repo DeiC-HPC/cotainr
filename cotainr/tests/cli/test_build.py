@@ -171,6 +171,8 @@ class TestExecute:
     def test_default_container_build(
         self,
         patch_disable_singularity_sandbox_subprocess_runner,
+        # add_metadata fails as there is no sandbox_dir and labels.json since
+        # we request patch_disable_singularity_sandbox_subprocess_runner.
         patch_disable_add_metadata,
         capsys,
     ):
