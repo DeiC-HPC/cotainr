@@ -24,9 +24,10 @@ def test_conda_env_build(
         )
     ).subcommand.execute()
 
-    container_metadata = singularity_inspect(build_container_path)
-    assert __version__ in container_metadata.stdout
-    assert "https://github.com/DeiC-HPC/cotainr" in container_metadata.stdout
+    container_metadata = singularity_inspect(build_container_path).stdout.split("\n")
+    assert f"cotainr.version: {_cotainr_version}" in container_metadata
+    assert "cotainr.url: https://github.com/DeiC-HPC/cotainr" in container_metadata
+    assert any(datum.startswith("cotainr.command: ") for datum in container_metadata) 
 
     container_python_process = singularity_exec(
         f"{build_container_path} python -c 'import sys; print(sys.executable)'"
