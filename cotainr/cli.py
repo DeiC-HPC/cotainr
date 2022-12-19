@@ -150,8 +150,8 @@ class Info(CotainrSubcommand):
     """
 
     def __init__(self):
-        self._checkmark = "\N{check mark}"
-        self._nocheckmark = "\N{minus sign}"
+        self._checkmark = "OK"
+        self._nocheckmark = "ERROR"
         self._min_python = (3, 8)
         self.path_check = {"env": ["/bin/env", "/usr/bin/env"]}
         self.singularity_version = (3, 2)
