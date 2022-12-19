@@ -12,7 +12,9 @@ The :ref:`reference documentation <reference_docs>` is hosted on Read the Docs: 
 Contributing to `cotainr`
 -------------------------
 
-All contributions, including bug reports, bug fixes, documentation, new features are welcome.
+All contributions, including bug reports, bug fixes, documentation, and new features are welcome. 
+
+`cotainr` is free and open source software licensed under the `European Union Public License (EUPL) 1.2 <https://joinup.ec.europa.eu/collection/eupl/introduction-eupl-licence>`_. See the `LICENSE <https://github.com/DeiC-HPC/cotainr/blob/main/LICENSE>`_ file for details about your rights and obligations when using and contributing to `cotainr`.
 
 Feedback & bug reports
 ~~~~~~~~~~~~~~~~~~~~~~
