@@ -1,3 +1,12 @@
+"""
+cotainr - a user space Apptainer/Singularity container builder.
+
+Copyright DeiC, deic.dk
+Licensed under the European Union Public License (EUPL) 1.2
+- see the LICENSE file for details.
+
+"""
+
 import argparse
 from pathlib import Path
 import shlex
@@ -68,7 +77,6 @@ class TestConstructor:
         )
         assert build.conda_env.is_absolute()
         assert build.conda_env.name == conda_env
-
 
     def test_specifying_non_existing_system(self, patch_empty_system):
         image_path = "some_image_path_6021"
