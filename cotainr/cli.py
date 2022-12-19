@@ -158,6 +158,7 @@ class Info(CotainrSubcommand):
         self.apptainer_version = (3, 3)
 
     def execute(self):
+        util.check_container_version("1.2.2")
         print("Checking needed dependencies for running cotainr")
         print(
             "\t- python version " + self._checkmark

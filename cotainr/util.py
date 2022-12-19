@@ -152,3 +152,13 @@ def check_path(path_to_check):
         if os.path.exists(path_to_check):
             return True
     return False
+
+def check_container_version(version_to_check):
+   p = stream_subprocess(
+            args=[
+                "singularity",
+                "version",
+            ]
+        )
+    print(p.stdout)
+    
