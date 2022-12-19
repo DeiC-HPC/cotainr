@@ -7,11 +7,11 @@ headingDivider: 2
 
 DeiC
 
-# LUMI-G status as of 2022-12-13
+# LUMI-G status as of 2022-12-19
 
 - Pilot phase extended to January 9th, 2023 (**pilot** SLURM partition - *not billed*)
-- Early access platform (EAP) still accessible to all users (**eap** SLURM partition - *not billed*)
-- Access for regular users coming *soon* (**gpu?** SLURM partition - *billed*)
+- Early Access Platform (EAP) still accessible to all users (**eap** SLURM partition - *not billed*)
+- Access for regular users starting this week (**standard-g**/**small-g**/**dev-g** SLURM partitions - *billed*)
 - HPE acceptance tests still on-going
 - Hardware triage and fixing almost complete
 - A lot of known issues with the software stack (update expected early January)
@@ -21,6 +21,7 @@ DeiC
 
 - "Random" network failures (when using multiple nodes)
 - "Random" filesystem hangs
+- "Random" node crashes
 - Occasional problems with login nodes
 - Some SLURM resource requests result in strange errors
 - CPU core #0 reserved for "low noise mode" on LUMI-G nodes
