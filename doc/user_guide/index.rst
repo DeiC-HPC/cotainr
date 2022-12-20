@@ -47,7 +47,18 @@ Containers are built using the :code:`cotainr build` subcommand, e.g.
 
     $ cotainr build my_container.sif --base-image=docker://ubuntu:22.04
 
-which would create the container `my_container.sif` based on the official `Ubuntu 22.04 DockerHub image <https://hub.docker.com/_/ubuntu>`_. Not specifying any further options to :code:`cotainr build` than above, provides no more than what can be achieved with a :code:`singularity pull`. In order to add software and files to the container, you need to use the options available with :code:`cotainr build`. To list all options, run:
+which would create the container `my_container.sif` based on the official `Ubuntu 22.04 DockerHub image <https://hub.docker.com/_/ubuntu>`_.
+The same could be achieved with:
+.. code-block:: console
+
+    $ cotainr build my_container.sif --system a-system
+
+if the system :code:`a-system` was defined to use the same docker image.
+These predefined systems can be listed with the info command, and will be defined by your system administrator to help you create containers.
+
+Not specifying any further options to :code:`cotainr build` than above, provides no more than what can be achieved with a :code:`singularity pull`.
+In order to add software and files to the container, you need to use the options available with :code:`cotainr build`.
+To list all options, run:
 
 .. code-block:: console
 
@@ -55,9 +66,24 @@ which would create the container `my_container.sif` based on the official `Ubunt
 
 Also, take a look at the :ref:`list of use cases <use_cases>` for further inspiration to building containers using `cotainr`.
 
-.. _hpc_systems_information:
+System information
+~~~~~~~~~~~~~~~~~~
+To make sure that everything is in your enviroment, you can run the :code:`cotainr info` subcommand.
+This will provide you information about the system and also providing you with names of predefined systems.
 
-TODO: Decsribe the idea in the :code:`--system` flag.
+.. code-block:: console
+
+    $ cotainr info
+    Dependency report
+    -------------------------------------------------------------------------------
+        - Running python 3.10.8 >= 3.8.0, OK
+        - Found singularity 3.8.7 >= 3.7.4, OK
+
+    System info
+    -------------------------------------------------------------------------------
+    Available system configurations:
+        - lumi-g
+        - lumi-c
 
 
 Python interface
