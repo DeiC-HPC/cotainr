@@ -1,12 +1,23 @@
 """
-Packaging for user space Apptainer/Singularity container builder.
+cotainr - a user space Apptainer/Singularity container builder.
 
-Created by DeiC, deic.dk
+Copyright DeiC, deic.dk
+Licensed under the European Union Public License (EUPL) 1.2
+- see the LICENSE file for details.
+
+This module implements utility functions.
 
 Functions
 ---------
 stream_subprocess(\*, args, \*\*kwargs)
     Run a the command described by `args` while streaming stdout and stderr.
+get_systems()
+    Get a dictionary of predefined systems, defined in systems.json
+
+Attributes
+----------
+systems_file
+    The path to the systems.json file (if present).
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -17,6 +28,32 @@ import sys
 import os
 
 systems_file = (Path(__file__) / "../../systems.json").resolve()
+
+
+def get_systems():
+    """
+    Get a dictionary of predefined systems, defined in systems.json
+
+    Returns
+    -------
+    systems : Dict
+        A dictionary of predefined systems
+
+    Raises
+    ------
+    :class:`NameError`
+        If some required arguments are missing in the systems.json file.
+    """
+    if systems_file.is_file():
+        systems = json.loads(systems_file.read_text())
+        for system in systems:
+            if "base-image" not in systems[system]:
+                raise NameError(
+                    f"Error in systems.json: {system} missing argument base-image"
+                )
+        return systems
+    else:
+        return {}
 
 
 def stream_subprocess(*, args, **kwargs):
@@ -95,6 +132,7 @@ def _print_and_capture_stream(*, stream_handle, print_stream):
         captured_stream.append(line)
 
     return captured_stream
+
 
 
 def get_systems():
@@ -179,5 +217,4 @@ def check_container_version(version_to_check):
         return False
     
     return True
-    
     
