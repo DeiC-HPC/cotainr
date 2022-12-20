@@ -8,13 +8,13 @@ Sandbox
     A Singularity container sandbox context manager.
 """
 
+import json
 import os
 from pathlib import Path
 import shlex
 import subprocess
-from tempfile import TemporaryDirectory
 import sys
-import json
+from tempfile import TemporaryDirectory
 
 from . import __version__ as _cotainr_version
 from . import util
