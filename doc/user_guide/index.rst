@@ -51,9 +51,9 @@ which would create the container `my_container.sif` based on the official `Ubunt
 The same could be achieved with:
 .. code-block:: console
 
-    $ cotainr build my_container.sif --system a-system
+    $ cotainr build my_container.sif --system some-system
 
-if the system :code:`a-system` was defined to use the same docker image.
+if the system :code:`some-system` was defined to use the same docker image.
 These predefined systems can be listed with the info command, and will be defined by your system administrator to help you create containers.
 
 Not specifying any further options to :code:`cotainr build` than above, provides no more than what can be achieved with a :code:`singularity pull`.
