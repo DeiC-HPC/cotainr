@@ -104,3 +104,16 @@ def singularity_exec():
         return singularity_process
 
     return _singularity_exec
+
+
+@pytest.fixture
+def singularity_inspect():
+    """
+    Provide a function wrapping a "singularity inspect" call.
+    """
+    return lambda containerpath: subprocess.run(
+        ["singularity", "inspect", containerpath],
+        capture_output=True,
+        check=True,
+        text=True,
+    )
