@@ -1,10 +1,15 @@
 """
-Container tools for Cotainr
-Created by DeiC, deic.dk
+cotainr - a user space Apptainer/Singularity container builder.
+
+Copyright DeiC, deic.dk
+Licensed under the European Union Public License (EUPL) 1.2
+- see the LICENSE file for details.
+
+This module implements the interaction with the container runtime.
 
 Classes
 -------
-Sandbox
+SingularitySandbox
     A Singularity container sandbox context manager.
 """
 

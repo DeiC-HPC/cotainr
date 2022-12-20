@@ -1,3 +1,12 @@
+"""
+cotainr - a user space Apptainer/Singularity container builder.
+
+Copyright DeiC, deic.dk
+Licensed under the European Union Public License (EUPL) 1.2
+- see the LICENSE file for details.
+
+"""
+
 import pathlib
 from pathlib import Path
 
@@ -27,7 +36,7 @@ def patch_disable_stream_subprocess(monkeypatch):
 def patch_empty_system(monkeypatch):
     """
     Fake an empty JSON file.
-    
+
     Used to patch `cotainr.util.systems_file` as empty.
     """
     monkeypatch.setattr(pathlib.Path, "is_file", lambda _: True)
@@ -38,7 +47,7 @@ def patch_empty_system(monkeypatch):
 def patch_system_with_actual_file(monkeypatch):
     """
     Fake a JSON file with 2 entries.
-    
+
     Used to patch `cotainr.util.systems_file` with two entries.
     """
     monkeypatch.setattr(pathlib.Path, "is_file", lambda _: True)
@@ -66,7 +75,7 @@ def patch_system_with_non_existing_file(monkeypatch):
 def patch_system_with_badly_formatted_file(monkeypatch):
     """
     Fake a badly formatted JSON file.
-    
+
     Used to patch `cotainr.util.systems_file` as badly formatted.
     """
     monkeypatch.setattr(pathlib.Path, "is_file", lambda _: True)

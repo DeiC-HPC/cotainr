@@ -16,6 +16,18 @@ The two main reasons to use `cotainr` are:
 
 In order to achieve this, the scope of `cotainr` is deliberately limited - focus is on making it easy to build reasonably performant containers for :ref:`common HPC use cases <use_cases>`. If you need a general purpose solution for building containers that achieve the absolute maximum performance, you should stick with `Apptainer`_/`Singularity`_ instead of `cotainr`.
 
+.. _cotainr_dependencies:
+
+Dependencies
+------------
+Since `cotainr` is a tool, written in `Python`_, for building `Singularity`_/`Apptainer`_ containers, you need the following to be able to use `cotainr`:
+
+- A Linux OS (since `Singularity`_/`Apptainer`_ `only runs on Linux <https://apptainer.org/docs/admin/main/installation.html#installation-on-linux>`_)
+- `Python`_ >=3.8
+- `Singularity`_ >=3.7.4 or `Apptainer`_ >=1.0
+
+Additionally, some features provided by `cotainr` may impose requirements on the base images you use when building containers, e.g. when including a :ref:`conda environment <conda_environments>` the base container must have `bash <https://www.gnu.org/software/bash/>`_ installed in it.
+
 .. _command_line_interface:
 
 Command line interface
@@ -61,6 +73,8 @@ Typical use cases, that `cotainr` makes very easy to handle, include:
 
 - :ref:`Creating a container based on a Conda environment <conda_environments>`
 
+..
+    Toc for the use case pages
 .. toctree::
     :maxdepth: 1
     :hidden:
@@ -76,4 +90,5 @@ Further examples of using `cotainr` are included with the source code, https://g
 
 
 .. _Apptainer: https://apptainer.org/
+.. _Python: https://www.python.org/
 .. _Singularity: https://sylabs.io/singularity/

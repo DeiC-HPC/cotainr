@@ -6,6 +6,11 @@ Adding a `conda environment <https://conda.io/projects/conda/en/latest/user-guid
 
 As an example, consider the following `conda environment file <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#sharing-an-environment>`_, `my_conda_env.yml`:
 
+.. admonition:: Base image requirement
+    :class: sidebar note
+
+    In order to include a conda environment in your container, you must use a base image in which `bash <https://www.gnu.org/software/bash/>`_ is installed.
+
 .. code-block:: yaml
     :caption: my_conda_env.yml
     
