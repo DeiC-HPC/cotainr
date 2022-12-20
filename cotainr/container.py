@@ -185,7 +185,7 @@ class SingularitySandbox:
         with open(labels_path, "r+") as f:
             metadata = json.load(f)
             metadata["cotainr.command"] = " ".join(sys.argv)
-            metadata["cotainr.version"] = __version__
+            metadata["cotainr.version"] = _cotainr_version
             metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
             f.seek(0)
             json.dump(metadata, f)
