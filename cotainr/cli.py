@@ -141,6 +141,7 @@ class Build(CotainrSubcommand):
                 sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
                 conda_install.cleanup_unused_files()
 
+            sandbox.add_metadata()
             sandbox.build_image(path=self.image_path)
 
 

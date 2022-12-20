@@ -59,3 +59,14 @@ def patch_save_singularity_sandbox_context(monkeypatch):
         raising=False,
     )
     monkeypatch.setattr(cotainr.container.SingularitySandbox, "__exit__", mock_exit)
+
+
+@pytest.fixture
+def patch_disable_add_metadata(monkeypatch):
+    """
+    Disable SingularitySandbox.add_metadata().
+    """
+
+    monkeypatch.setattr(
+        cotainr.container.SingularitySandbox, "add_metadata", lambda _: None
+    )

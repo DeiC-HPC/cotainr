@@ -17,6 +17,7 @@ from cotainr.cli import Build, CotainrCLI
 from ..container.patches import (
     patch_save_singularity_sandbox_context,
     patch_disable_singularity_sandbox_subprocess_runner,
+    patch_disable_add_metadata,
 )
 from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -177,7 +178,12 @@ class TestAddArguments:
 
 class TestExecute:
     def test_default_container_build(
-        self, patch_disable_singularity_sandbox_subprocess_runner, capsys
+        self,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        # add_metadata fails as there is no sandbox_dir and labels.json since
+        # we request patch_disable_singularity_sandbox_subprocess_runner.
+        patch_disable_add_metadata,
+        capsys,
     ):
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
@@ -202,6 +208,7 @@ class TestExecute:
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_conda_installer,
         patch_save_singularity_sandbox_context,
+        patch_disable_add_metadata,
         capsys,
     ):
         image_path = "some_image_path_6021"
