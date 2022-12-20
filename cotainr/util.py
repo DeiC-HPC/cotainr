@@ -25,7 +25,6 @@ import json
 from pathlib import Path
 import subprocess
 import sys
-import os
 
 systems_file = (Path(__file__) / "../../systems.json").resolve()
 
