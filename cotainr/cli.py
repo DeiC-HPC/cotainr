@@ -1,4 +1,4 @@
-"""
+r"""
 cotainr - a user space Apptainer/Singularity container builder.
 
 Copyright DeiC, deic.dk
@@ -29,12 +29,16 @@ main(\*args, \*\*kwargs)
 from abc import ABC, abstractmethod
 import argparse
 from pathlib import Path
+import platform
+import re
 import shutil
+import subprocess
 import sys
 
 from . import container
 from . import pack
 from . import util
+from . import _minimum_dependency_version as _min_dep_ver
 
 
 class CotainrSubcommand(ABC):
@@ -152,14 +156,87 @@ class Info(CotainrSubcommand):
     The "info" subcommand.
     """
 
+    def __init__(self):
+        self._checkmark = "\033[92mOK\033[0m"  # green OK
+        self._nocheckmark = "\033[91mERROR\033[0m"  # red ERROR
+        self._tabs_width = 4
+
     def execute(self):
+        print("Dependency report")
+        print("-" * 79)
+        print(f"\t- {self._check_python_dependency()}".expandtabs(self._tabs_width))
+        print(
+            f"\t- {self._check_singularity_dependency()}".expandtabs(self._tabs_width)
+        )
+        print("")
+        print("System info")
+        print("-" * 79)
+        print(self._check_systems())
+
+    def _check_python_dependency(self):
+        ver_tup = platform.python_version_tuple()
+        ver_check = self._check_version(
+            version=tuple(map(int, ver_tup)), min_version=_min_dep_ver["python"]
+        )
+        return f"Running python {'.'.join(ver_tup)} {ver_check}"
+
+    def _check_singularity_dependency(self):
+        # assume that "singularity --version" returns a format like
+        # singularity version 3.7.4-1  (for singularity)
+        # apptainer version 1.0.3      (for apptainer)
+        try:
+            provider, _, version = subprocess.check_output(
+                ["singularity", "--version"], text=True
+            ).split()
+            ver_tup = tuple(
+                map(int, re.findall(r"\d+\.\d+\.\d+", version)[0].split("."))
+            )
+            if provider in _min_dep_ver:
+                ver_check = self._check_version(
+                    version=ver_tup, min_version=_min_dep_ver[provider]
+                )
+                singularity_check_result = f"Found {provider} {version} {ver_check}"
+            else:
+                singularity_check_result = (
+                    f"Found unknown singularity provider: {provider} {version}"
+                )
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            singularity_check_result = (
+                f"apptainer/singularity not found, {self._nocheckmark}"
+            )
+
+        return singularity_check_result
+
+    def _check_systems(self):
         systems = util.get_systems()
+        system_check_report = []
         if systems:
-            print("Available system configurations:")
+            system_check_report.append("Available system configurations:")
             for system in systems:
-                print(f"\t- {system}")
+                system_check_report.append(f"\t- {system}".expandtabs(self._tabs_width))
         else:
-            print("Sorry, no information about your system is available at this time.")
+            system_check_report.append("No system configurations available")
+
+        return "\n".join(system_check_report)
+
+    def _check_version(self, *, version, min_version):
+        for name, ver_spec in {"version": version, "min_version": min_version}.items():
+            if (
+                not isinstance(ver_spec, tuple)
+                or len(ver_spec) != 3
+                or not all(isinstance(part, int) for part in ver_spec)
+            ):
+                raise TypeError(
+                    f"The '{name}={ver_spec}' argument must be "
+                    "a (major, minor, patchlevel) tuple of integers"
+                )
+        min_ver_str = f"{min_version[0]}.{min_version[1]}.{min_version[2]}"
+        if version >= min_version:
+            ver_check = f">= {min_ver_str}, {self._checkmark}"
+        else:
+            ver_check = f"< {min_ver_str}, {self._nocheckmark}"
+
+        return ver_check
 
 
 class _NoSubcommand(CotainrSubcommand):
