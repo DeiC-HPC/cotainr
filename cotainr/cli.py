@@ -199,7 +199,7 @@ class Info(CotainrSubcommand):
                 singularity_check_result = (
                     f"Found unknown singularity provider: {provider} {version}"
                 )
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, FileNotFoundError):
             singularity_check_result = (
                 f"apptainer/singularity not found, {self._nocheckmark}"
             )

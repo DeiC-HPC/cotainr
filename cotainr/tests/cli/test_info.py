@@ -140,7 +140,7 @@ class Test_check_singularity_dependency:
 
     def test_not_found(self, monkeypatch):
         def not_found(*args, **kwargs):
-            raise subprocess.CalledProcessError(0, "patched", "check_output")
+            raise FileNotFoundError()
 
         monkeypatch.setattr(
             subprocess,

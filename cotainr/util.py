@@ -1,4 +1,4 @@
-"""
+r"""
 cotainr - a user space Apptainer/Singularity container builder.
 
 Copyright DeiC, deic.dk
