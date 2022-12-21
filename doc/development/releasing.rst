@@ -24,6 +24,7 @@ Release process
 In order to release a new version of `cotainr`, one must:
 
 1. Update the :attr:`cotainr.__version__` string in `cotianr/__init__.py`.
-2. Create the associated release notes, i.e. create a `YYYY.MM.MINOR.md` file in the `doc/release_notes` folder based on the template `doc/release_notes/release_note.md.template`.
-3. Create a git tag (:code:`git tag YYYY.MM.MINOR`) for the version on the *main* branch and push it to the GitHub repository.
-4. Assert that the :ref:`CD setup <continuous_delivery>` finishes correctly.
+2. Update the version switcher list in `cotainr/doc/_static/switcher.json`.
+3. Create the associated release notes, i.e. create a `YYYY.MM.MINOR.md` file in the `doc/release_notes` folder based on the template `doc/release_notes/release_note.md.template`.
+4. Create a git tag (:code:`git tag YYYY.MM.MINOR`) for the version on the *main* branch and push it to the GitHub repository.
+5. Assert that the :ref:`CD setup <continuous_delivery>` finishes correctly.
