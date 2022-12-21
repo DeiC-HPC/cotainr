@@ -8,6 +8,14 @@ build:
     python: "3"
   jobs:
     pre_build:
+      - pwd
+      - ls
+      - which python
+      - python --version
+      - which sphinx-build
+      - sphinx-build --version
+      - which sphinx-apidoc
+      - sphinx-apidoc --version
       - cd doc; make apidoc; make relnotes;
 sphinx:
   builder: html
