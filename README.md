@@ -11,6 +11,10 @@ cotainr makes it easy to build Singularity/Apptainer containers for certain use 
 $ cotainr build --base-image docker://ubuntu:22.04
 ```
 
+## Documentation
+
+Our documentation is hosted [here on Read the Docs](https://cotainr.readthedocs.io/en/latest/).
+
 ## Installation
 
 cotainr has no external dependencies other than Python >= 3.8 and Singularity/Apptainer.
@@ -52,6 +56,3 @@ sanity_check_paths = {
 
 sanity_check_commands = ['cotainr']
 ```
-
-## Documentation
-Our documentation is hosted [here on Read the Docs](https://cotainr.readthedocs.io/en/latest/).
