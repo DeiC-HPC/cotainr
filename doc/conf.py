@@ -52,9 +52,12 @@ if not rtd_version or rtd_version.isdigit():
     # Either not on readthedocs or it is a pull request number
     switcher_version = "latest"
     switcher_json = "_static/switcher.json"
+elif rtd_version == "rtd_cd":
+    switcher_version = "rtd_cd"
+    switcher_json = "_static/switcher.json"
 else:
     switcher_version = rtd_version
-    switcher_json = "https://cotainr.readthedocs.io/en/rtd_cd/_static/switcher.json"
+    switcher_json = "https://cotainr.readthedocs.io/en/latest/_static/switcher.json"
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
