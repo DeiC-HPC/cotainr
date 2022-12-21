@@ -16,7 +16,8 @@ build:
       - sphinx-build --version
       - which sphinx-apidoc
       - sphinx-apidoc --version
-      - cd doc; make apidoc; make relnotes;
+      - make -C doc apidoc
+      - make -C doc relnotes
 sphinx:
   builder: html
   configuration: doc/conf.py
