@@ -3,7 +3,7 @@
 ![CI](https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/cotainr/badge/?version=latest)](https://cotainr.readthedocs.io/en/latest/?badge=latest)
 
-cotainr - a user space [Apptainer](https://apptainer.org/)/][Singularity](https://sylabs.io/singularity/) container builder.
+cotainr - a user space [Apptainer](https://apptainer.org/)/[Singularity](https://sylabs.io/singularity/) container builder.
 
 cotainr makes it easy to build Singularity/Apptainer containers for certain use cases.
 
