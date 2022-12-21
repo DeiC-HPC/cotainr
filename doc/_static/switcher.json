@@ -1,0 +1,16 @@
+[
+    {
+      "name": "dev",
+      "version": "latest",
+      "url": "https://cotainr.readthedocs.io/en/latest/"
+    },
+    {
+      "name": "2022.12.0 (stable)",
+      "version": "stable",
+      "url": "https://cotainr.readthedocs.io/en/stable/"
+    },
+    {
+      "version": "rtd_cd",
+      "url": "https://cotainr.readthedocs.io/en/rtd_cd/"
+    }
+]
