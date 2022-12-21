@@ -84,7 +84,16 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
 
 Continuous Delivery (CD)
 ------------------------
-TODO: Describe CD
+Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/features.html#automatic-documentation-deployment>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
+
+Read the Docs continuous documentation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The :ref:`HTML documentation <building_the_html_docs>` served at http://cotainr.readthedocs.io is automatically built by Read the Docs based on the configuration in the `.readthedocs.yml configuration file <https://github.com/DeiC-HPC/cotainr/blob/main/.readthedocs.yml>`_.
+
+.. include:: ../../.readthedocs.yml
+    :literal:
+
+This fully automates the process of building `*latest* and *stable* versions <https://docs.readthedocs.io/en/stable/versions.html>`_ of the HTML documentation served at http://cotainr.readthedocs.io. Additionally, the `"build pull requests" <https://docs.readthedocs.io/en/stable/pull-requests.html>`_ feature is enabled. A pull request documentation build is linked in the list of checks for the GitHub pull request.
 
 Scheduled tests
 ---------------

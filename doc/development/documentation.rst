@@ -5,6 +5,8 @@ Reference documentation
 
 The `cotainr` reference documentation is what you are reading right now. It consists of a set of `reStructuredText <https://docutils.sourceforge.io/rst.html>`_ files in the `doc` folder along with all the `docstrings <https://peps.python.org/pep-0257/>`_ in the `cotainr` Python source code, and the `markdown <https://commonmark.org/>`_ release notes in the `doc/release_notes` folder. All of it is tied together via a `Sphinx <https://www.sphinx-doc.org/en/master/>`_ setup for building an HTML version of the documentation which is hosted on http://cotainr.readthedocs.io.
 
+.. _building_the_html_docs:
+
 Building the HTML version
 -------------------------
 The HTML version of the documentation may be built by running the following commands from the `doc` folder:
