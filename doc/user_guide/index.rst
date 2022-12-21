@@ -66,6 +66,8 @@ To list all options, run:
 
 Also, take a look at the :ref:`list of use cases <use_cases>` for further inspiration to building containers using `cotainr`.
 
+.. _hpc_systems_information:
+
 System information
 ~~~~~~~~~~~~~~~~~~
 To make sure that everything is in your enviroment, you can run the :code:`cotainr info` subcommand.
