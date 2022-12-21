@@ -93,7 +93,7 @@ The :ref:`HTML documentation <building_the_html_docs>` served at http://cotainr.
 .. include:: ../../.readthedocs.yml
     :literal:
 
-This fully automates the process of building `*latest* and *stable* versions <https://docs.readthedocs.io/en/stable/versions.html>`_ of the HTML documentation served at http://cotainr.readthedocs.io. Additionally, the `"build pull requests" <https://docs.readthedocs.io/en/stable/pull-requests.html>`_ feature is enabled.
+This fully automates the process of building `*latest* and *stable* versions <https://docs.readthedocs.io/en/stable/versions.html>`_ of the HTML documentation served at http://cotainr.readthedocs.io. Additionally, the `"build pull requests" <https://docs.readthedocs.io/en/stable/pull-requests.html>`_ feature is enabled. A pull request documentation build is linked in the list of checks for the GitHub pull request.
 
 Scheduled tests
 ---------------
