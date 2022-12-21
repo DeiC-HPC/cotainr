@@ -8,14 +8,6 @@ build:
     python: "3"
   jobs:
     pre_build:
-      - pwd
-      - ls
-      - which python
-      - python --version
-      - which sphinx-build
-      - sphinx-build --version
-      - which sphinx-apidoc
-      - sphinx-apidoc --version
       - make -C doc apidoc
       - make -C doc relnotes
 sphinx:
