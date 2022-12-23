@@ -3,9 +3,6 @@ on:
   schedule:
     - cron: '15 2 * * TUE'  # every Tuesday night
   workflow_dispatch:  # allow for manually trigging the workflow
-  push:
-    branches:
-      - sched_linkcheck
 jobs:
   check-docs-links:
     name: Check for broken links in documentation
