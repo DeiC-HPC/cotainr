@@ -86,10 +86,12 @@ class Build(CotainrSubcommand):
     """
 
     def __init__(self, *, image_path, base_image=None, conda_env=None, system=None):
+        """Construct the "build" subcommand."""
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
             val = input(
-                f"{self.image_path} already exists. Would you like to overwrite it? (y/N) "
+                f"{self.image_path} already exists. "
+                "Would you like to overwrite it? (y/N) "
             ).lower()
             if val != "y":
                 sys.exit(0)
@@ -113,6 +115,7 @@ class Build(CotainrSubcommand):
 
     @classmethod
     def add_arguments(cls, *, parser):
+        """Add arguments to the "build" subcommand subparser."""
         parser.add_argument(
             "image_path",
             help=_extract_help_from_docstring(arg="image_path", docstring=cls.__doc__),
@@ -134,6 +137,7 @@ class Build(CotainrSubcommand):
         )
 
     def execute(self):
+        """Execute the "build" subcommand."""
         with container.SingularitySandbox(base_image=self.base_image) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
@@ -157,11 +161,13 @@ class Info(CotainrSubcommand):
     """
 
     def __init__(self):
+        """Construct the "info" subcommand."""
         self._checkmark = "\033[92mOK\033[0m"  # green OK
         self._nocheckmark = "\033[91mERROR\033[0m"  # red ERROR
         self._tabs_width = 4
 
     def execute(self):
+        """Execute the "info" subcommand."""
         print("Dependency report")
         print("-" * 79)
         print(f"\t- {self._check_python_dependency()}".expandtabs(self._tabs_width))
@@ -174,6 +180,17 @@ class Info(CotainrSubcommand):
         print(self._check_systems())
 
     def _check_python_dependency(self):
+        """
+        Check and report on the Python version used.
+
+        Reports the Python version used and whether it meets the minimum
+        required version.
+
+        Returns
+        -------
+        python_check_result : str
+            A description of the Python version used.
+        """
         ver_tup = platform.python_version_tuple()
         ver_check = self._check_version(
             version=tuple(map(int, ver_tup)), min_version=_min_dep_ver["python"]
@@ -181,9 +198,24 @@ class Info(CotainrSubcommand):
         return f"Running python {'.'.join(ver_tup)} {ver_check}"
 
     def _check_singularity_dependency(self):
-        # assume that "singularity --version" returns a format like
-        # singularity version 3.7.4-1  (for singularity)
-        # apptainer version 1.0.3      (for apptainer)
+        """
+        Check and report on any installed singularity provider.
+
+        Reports the provider (apptainer/singularity/unknown), its version, and
+        whether it meets the minimum required version if a singularity provider
+        is found. Otherwise reports "apptainer/singularity not found".
+
+        Returns
+        -------
+        singularity_check_result : str
+            A description of the singularity provider.
+
+        Notes
+        -----
+        Assumes that "singularity --version" returns a format like:
+          - singularity version 3.7.4-1  (for singularity)
+          - apptainer version 1.0.3      (for apptainer)
+        """
         try:
             provider, _, version = subprocess.check_output(
                 ["singularity", "--version"], text=True
@@ -208,6 +240,16 @@ class Info(CotainrSubcommand):
         return singularity_check_result
 
     def _check_systems(self):
+        """
+        Check and report on any available HPC systems.
+
+        Reports the available systems from the `systems.json` file.
+
+        Returns
+        -------
+        system_check_result : str
+            A description of the available system configurations.
+        """
         systems = util.get_systems()
         system_check_report = []
         if systems:
@@ -220,6 +262,31 @@ class Info(CotainrSubcommand):
         return "\n".join(system_check_report)
 
     def _check_version(self, *, version, min_version):
+        """
+        Check and report a version against a minimum required version.
+
+        Checks whether `version` is larger than or equal to `min_version` and
+        returns a description of result. The version specifications must be
+        (major, minor, patchlevel) tuples of integers.
+
+        Parameters
+        ----------
+        version : tuple of int
+            The version to check against a minimum version.
+        min_version : tuple of int
+            The minimum version to check against.
+
+        Returns
+        -------
+        ver_check : str
+            A description of the result of the version check.
+
+        Raises
+        ------
+        TypeError
+            If the provided `version` and `min_version` are not (major, minor,
+            patchlevel) tuples of integers.
+        """
         for name, ver_spec in {"version": version, "min_version": min_version}.items():
             if (
                 not isinstance(ver_spec, tuple)
@@ -273,7 +340,7 @@ class CotainrCLI:
     _subcommands = [Build, Info]
 
     def __init__(self, *, args=None):
-        """Create a command line interface for the container builder."""
+        """Construct a command line interface for the container builder."""
         # Sanity check subcommands
         for sub_cmd in self._subcommands:
             if not issubclass(sub_cmd, CotainrSubcommand):
@@ -316,7 +383,7 @@ class CotainrCLI:
 
 
 def main(*args, **kwargs):
-    """Main CLI entrypoint."""
+    """Construct the main CLI entrypoint."""
     # Create CotainrCLI to parse command line args and run the specified
     # subcommand
     cli = CotainrCLI()

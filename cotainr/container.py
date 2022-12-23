@@ -50,6 +50,7 @@ class SingularitySandbox:
     """
 
     def __init__(self, *, base_image):
+        """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
 
@@ -186,6 +187,24 @@ class SingularitySandbox:
         return process
 
     def add_metadata(self):
+        """
+        Add metadata to the container sandbox.
+
+        The following metadata is added to the container sandbox:
+          - "cotainr.command": The full command line used to build the container.
+          - "cotainr.version": The version of cotainr used to build the container.
+          - "cotainr.url": The cotainr project url.
+
+        The container metadata may be inspected by running `singularity inspect` on the
+        built container image file.
+
+        Notes
+        -----
+        The metadata entries are added to the `.singularity.d/labels.json
+        <https://apptainer.org/docs/user/main/environment_and_metadata.html#singularity-d-directory>`_
+        file.
+
+        """
         labels_path = self.sandbox_dir / ".singularity.d/labels.json"
         with open(labels_path, "r+") as f:
             metadata = json.load(f)

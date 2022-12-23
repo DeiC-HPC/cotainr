@@ -31,7 +31,7 @@ systems_file = (Path(__file__) / "../../systems.json").resolve()
 
 def get_systems():
     """
-    Get a dictionary of predefined systems, defined in systems.json
+    Get a dictionary of predefined systems, defined in the systems.json file.
 
     Returns
     -------
