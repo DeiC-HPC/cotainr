@@ -1,0 +1,24 @@
+name: Scheduled documentation link check
+on:
+  schedule:
+    - cron: '15 2 * * TUE'  # every Tuesday night
+  workflow_dispatch:  # allow for manually trigging the workflow
+jobs:
+  check-docs-links:
+    name: Check for broken links in documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          cache: pip
+          cache-dependency-path: "**/docs-requirements.txt"
+      - name: Install docs dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r docs-requirements.txt
+      - name: Run Sphinx documentation linkcheck
+        run: make -C doc linkcheck || make -C doc linkcheck || make -C doc linkcheck  # simple "retry 3 times" - for flaky links
