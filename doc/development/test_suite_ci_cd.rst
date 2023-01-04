@@ -97,6 +97,10 @@ This fully automates the process of building `*latest* and *stable* versions <ht
 
 Scheduled tests
 ---------------
-We run a scheduled test (weekly, every Tuesday night) in order to continuously test `cotainr` against *all* versions of its dependencies. That way we proactively monitor for changes in dependencies that end up breaking `cotainr`.
+We run `scheduled GitHub actions <https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule>`_ (weekly, every Tuesday night) in order to continuously test `cotainr` against its dependencies. That way we proactively monitor for changes in dependencies that end up breaking `cotainr`.
 
-Currently, this is simply implemented as a scheduled trigger in the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow which tests the most recent point releases of Python (as provided by GitHub Actions) as well as the most recent Conda version. Ideally, this should be separated into its own workflow that also includes the *latest* versions of Python and Singularity/Apptainer in the test matrix.
+Currently, the following scheduled `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ are implemented:
+
+- `SCHED_docs_linkcheck <https://github.com/DeiC-HPC/cotainr/actions/workflows/SCHED_docs_linkcheck.yml>`_: Builds the documentation and checks for any broken hyperlinks.
+
+Additionally, we currently also schedule the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow which tests the most recent point releases of Python (as provided by GitHub Actions) as well as the most recent Conda version. Ideally, this should be separated into its own workflow that also includes the *latest* versions of Python and Singularity/Apptainer in the test matrix.
