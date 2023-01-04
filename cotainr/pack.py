@@ -42,6 +42,7 @@ class CondaInstall:
     """
 
     def __init__(self, *, sandbox, prefix="/opt/conda"):
+        """Bootstrap a conda installation."""
         self.sandbox = sandbox
         self.prefix = prefix
 
@@ -140,7 +141,7 @@ class CondaInstall:
         # Make up to 3 attempts at downloading the installer
         for retry in range(3):
             try:
-                with urllib.request.urlopen(conda_installer_url) as url:
+                with urllib.request.urlopen(conda_installer_url) as url:  # nosec B310
                     path.write_bytes(url.read())
 
                 break
@@ -148,8 +149,8 @@ class CondaInstall:
             except urllib.error.URLError as e:
                 url_error = e
 
-                # Exponential backoff
-                time.sleep(2**retry + random.uniform(0.001, 1))
+                # Exponential back-off
+                time.sleep(2**retry + random.uniform(0.001, 1))  # nosec B311
 
         else:
             raise url_error
