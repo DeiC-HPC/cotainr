@@ -171,6 +171,7 @@ class SingularitySandbox:
                     "exec",
                     "--writable",
                     "--no-home",
+                    "--no-umask",
                     self.sandbox_dir,
                     *shlex.split(cmd),
                 ]
