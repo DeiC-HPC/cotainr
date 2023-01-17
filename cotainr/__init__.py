@@ -7,7 +7,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
-__version__ = "2022.12.0"
+__version__ = "2023.01.0"
 _minimum_dependency_version = {
     # Versions must be specified as a (major, minor, patchlevel) tuple of
     # integers
