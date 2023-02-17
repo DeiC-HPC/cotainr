@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # cotainr - a user space Apptainer/Singularity container builder.
 # Copyright DeiC, deic.dk
 # Licensed under the European Union Public License (EUPL) 1.2
