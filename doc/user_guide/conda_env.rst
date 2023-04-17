@@ -30,9 +30,9 @@ The conda environment is automatically activated when the container is run, allo
 
 .. code-block:: console
 
-    $ singularity exec my_conda_env_container.sif python --version
+    $ singularity exec my_conda_env_container.sif python3 --version
     Python 3.11.0
-    $ singularity exec my_conda_env_container.sif python -c "import numpy; print(numpy.__version__)"
+    $ singularity exec my_conda_env_container.sif python3 -c "import numpy; print(numpy.__version__)"
     1.23.5
 
 
