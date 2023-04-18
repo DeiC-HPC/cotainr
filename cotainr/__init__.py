@@ -7,7 +7,6 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
-import platform
 import sys
 
 __version__ = "2023.02.0"
@@ -20,12 +19,14 @@ _minimum_dependency_version = {
 }
 
 # Error early on too old Python version
-_py_ver = platform.python_version_tuple()
-if tuple(map(int, _py_ver)) < (3, 8, 0):
+if sys.version_info < _minimum_dependency_version["python"]:
     sys.exit(
         (
-            "\033[91mCotainr requires Python>=3.8, you are running Python==%s from %s, "
-            "ABORTING!\033[0m"
+            "\033[91m"  # start of red colored text
+            "Cotainr requires Python>=3.8\n"
+            "You are running Python=='%s' from '%s'\n"
+            "ABORTING!"
+            "\033[0m"  # end of red colored text
         )
-        % (".".join(_py_ver), sys.executable)
+        % (sys.version, sys.executable)
     )
