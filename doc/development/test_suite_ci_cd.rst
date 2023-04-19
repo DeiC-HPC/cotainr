@@ -84,7 +84,7 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
 
 Continuous Delivery (CD)
 ------------------------
-Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/features.html#automatic-documentation-deployment>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
+Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/integrations.html>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
 
 Read the Docs continuous documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
