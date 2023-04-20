@@ -13,8 +13,8 @@ PACKAGENAME   = cotainr
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
-	@python -c """import sphinx.util; print('  %s  to autogenerate the API reference rst files' % sphinx.util.console.blue('docapi'.ljust(10)))"""
-	@python -c """import sphinx.util; print('  %s  to autogenerate the release notes rst file' % sphinx.util.console.blue('relnotes'.ljust(10)))"""
+	@python3 -c """import sphinx.util; print('  %s  to autogenerate the API reference rst files' % sphinx.util.console.blue('docapi'.ljust(10)))"""
+	@python3 -c """import sphinx.util; print('  %s  to autogenerate the release notes rst file' % sphinx.util.console.blue('relnotes'.ljust(10)))"""
 
 .PHONY: help apidoc Makefile
 
@@ -24,7 +24,7 @@ apidoc:
 	@rm api_reference/cotainr.rst
 
 relnotes:
-	@python release_notes/create_release_notes_list.py
+	@python3 release_notes/create_release_notes_list.py
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).

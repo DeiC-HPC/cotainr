@@ -39,7 +39,7 @@ def test_conda_env_build(
     assert any(datum.startswith("cotainr.command: ") for datum in container_metadata)
 
     container_python_process = singularity_exec(
-        f"{build_container_path} python -c 'import sys; print(sys.executable)'"
+        f"{build_container_path} python3 -c 'import sys; print(sys.executable)'"
     )
     for conda_identifier in ["conda", "/envs/"]:
         assert conda_identifier in container_python_process.stdout

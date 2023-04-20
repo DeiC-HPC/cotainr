@@ -7,6 +7,7 @@ We aim to keep the `cotainr` code base and documentation consistent by following
 - We follow the :pep:`8` style guide.
 - The Python source code is formatted using `black <https://black.readthedocs.io/en/stable/>`_ .
 - All `docstrings <https://peps.python.org/pep-0257/>`_ are formatted according to the `numpydoc format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
+- We reference the python interpreter executable as `python3` (not `python`) when explicitly calling the system python executable and as :data:`sys.executable` when reinvoking the interpreter as recommended in :pep:`394`.
 
 When hacking on `cotainr`, we generally try to:
 
