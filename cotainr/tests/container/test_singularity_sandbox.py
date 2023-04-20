@@ -110,6 +110,18 @@ class TestBuildImage:
 
 @pytest.mark.singularity_integration
 class TestRunCommandInContainer:
+    def test_correct_umask(self, data_cached_alpine_sif, context_set_umask):
+        test_file = "test_file_6021"
+        with context_set_umask(0o007):  # default umask on LUMI
+            with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
+                sandbox.run_command_in_container(cmd=f"touch /{test_file}")
+                test_file_path = sandbox.sandbox_dir / test_file
+                assert test_file_path.exists()
+                test_file_mode = test_file_path.stat().st_mode
+                # file permissions extracted from the last 3 octal digits of st_mode
+                test_file_permissions = test_file_mode & 0o777
+                assert oct(test_file_permissions) == "0o644"
+
     def test_error_handling(self, data_cached_alpine_sif):
         cmd = "some6021 non-meaningful command"
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
@@ -122,12 +134,6 @@ class TestRunCommandInContainer:
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
             process = sandbox.run_command_in_container(cmd="ls -l /home")
         assert process.stdout.strip() == "total 0"
-
-    def test_writeable(self, data_cached_alpine_sif):
-        test_file = "test_file_6021"
-        with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
-            sandbox.run_command_in_container(cmd=f"touch /{test_file}")
-            assert (sandbox.sandbox_dir / test_file).exists()
 
 
 class Test_AssertWithinSandboxContext:
