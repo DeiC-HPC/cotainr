@@ -35,6 +35,23 @@ def argparse_options_line():
 
 
 @pytest.fixture
+def context_set_umask():
+    """Return a context manager providing a context with the specified umask."""
+
+    @contextlib.contextmanager
+    def set_umask(umask):
+        current_umask = None
+        try:
+            current_umask = os.umask(umask)
+            yield
+        finally:
+            if current_umask is not None:
+                os.umask(current_umask)
+
+    return set_umask
+
+
+@pytest.fixture
 def patch_urllib_urlopen_as_bytes_stream(monkeypatch):
     """
     Disable urllib.request.urlopen(...).

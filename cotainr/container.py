@@ -156,11 +156,23 @@ class SingularitySandbox:
 
         Notes
         -----
-        The command is run with `--no-home` for maximum compatibility (e.g.
-        trying to mount the home folder on LUMI causes problems). Thus, when
-        running a command in the container, you cannot reference files in your
-        home directory. Instead you must copy all files into the container
-        sandbox and then reference the files relative to the container root.
+        We pass several flags to the `singularity exec` command to provide
+        maximum compatibility with different HPC systems. In particular, we
+        use:
+
+        - `--no-home` as trying to mount the home folder on some systems (e.g.
+          LUMI) causes problems. Thus, when running a command in the container,
+          you cannot reference files in your home directory. Instead you must
+          copy all files into the container sandbox and then reference the
+          files relative to the container root.
+        - `--no-umask` as some systems use a default umask (e.g. 0007 on LUMI)
+          that prevents you from accessing any files added to the container as
+          a regular user when you run the built container, e.g. such files are
+          owned by root:root with 660 permissions for a 0007 umask. Thus, all
+          files added to the container by running a command in the container
+          will have file permissions 644 (Apptainer/Singularity forces the
+          umask to 0022). If you need other file permissions, you must manually
+          change them.
         """
         self._assert_within_sandbox_context()
 
