@@ -1,5 +1,11 @@
 import subprocess
 import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, f'{Path("..").resolve()}')
+
+import cotainr
 
 tags = [
     tag
@@ -19,13 +25,13 @@ switcher = [
         "url": "https://cotainr.readthedocs.io/en/latest/",
     },
     {
-        "name": f"{tags[0]} (stable)",
+        "name": f"{cotainr.__version__} (stable)",
         "version": "stable",
         "url": "https://cotainr.readthedocs.io/en/stable/",
     },
 ]
 
-for tag in tags[1:4]:
+for tag in tags[0:3]:
     switcher.append(
         {
             "name": tag,
