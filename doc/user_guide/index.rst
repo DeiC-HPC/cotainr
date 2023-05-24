@@ -49,6 +49,7 @@ Containers are built using the :code:`cotainr build` subcommand, e.g.
 
 which would create the container `my_container.sif` based on the official `Ubuntu 22.04 DockerHub image <https://hub.docker.com/_/ubuntu>`_.
 The same could be achieved with:
+
 .. code-block:: console
 
     $ cotainr build my_container.sif --system some-system
