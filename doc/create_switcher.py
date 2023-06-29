@@ -3,7 +3,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-sys.path.insert(0, f'{Path("..").resolve()}')
+sys.path.insert(0, f'{(Path(__file__) / "..").resolve()}')
 
 import cotainr
 
