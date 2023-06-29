@@ -1,7 +1,7 @@
-import subprocess
 import json
-import sys
 from pathlib import Path
+import subprocess
+import sys
 
 sys.path.insert(0, f'{Path("..").resolve()}')
 
