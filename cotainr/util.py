@@ -21,11 +21,14 @@ systems_file
 """
 
 from concurrent.futures import ThreadPoolExecutor
+import functools
+import logging
 import json
 from pathlib import Path
 import subprocess
 import sys
 
+logger = logging.getLogger(__name__)
 systems_file = (Path(__file__) / "../../systems.json").resolve()
 
 
@@ -55,7 +58,7 @@ def get_systems():
         return {}
 
 
-def stream_subprocess(*, args, **kwargs):
+def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     """
     Run a the command described by `args` while streaming stdout and stderr.
 
@@ -68,6 +71,8 @@ def stream_subprocess(*, args, **kwargs):
     args : list or str
         Program arguments. See the docstring for :class:`subprocess.Popen` for
         details.
+    TODO: Cleanup and document
+    TODO: Consider reworking to avoid API break
 
     Returns
     -------
@@ -93,12 +98,16 @@ def stream_subprocess(*, args, **kwargs):
             stdout_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stdout,
-                print_stream=sys.stdout,
+                print_dispatch=log_dispatcher.log_to_stdout
+                if log_dispatcher is not None
+                else functools.partial(print, end="", file=sys.stdout),
             )
             stderr_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stderr,
-                print_stream=sys.stderr,
+                print_dispatch=log_dispatcher.log_to_stderr
+                if log_dispatcher is not None
+                else functools.partial(print, end="", file=sys.stderr),
             )
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
@@ -115,7 +124,7 @@ def stream_subprocess(*, args, **kwargs):
     return completed_process
 
 
-def _print_and_capture_stream(*, stream_handle, print_stream):
+def _print_and_capture_stream(*, stream_handle, print_dispatch):
     """
     Print a text stream while also storing it.
 
@@ -123,12 +132,39 @@ def _print_and_capture_stream(*, stream_handle, print_stream):
     ----------
     stream_handle : io.TextIOWrapper
         The text stream to print and capture.
-    print_stream : file object implementing write(string) method.
-        The file object to print the stream to.
+    print_dispatch : ...
     """
     captured_stream = []
     for line in stream_handle:
-        print(line, end="", file=print_stream)
+        print_dispatch(line)
         captured_stream.append(line)
 
     return captured_stream
+
+
+class LogDispatcher:
+    #TODO: Cleanup and document
+    def __init__(
+        self,
+        *,
+        name,
+        map_log_level_func,
+        log_level,
+        stdout_log_handlers,
+        stderr_log_handlers,
+    ):
+        self.logger_stdout = logging.getLogger(f"{name}.stdout")
+        for handler in stdout_log_handlers:
+            self.logger_stdout.addHandler(handler)
+        self.logger_stdout.setLevel(log_level)
+        self.logger_stderr = logging.getLogger(f"{name}.stderr")
+        for handler in stderr_log_handlers:
+            self.logger_stderr.addHandler(handler)
+        self.logger_stderr.setLevel(log_level)
+        self.map_log_level = map_log_level_func
+
+    def log_to_stdout(self, msg):
+        self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
+
+    def log_to_stderr(self, msg):
+        self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())

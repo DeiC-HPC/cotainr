@@ -28,6 +28,8 @@ main(\*args, \*\*kwargs)
 
 from abc import ABC, abstractmethod
 import argparse
+import functools
+import logging
 from pathlib import Path
 import platform
 import re
@@ -41,8 +43,17 @@ from . import util
 from . import _minimum_dependency_version as _min_dep_ver
 
 
+logger = logging.getLogger(__name__)
+
+
 class CotainrSubcommand(ABC):
     """Abstract base class for `CotainrCLI` subcommands."""
+
+    @abstractmethod
+    def __init__(self, *, log_dispatcher_factory=None, **subcommand_args):
+        #TODO: Clean-up and document
+        #TODO: Consider if this can be reworked to avoid breaking API
+        pass
 
     @classmethod
     def add_arguments(cls, *, parser):
@@ -83,10 +94,20 @@ class Build(CotainrSubcommand):
         image and other parameters for a simpler container creation.
         Running the info command will tell you more about the system and what is
         available.
+    TODO: Cleanup and document
     """
 
-    def __init__(self, *, image_path, base_image=None, conda_env=None, system=None):
+    def __init__(
+        self,
+        *,
+        log_dispatcher_factory=None,
+        image_path,
+        base_image=None,
+        conda_env=None,
+        system=None,
+    ):
         """Construct the "build" subcommand."""
+        self.log_dispatcher_factory = log_dispatcher_factory
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
             val = input(
@@ -138,7 +159,10 @@ class Build(CotainrSubcommand):
 
     def execute(self):
         """Execute the "build" subcommand."""
-        with container.SingularitySandbox(base_image=self.base_image) as sandbox:
+        with container.SingularitySandbox(
+            base_image=self.base_image,
+            log_dispatcher_factory=self.log_dispatcher_factory,
+        ) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
                 conda_env_name = "conda_container_env"
@@ -160,8 +184,9 @@ class Info(CotainrSubcommand):
     The "info" subcommand.
     """
 
-    def __init__(self):
+    def __init__(self, *, log_dispatcher_factory=None):
         """Construct the "info" subcommand."""
+        #TODO: Cleanup log_dispatcher
         self._checkmark = "\033[92mOK\033[0m"  # green OK
         self._nocheckmark = "\033[91mERROR\033[0m"  # red ERROR
         self._tabs_width = 4
@@ -309,7 +334,8 @@ class Info(CotainrSubcommand):
 class _NoSubcommand(CotainrSubcommand):
     """A subcommand that simply prints the `parser` help message and exits."""
 
-    def __init__(self, *, parser):
+    def __init__(self, *, log_dispatcher_factory=None, parser):
+        #TODO: Cleanup
         self.parser = parser
 
     def execute(self):
@@ -375,11 +401,45 @@ class CotainrCLI:
             key: val for key, val in vars(self.args).items() if key != "subcommand_cls"
         }
 
+        # Setup logging
+        console_log_formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        console_stdout_log = logging.StreamHandler(stream=sys.stdout)  #TODO: Replace with SpinnerStreamHandler
+        console_stdout_log.setLevel(logging.DEBUG)  #TODO: set based on CLI args
+        console_stdout_log.setFormatter(console_log_formatter)  #TODO: set based on CLI args
+        console_stderr_log = logging.StreamHandler(stream=sys.stderr)  #TODO: Replace with SpinnerStreamHandler
+        console_stderr_log.setLevel(logging.DEBUG)  #TODO: set based on CLI args
+        console_stderr_log.setFormatter(console_log_formatter)  #TODO: set based on CLI args
+        #TODO: Add FileHandler(s)
+
+        log_dispatcher_factory = functools.partial(
+            util.LogDispatcher,
+            log_level=logging.DEBUG, #TODO: set based on CLI args
+            stdout_log_handlers=[console_stdout_log],
+            stderr_log_handlers=[console_stderr_log],
+        )
+
+        root_logger = logging.getLogger("cotainr")
+        root_logger.setLevel(logging.DEBUG)  #TODO: set based on CLI args
+        root_logger.addHandler(console_stderr_log)
+
+        # Run subcommand
         try:
-            self.subcommand = self.args.subcommand_cls(**subcommand_args)
+            #TODO: Remove test logs
+            logger.debug("DEBUG: running subcommand")
+            logger.info("INFO: running subcommand")
+            logger.warning("WARNING: running subcommand")
+            logger.error("ERROR: running subcommand")
+            logger.critical("CRITICAL: running subcommand")
+            self.subcommand = self.args.subcommand_cls(
+                log_dispatcher_factory=log_dispatcher_factory, **subcommand_args
+            )
         except AttributeError:
+            #TODO: Add proper exception logs throughout (and not here...)
+            logger.exception("EXCEPTION: running subcommand")
             # Print help and exit if no subcommand was given
-            self.subcommand = _NoSubcommand(parser=parser)
+            self.subcommand = _NoSubcommand(log_dispatcher_factory=None, parser=parser)
 
 
 def main(*args, **kwargs):

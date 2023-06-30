@@ -14,6 +14,7 @@ SingularitySandbox
 """
 
 import json
+import logging
 import os
 from pathlib import Path
 import shlex
@@ -23,6 +24,9 @@ from tempfile import TemporaryDirectory
 
 from . import __version__ as _cotainr_version
 from . import util
+
+#TODO: Add loggers all over
+logger = logging.getLogger(__name__)
 
 
 class SingularitySandbox:
@@ -47,11 +51,15 @@ class SingularitySandbox:
     sandbox_dir : :class:`os.PathLike` or None
         The path to the temporary directory containing the sandbox if within a
         sandbox context, otherwise it is None.
+    #TODO: Cleanup and document
     """
 
-    def __init__(self, *, base_image):
+    def __init__(self, *, base_image, log_dispatcher_factory=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
+        self.log_dispatcher = log_dispatcher_factory(
+            name=__class__.__name__, map_log_level_func=self._map_log_level
+        ) #TODO: Consider replacing __class__.__name__ with actual singularity provider
         self.sandbox_dir = None
 
     def __enter__(self):
@@ -91,6 +99,34 @@ class SingularitySandbox:
         os.chdir(self._origin)
         self._tmp_dir.cleanup()
         self.sandbox_dir = None
+
+    def add_metadata(self):
+        """
+        Add metadata to the container sandbox.
+
+        The following metadata is added to the container sandbox:
+          - "cotainr.command": The full command line used to build the container.
+          - "cotainr.version": The version of cotainr used to build the container.
+          - "cotainr.url": The cotainr project url.
+
+        The container metadata may be inspected by running `singularity inspect` on the
+        built container image file.
+
+        Notes
+        -----
+        The metadata entries are added to the `.singularity.d/labels.json
+        <https://apptainer.org/docs/user/main/environment_and_metadata.html#singularity-d-directory>`_
+        file.
+
+        """
+        labels_path = self.sandbox_dir / ".singularity.d/labels.json"
+        with open(labels_path, "r+") as f:
+            metadata = json.load(f)
+            metadata["cotainr.command"] = " ".join(sys.argv)
+            metadata["cotainr.version"] = _cotainr_version
+            metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
+            f.seek(0)
+            json.dump(metadata, f)
 
     def add_to_env(self, *, shell_script):
         """
@@ -199,34 +235,6 @@ class SingularitySandbox:
 
         return process
 
-    def add_metadata(self):
-        """
-        Add metadata to the container sandbox.
-
-        The following metadata is added to the container sandbox:
-          - "cotainr.command": The full command line used to build the container.
-          - "cotainr.version": The version of cotainr used to build the container.
-          - "cotainr.url": The cotainr project url.
-
-        The container metadata may be inspected by running `singularity inspect` on the
-        built container image file.
-
-        Notes
-        -----
-        The metadata entries are added to the `.singularity.d/labels.json
-        <https://apptainer.org/docs/user/main/environment_and_metadata.html#singularity-d-directory>`_
-        file.
-
-        """
-        labels_path = self.sandbox_dir / ".singularity.d/labels.json"
-        with open(labels_path, "r+") as f:
-            metadata = json.load(f)
-            metadata["cotainr.command"] = " ".join(sys.argv)
-            metadata["cotainr.version"] = _cotainr_version
-            metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
-            f.seek(0)
-            json.dump(metadata, f)
-
     def _assert_within_sandbox_context(self):
         """Raise a ValueError if we are not inside the sandbox context."""
         if self.sandbox_dir is None:
@@ -234,4 +242,22 @@ class SingularitySandbox:
 
     def _subprocess_runner(self, *, args, **kwargs):
         """Wrap the choice of subprocess runner."""
-        return util.stream_subprocess(args=args, **kwargs)
+        return util.stream_subprocess(
+            args=args, log_dispatcher=self.log_dispatcher, **kwargs
+        )
+
+    @staticmethod
+    def _map_log_level(msg):
+        #TODO: Cleanup and document
+        if msg.startswith("DEBUG") or msg.startswith("VERBOSE"):
+            return logging.DEBUG
+        elif msg.startswith("INFO") or msg.startswith("LOG"):
+            return logging.INFO
+        elif msg.startswith("WARNING"):
+            return logging.WARNING
+        elif msg.startswith("ERROR"):
+            return logging.ERROR
+        elif msg.startswith("ABRT"):
+            return logging.CRITICAL
+        else:
+            return logging.INFO
