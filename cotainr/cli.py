@@ -28,7 +28,6 @@ main(\*args, \*\*kwargs)
 
 from abc import ABC, abstractmethod
 import argparse
-import functools
 import logging
 from pathlib import Path
 import platform
@@ -39,6 +38,7 @@ import sys
 
 from . import container
 from . import pack
+from . import tracing
 from . import util
 from . import _minimum_dependency_version as _min_dep_ver
 
@@ -46,14 +46,35 @@ from . import _minimum_dependency_version as _min_dep_ver
 logger = logging.getLogger(__name__)
 
 
+class CommonParentParsers:
+    # TODO: Cleanup and document (also in docs)
+    # TODO: --co-color
+
+    @staticmethod
+    def _verbose_parser():
+        # TODO: --quiet as mutually exclusive to verbose - and have it set verbosity to -1
+        verbose_parser = argparse.ArgumentParser(add_help=False)
+        verbose_parser.add_argument(
+            "--verbose",
+            "-v",
+            action="count",
+            dest="verbosity",
+            default=0,
+            help=(
+                "increase the verbosity of the output from cotainr. "
+                "Can be used multiple times: Once for INFO, twice for DEBUG, "
+                "and three times for TRACE."
+            ),
+        )
+        return verbose_parser
+
+    verbose = _verbose_parser()
+
+
 class CotainrSubcommand(ABC):
     """Abstract base class for `CotainrCLI` subcommands."""
 
-    @abstractmethod
-    def __init__(self, *, log_dispatcher_factory=None, **subcommand_args):
-        #TODO: Clean-up and document
-        #TODO: Consider if this can be reworked to avoid breaking API
-        pass
+    _parent_parsers = []
 
     @classmethod
     def add_arguments(cls, *, parser):
@@ -97,17 +118,19 @@ class Build(CotainrSubcommand):
     TODO: Cleanup and document
     """
 
+    _parent_parsers = [CommonParentParsers.verbose]
+
     def __init__(
         self,
         *,
-        log_dispatcher_factory=None,
+        verbosity,
         image_path,
         base_image=None,
         conda_env=None,
         system=None,
     ):
         """Construct the "build" subcommand."""
-        self.log_dispatcher_factory = log_dispatcher_factory
+        self.verbosity = verbosity
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
             val = input(
@@ -160,8 +183,7 @@ class Build(CotainrSubcommand):
     def execute(self):
         """Execute the "build" subcommand."""
         with container.SingularitySandbox(
-            base_image=self.base_image,
-            log_dispatcher_factory=self.log_dispatcher_factory,
+            base_image=self.base_image, verbosity=self.verbosity
         ) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
@@ -184,9 +206,8 @@ class Info(CotainrSubcommand):
     The "info" subcommand.
     """
 
-    def __init__(self, *, log_dispatcher_factory=None):
+    def __init__(self):
         """Construct the "info" subcommand."""
-        #TODO: Cleanup log_dispatcher
         self._checkmark = "\033[92mOK\033[0m"  # green OK
         self._nocheckmark = "\033[91mERROR\033[0m"  # red ERROR
         self._tabs_width = 4
@@ -334,8 +355,7 @@ class Info(CotainrSubcommand):
 class _NoSubcommand(CotainrSubcommand):
     """A subcommand that simply prints the `parser` help message and exits."""
 
-    def __init__(self, *, log_dispatcher_factory=None, parser):
-        #TODO: Cleanup
+    def __init__(self, *, parser):
         self.parser = parser
 
     def execute(self):
@@ -391,6 +411,7 @@ class CotainrCLI:
                     name=subcommand_cls.__name__.lower(),
                     help=subcommand_doc_summary,
                     description=subcommand_doc_summary,
+                    parents=subcommand_cls._parent_parsers,
                 )
                 subcommand_cls.add_arguments(parser=sub_parser)
                 sub_parser.set_defaults(subcommand_cls=subcommand_cls)
@@ -401,45 +422,29 @@ class CotainrCLI:
             key: val for key, val in vars(self.args).items() if key != "subcommand_cls"
         }
 
-        # Setup logging
-        console_log_formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
-        console_stdout_log = logging.StreamHandler(stream=sys.stdout)  #TODO: Replace with SpinnerStreamHandler
-        console_stdout_log.setLevel(logging.DEBUG)  #TODO: set based on CLI args
-        console_stdout_log.setFormatter(console_log_formatter)  #TODO: set based on CLI args
-        console_stderr_log = logging.StreamHandler(stream=sys.stderr)  #TODO: Replace with SpinnerStreamHandler
-        console_stderr_log.setLevel(logging.DEBUG)  #TODO: set based on CLI args
-        console_stderr_log.setFormatter(console_log_formatter)  #TODO: set based on CLI args
-        #TODO: Add FileHandler(s)
-
-        log_dispatcher_factory = functools.partial(
-            util.LogDispatcher,
-            log_level=logging.DEBUG, #TODO: set based on CLI args
-            stdout_log_handlers=[console_stdout_log],
-            stderr_log_handlers=[console_stderr_log],
-        )
-
+        # Setup root logger to catch all internal cotainr logging
         root_logger = logging.getLogger("cotainr")
-        root_logger.setLevel(logging.DEBUG)  #TODO: set based on CLI args
-        root_logger.addHandler(console_stderr_log)
+        if "verbosity" in subcommand_args:
+            root_logger.setLevel(
+                tracing.get_cotainr_log_level(verbosity=subcommand_args["verbosity"])
+            )
+            # #TODO set format and handlers
+            # root_logger.addHandler(console_stderr_log)
 
         # Run subcommand
         try:
-            #TODO: Remove test logs
+            # TODO: Remove test logs
             logger.debug("DEBUG: running subcommand")
             logger.info("INFO: running subcommand")
             logger.warning("WARNING: running subcommand")
             logger.error("ERROR: running subcommand")
             logger.critical("CRITICAL: running subcommand")
-            self.subcommand = self.args.subcommand_cls(
-                log_dispatcher_factory=log_dispatcher_factory, **subcommand_args
-            )
+            self.subcommand = self.args.subcommand_cls(**subcommand_args)
         except AttributeError:
-            #TODO: Add proper exception logs throughout (and not here...)
+            # TODO: Add proper exception logs throughout (and not here...)
             logger.exception("EXCEPTION: running subcommand")
             # Print help and exit if no subcommand was given
-            self.subcommand = _NoSubcommand(log_dispatcher_factory=None, parser=parser)
+            self.subcommand = _NoSubcommand(parser=parser)
 
 
 def main(*args, **kwargs):

@@ -140,31 +140,3 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
         captured_stream.append(line)
 
     return captured_stream
-
-
-class LogDispatcher:
-    #TODO: Cleanup and document
-    def __init__(
-        self,
-        *,
-        name,
-        map_log_level_func,
-        log_level,
-        stdout_log_handlers,
-        stderr_log_handlers,
-    ):
-        self.logger_stdout = logging.getLogger(f"{name}.stdout")
-        for handler in stdout_log_handlers:
-            self.logger_stdout.addHandler(handler)
-        self.logger_stdout.setLevel(log_level)
-        self.logger_stderr = logging.getLogger(f"{name}.stderr")
-        for handler in stderr_log_handlers:
-            self.logger_stderr.addHandler(handler)
-        self.logger_stderr.setLevel(log_level)
-        self.map_log_level = map_log_level_func
-
-    def log_to_stdout(self, msg):
-        self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
-
-    def log_to_stderr(self, msg):
-        self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())

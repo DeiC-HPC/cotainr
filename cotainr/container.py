@@ -23,9 +23,10 @@ import sys
 from tempfile import TemporaryDirectory
 
 from . import __version__ as _cotainr_version
+from . import tracing
 from . import util
 
-#TODO: Add loggers all over
+# TODO: Add loggers all over
 logger = logging.getLogger(__name__)
 
 
@@ -54,12 +55,14 @@ class SingularitySandbox:
     #TODO: Cleanup and document
     """
 
-    def __init__(self, *, base_image, log_dispatcher_factory=None):
+    def __init__(self, *, base_image, verbosity):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
-        self.log_dispatcher = log_dispatcher_factory(
-            name=__class__.__name__, map_log_level_func=self._map_log_level
-        ) #TODO: Consider replacing __class__.__name__ with actual singularity provider
+        self.log_dispatcher = tracing.LogDispatcher(
+            name=__class__.__name__,
+            map_log_level_func=self._map_log_level,
+            verbosity=verbosity,
+        )  # TODO: Consider replacing __class__.__name__ with actual singularity provider
         self.sandbox_dir = None
 
     def __enter__(self):
@@ -248,7 +251,7 @@ class SingularitySandbox:
 
     @staticmethod
     def _map_log_level(msg):
-        #TODO: Cleanup and document
+        # TODO: Cleanup and document
         if msg.startswith("DEBUG") or msg.startswith("VERBOSE"):
             return logging.DEBUG
         elif msg.startswith("INFO") or msg.startswith("LOG"):
