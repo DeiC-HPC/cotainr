@@ -51,10 +51,10 @@ class CommonParentParsers:
     # TODO: --co-color
 
     @staticmethod
-    def _verbose_parser():
-        # TODO: --quiet as mutually exclusive to verbose - and have it set verbosity to -1
-        verbose_parser = argparse.ArgumentParser(add_help=False)
-        verbose_parser.add_argument(
+    def _verbose_quiet_parser():
+        verbose_quiet_parser = argparse.ArgumentParser(add_help=False)
+        verbose_quiet_group = verbose_quiet_parser.add_mutually_exclusive_group()
+        verbose_quiet_group.add_argument(
             "--verbose",
             "-v",
             action="count",
@@ -66,9 +66,17 @@ class CommonParentParsers:
                 "and three times for TRACE."
             ),
         )
-        return verbose_parser
+        verbose_quiet_group.add_argument(
+            "--quiet",
+            "-q",
+            action="store_const",
+            const=-1,
+            dest="verbosity",
+            help="do not show any non-CRITICAL output from cotainr.",
+        )
+        return verbose_quiet_parser
 
-    verbose = _verbose_parser()
+    verbose_quiet = _verbose_quiet_parser()
 
 
 class CotainrSubcommand(ABC):
@@ -118,7 +126,7 @@ class Build(CotainrSubcommand):
     TODO: Cleanup and document
     """
 
-    _parent_parsers = [CommonParentParsers.verbose]
+    _parent_parsers = [CommonParentParsers.verbose_quiet]
 
     def __init__(
         self,
@@ -182,20 +190,42 @@ class Build(CotainrSubcommand):
 
     def execute(self):
         """Execute the "build" subcommand."""
+        logger.log(
+            msg="Creating Singularity Sandbox...", level=tracing.COTAINR_CLI_INFO
+        )
         with container.SingularitySandbox(
             base_image=self.base_image, verbosity=self.verbosity
         ) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
+                logger.log(
+                    msg="Installing Conda environment...: %s.",
+                    args=(self.conda_env,),
+                    level=tracing.COTAINR_CLI_INFO,
+                )
                 conda_env_name = "conda_container_env"
                 conda_env_file = sandbox.sandbox_dir / self.conda_env.name
                 shutil.copyfile(self.conda_env, conda_env_file)
                 conda_install = pack.CondaInstall(sandbox=sandbox)
                 conda_install.add_environment(path=conda_env_file, name=conda_env_name)
                 sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
+
+                # Clean-up unused files
+                logger.log(
+                    msg="Cleaning up unused Conda files...",
+                    level=tracing.COTAINR_CLI_INFO,
+                )
                 conda_install.cleanup_unused_files()
 
+            logger.log(
+                msg="Adding metadata to container...",
+                level=tracing.COTAINR_CLI_INFO,
+            )
             sandbox.add_metadata()
+            logger.log(
+                msg="Building container image...",
+                level=tracing.COTAINR_CLI_INFO,
+            )
             sandbox.build_image(path=self.image_path)
 
 
@@ -423,13 +453,8 @@ class CotainrCLI:
         }
 
         # Setup root logger to catch all internal cotainr logging
-        root_logger = logging.getLogger("cotainr")
         if "verbosity" in subcommand_args:
-            root_logger.setLevel(
-                tracing.get_cotainr_log_level(verbosity=subcommand_args["verbosity"])
-            )
-            # #TODO set format and handlers
-            # root_logger.addHandler(console_stderr_log)
+            tracing.setup_cotainr_cli_logging(verbosity=subcommand_args["verbosity"])
 
         # Run subcommand
         try:

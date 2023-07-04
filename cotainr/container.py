@@ -58,12 +58,13 @@ class SingularitySandbox:
     def __init__(self, *, base_image, verbosity):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
+        self.sandbox_dir = None
+        self.verbosity = verbosity
         self.log_dispatcher = tracing.LogDispatcher(
             name=__class__.__name__,
             map_log_level_func=self._map_log_level,
             verbosity=verbosity,
-        )  # TODO: Consider replacing __class__.__name__ with actual singularity provider
-        self.sandbox_dir = None
+        )
 
     def __enter__(self):
         """
@@ -82,14 +83,16 @@ class SingularitySandbox:
         self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
         self.sandbox_dir.mkdir(exist_ok=False)
         self._subprocess_runner(
-            args=[
-                "singularity",
-                "build",
-                "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
-                "--sandbox",
-                self.sandbox_dir,
-                self.base_image,
-            ]
+            args=self._add_output_formatting_args(
+                args=[
+                    "singularity",
+                    "build",
+                    "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
+                    "--sandbox",
+                    self.sandbox_dir,
+                    self.base_image,
+                ]
+            ),
         )
 
         # Change directory to the sandbox
@@ -166,16 +169,18 @@ class SingularitySandbox:
         self._assert_within_sandbox_context()
 
         self._subprocess_runner(
-            args=[
-                "singularity",
-                "build",
-                "--force",
-                path,
-                self.sandbox_dir,
-            ]
+            args=self._add_output_formatting_args(
+                args=[
+                    "singularity",
+                    "build",
+                    "--force",
+                    path,
+                    self.sandbox_dir,
+                ]
+            ),
         )
 
-    def run_command_in_container(self, *, cmd):
+    def run_command_in_container(self, *, custom_log_dispatcher=None, cmd):
         """
         Run a command in the container sandbox.
 
@@ -187,6 +192,7 @@ class SingularitySandbox:
         ----------
         cmd : str
             The command to run in the container sandbox.
+        TODO: Update
 
         Returns
         -------
@@ -217,15 +223,18 @@ class SingularitySandbox:
 
         try:
             process = self._subprocess_runner(
-                args=[
-                    "singularity",
-                    "exec",
-                    "--writable",
-                    "--no-home",
-                    "--no-umask",
-                    self.sandbox_dir,
-                    *shlex.split(cmd),
-                ]
+                custom_log_dispatcher=custom_log_dispatcher,
+                args=self._add_output_formatting_args(
+                    args=[
+                        "singularity",
+                        "exec",
+                        "--writable",
+                        "--no-home",
+                        "--no-umask",
+                        self.sandbox_dir,
+                        *shlex.split(cmd),
+                    ]
+                ),
             )
         except subprocess.CalledProcessError as e:
             singularity_fatal_error = "\n".join(
@@ -243,10 +252,25 @@ class SingularitySandbox:
         if self.sandbox_dir is None:
             raise ValueError("The operation is only valid inside a sandbox context.")
 
-    def _subprocess_runner(self, *, args, **kwargs):
+    def _add_output_formatting_args(self, *, args):
+        # TODO: document
+        if self.verbosity <= 0:
+            args.insert(1, "--quiet")
+        elif self.verbosity >= 2:
+            args.insert(1, "--verbose")
+
+        return args
+
+    def _subprocess_runner(self, *, custom_log_dispatcher=None, args, **kwargs):
         """Wrap the choice of subprocess runner."""
         return util.stream_subprocess(
-            args=args, log_dispatcher=self.log_dispatcher, **kwargs
+            log_dispatcher=(
+                self.log_dispatcher
+                if custom_log_dispatcher is None
+                else custom_log_dispatcher
+            ),
+            args=args,
+            **kwargs,
         )
 
     @staticmethod
@@ -263,4 +287,5 @@ class SingularitySandbox:
         elif msg.startswith("ABRT"):
             return logging.CRITICAL
         else:
+            # If no prefix on message, assume its INFO level
             return logging.INFO

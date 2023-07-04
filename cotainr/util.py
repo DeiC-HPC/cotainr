@@ -58,7 +58,7 @@ def get_systems():
         return {}
 
 
-def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
+def stream_subprocess(*, log_dispatcher=None, args, **kwargs):
     """
     Run a the command described by `args` while streaming stdout and stderr.
 
