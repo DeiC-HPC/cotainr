@@ -190,19 +190,13 @@ class Build(CotainrSubcommand):
 
     def execute(self):
         """Execute the "build" subcommand."""
-        logger.log(
-            msg="Creating Singularity Sandbox...", level=tracing.COTAINR_CLI_INFO
-        )
+        logger.info("Creating Singularity Sandbox...")
         with container.SingularitySandbox(
             base_image=self.base_image, verbosity=self.verbosity
         ) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
-                logger.log(
-                    msg="Installing Conda environment...: %s.",
-                    args=(self.conda_env,),
-                    level=tracing.COTAINR_CLI_INFO,
-                )
+                logger.info("Installing Conda environment...: %s.", self.conda_env)
                 conda_env_name = "conda_container_env"
                 conda_env_file = sandbox.sandbox_dir / self.conda_env.name
                 shutil.copyfile(self.conda_env, conda_env_file)
@@ -211,21 +205,12 @@ class Build(CotainrSubcommand):
                 sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
                 # Clean-up unused files
-                logger.log(
-                    msg="Cleaning up unused Conda files...",
-                    level=tracing.COTAINR_CLI_INFO,
-                )
+                logger.info("Cleaning up unused Conda files...")
                 conda_install.cleanup_unused_files()
 
-            logger.log(
-                msg="Adding metadata to container...",
-                level=tracing.COTAINR_CLI_INFO,
-            )
+            logger.info("Adding metadata to container...")
             sandbox.add_metadata()
-            logger.log(
-                msg="Building container image...",
-                level=tracing.COTAINR_CLI_INFO,
-            )
+            logger.info("Building container image...")
             sandbox.build_image(path=self.image_path)
 
 
@@ -453,8 +438,7 @@ class CotainrCLI:
         }
 
         # Setup root logger to catch all internal cotainr logging
-        if "verbosity" in subcommand_args:
-            tracing.setup_cotainr_cli_logging(verbosity=subcommand_args["verbosity"])
+        self._setup_cotainr_cli_logging(verbosity=subcommand_args.get("verbosity", 0))
 
         # Run subcommand
         try:
@@ -470,6 +454,60 @@ class CotainrCLI:
             logger.exception("EXCEPTION: running subcommand")
             # Print help and exit if no subcommand was given
             self.subcommand = _NoSubcommand(parser=parser)
+
+    @staticmethod
+    def _setup_cotainr_cli_logging(*, verbosity):
+        # TODO: Move to CotainrCLI?
+        class OnlyDebugInfoLevelFilter(logging.Filter):
+            def filter(self, record):
+                return record.levelno <= logging.INFO
+
+        # Setup cotainr CLI log level and format
+        if verbosity >= 2:
+            cotainr_log_level = logging.DEBUG
+            cotainr_console_stdout_log_formatter = logging.Formatter(
+                "%(asctime)s - %(name)s::%(funcName)s::%(lineno)d::"
+                "Cotainr:%(levelname)s$ %(message)s"
+            )
+            cotainr_console_stderr_log_formatter = (
+                cotainr_console_stdout_log_formatter
+            )
+        else:
+            cotainr_log_level = logging.INFO
+            cotainr_console_stdout_log_formatter = logging.Formatter(
+                "Cotainr$ %(message)s"
+            )
+            cotainr_console_stderr_log_formatter = logging.Formatter(
+                # Only show levelname for WARNINGs and above
+                "Cotainr:%(levelname)s$ %(message)s"
+            )
+
+        # Setup cotainr CLI log handlers
+        cotainr_console_stdout_handler = logging.StreamHandler(
+            stream=tracing.console_progress_handler.stdout
+        )
+        cotainr_console_stdout_handler.setLevel(cotainr_log_level)
+        cotainr_console_stdout_handler.setFormatter(
+            cotainr_console_stdout_log_formatter
+        )
+        cotainr_console_stdout_handler.addFilter(
+            # Avoid also emitting WARNINGs and above on stdout
+            OnlyDebugInfoLevelFilter()
+        )
+        cotainr_console_stderr_handler = logging.StreamHandler(
+            stream=tracing.console_progress_handler.stderr
+        )
+        cotainr_console_stderr_handler.setLevel(logging.WARNING)
+        cotainr_console_stderr_handler.setFormatter(
+            cotainr_console_stderr_log_formatter
+        )
+
+        # Define cotainr root logger
+        root_logger = logging.getLogger("cotainr")
+        root_logger.setLevel(cotainr_log_level)
+        root_logger.addHandler(cotainr_console_stdout_handler)
+        root_logger.addHandler(cotainr_console_stderr_handler)
+        # TODO: Add FileHandler
 
 
 def main(*args, **kwargs):
