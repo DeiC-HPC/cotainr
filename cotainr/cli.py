@@ -141,11 +141,14 @@ class Build(CotainrSubcommand):
         self.verbosity = verbosity
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
-            val = input(
-                f"{self.image_path} already exists. "
-                "Would you like to overwrite it? (y/N) "
-            ).lower()
+            # TODO: Implement tracing.input function
+            with tracing.io_lock:
+                val = input(
+                    f"{self.image_path} already exists. "
+                    "Would you like to overwrite it? (y/N) "
+                ).lower()
             if val != "y":
+                tracing.console_progress_handler.stop() #TODO
                 sys.exit(0)
 
         self.base_image = base_image
@@ -454,10 +457,11 @@ class CotainrCLI:
             logger.exception("EXCEPTION: running subcommand")
             # Print help and exit if no subcommand was given
             self.subcommand = _NoSubcommand(parser=parser)
+            tracing.console_progress_handler.stop() #TODO
 
     @staticmethod
     def _setup_cotainr_cli_logging(*, verbosity):
-        # TODO: Move to CotainrCLI?
+        # TODO: document
         class OnlyDebugInfoLevelFilter(logging.Filter):
             def filter(self, record):
                 return record.levelno <= logging.INFO
@@ -469,9 +473,7 @@ class CotainrCLI:
                 "%(asctime)s - %(name)s::%(funcName)s::%(lineno)d::"
                 "Cotainr:%(levelname)s$ %(message)s"
             )
-            cotainr_console_stderr_log_formatter = (
-                cotainr_console_stdout_log_formatter
-            )
+            cotainr_console_stderr_log_formatter = cotainr_console_stdout_log_formatter
         else:
             cotainr_log_level = logging.INFO
             cotainr_console_stdout_log_formatter = logging.Formatter(
@@ -483,9 +485,7 @@ class CotainrCLI:
             )
 
         # Setup cotainr CLI log handlers
-        cotainr_console_stdout_handler = logging.StreamHandler(
-            stream=tracing.console_progress_handler.stdout
-        )
+        cotainr_console_stdout_handler = tracing.QueuedStreamHandler(stream=sys.stdout)
         cotainr_console_stdout_handler.setLevel(cotainr_log_level)
         cotainr_console_stdout_handler.setFormatter(
             cotainr_console_stdout_log_formatter
@@ -494,9 +494,7 @@ class CotainrCLI:
             # Avoid also emitting WARNINGs and above on stdout
             OnlyDebugInfoLevelFilter()
         )
-        cotainr_console_stderr_handler = logging.StreamHandler(
-            stream=tracing.console_progress_handler.stderr
-        )
+        cotainr_console_stderr_handler = tracing.QueuedStreamHandler(stream=sys.stderr)
         cotainr_console_stderr_handler.setLevel(logging.WARNING)
         cotainr_console_stderr_handler.setFormatter(
             cotainr_console_stderr_log_formatter
@@ -516,6 +514,7 @@ def main(*args, **kwargs):
     # subcommand
     cli = CotainrCLI()
     cli.subcommand.execute()
+    tracing.console_progress_handler.stop()
 
 
 def _extract_help_from_docstring(*, arg, docstring):

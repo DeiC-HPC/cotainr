@@ -86,6 +86,7 @@ class SingularitySandbox:
             args=self._add_output_formatting_args(
                 args=[
                     "singularity",
+                    "--nocolor",
                     "build",
                     "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
                     "--sandbox",
@@ -172,6 +173,7 @@ class SingularitySandbox:
             args=self._add_output_formatting_args(
                 args=[
                     "singularity",
+                    "--nocolor",
                     "build",
                     "--force",
                     path,
@@ -227,6 +229,7 @@ class SingularitySandbox:
                 args=self._add_output_formatting_args(
                     args=[
                         "singularity",
+                        "--nocolor",
                         "exec",
                         "--writable",
                         "--no-home",
@@ -284,7 +287,7 @@ class SingularitySandbox:
             return logging.WARNING
         elif msg.startswith("ERROR"):
             return logging.ERROR
-        elif msg.startswith("ABRT"):
+        elif msg.startswith("ABRT") or msg.startswith("FATAL"):
             return logging.CRITICAL
         else:
             # If no prefix on message, assume its INFO level
