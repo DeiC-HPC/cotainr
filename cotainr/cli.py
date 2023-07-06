@@ -31,10 +31,12 @@ import argparse
 import logging
 from pathlib import Path
 import platform
+import queue
 import re
 import shutil
 import subprocess
 import sys
+import time
 
 from . import container
 from . import pack
@@ -48,7 +50,7 @@ logger = logging.getLogger(__name__)
 
 class CommonParentParsers:
     # TODO: Cleanup and document (also in docs)
-    # TODO: --co-color
+    # TODO: --no-color
 
     @staticmethod
     def _verbose_quiet_parser():
@@ -141,14 +143,11 @@ class Build(CotainrSubcommand):
         self.verbosity = verbosity
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
-            # TODO: Implement tracing.input function
-            with tracing.io_lock:
-                val = input(
-                    f"{self.image_path} already exists. "
-                    "Would you like to overwrite it? (y/N) "
-                ).lower()
+            val = input(
+                f"{self.image_path} already exists. "
+                "Would you like to overwrite it? (y/N) "
+            ).lower()
             if val != "y":
-                tracing.console_progress_handler.stop() #TODO
                 sys.exit(0)
 
         self.base_image = base_image
@@ -167,6 +166,8 @@ class Build(CotainrSubcommand):
                 )
         else:
             self.conda_env = None
+
+        self.console_log_msg_queue = None
 
     @classmethod
     def add_arguments(cls, *, parser):
@@ -193,28 +194,43 @@ class Build(CotainrSubcommand):
 
     def execute(self):
         """Execute the "build" subcommand."""
+        t_start_build = time.time()
         logger.info("Creating Singularity Sandbox...")
         with container.SingularitySandbox(
-            base_image=self.base_image, verbosity=self.verbosity
+            base_image=self.base_image,
+            verbosity=self.verbosity,
+            console_log_msg_queue=self.console_log_msg_queue,
         ) as sandbox:
             if self.conda_env is not None:
                 # Install supplied conda env
-                logger.info("Installing Conda environment...: %s.", self.conda_env)
+                logger.info("Installing Conda environment: %s...", self.conda_env)
                 conda_env_name = "conda_container_env"
                 conda_env_file = sandbox.sandbox_dir / self.conda_env.name
                 shutil.copyfile(self.conda_env, conda_env_file)
                 conda_install = pack.CondaInstall(sandbox=sandbox)
-                conda_install.add_environment(path=conda_env_file, name=conda_env_name)
+                conda_install.add_environment(
+                    path=conda_env_file, name=conda_env_name
+                )
                 sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
                 # Clean-up unused files
                 logger.info("Cleaning up unused Conda files...")
                 conda_install.cleanup_unused_files()
+                logger.info(
+                    "Finished installing conda environment: %s", self.conda_env
+                )
 
             logger.info("Adding metadata to container...")
             sandbox.add_metadata()
             logger.info("Building container image...")
             sandbox.build_image(path=self.image_path)
+
+        t_end_build = time.time()
+        logger.info(
+            "Finished building %s in %s",
+            self.image_path,
+            time.strftime("%H:%M:%S", time.gmtime(t_end_build - t_start_build)),
+        )
 
 
 class Info(CotainrSubcommand):
@@ -441,26 +457,24 @@ class CotainrCLI:
         }
 
         # Setup root logger to catch all internal cotainr logging
+        self.console_log_msg_queue = queue.Queue()
         self._setup_cotainr_cli_logging(verbosity=subcommand_args.get("verbosity", 0))
 
         # Run subcommand
         try:
-            # TODO: Remove test logs
-            logger.debug("DEBUG: running subcommand")
-            logger.info("INFO: running subcommand")
-            logger.warning("WARNING: running subcommand")
-            logger.error("ERROR: running subcommand")
-            logger.critical("CRITICAL: running subcommand")
             self.subcommand = self.args.subcommand_cls(**subcommand_args)
+            self.subcommand.console_log_msg_queue = self.console_log_msg_queue
         except AttributeError:
             # TODO: Add proper exception logs throughout (and not here...)
             logger.exception("EXCEPTION: running subcommand")
             # Print help and exit if no subcommand was given
             self.subcommand = _NoSubcommand(parser=parser)
-            tracing.console_progress_handler.stop() #TODO
 
-    @staticmethod
-    def _setup_cotainr_cli_logging(*, verbosity):
+    def execute(self):
+        with tracing.ConsoleProgressHandler(queue=self.console_log_msg_queue):
+            self.subcommand.execute()
+
+    def _setup_cotainr_cli_logging(self, *, verbosity):
         # TODO: document
         class OnlyDebugInfoLevelFilter(logging.Filter):
             def filter(self, record):
@@ -471,21 +485,26 @@ class CotainrCLI:
             cotainr_log_level = logging.DEBUG
             cotainr_console_stdout_log_formatter = logging.Formatter(
                 "%(asctime)s - %(name)s::%(funcName)s::%(lineno)d::"
-                "Cotainr:%(levelname)s$ %(message)s"
+                "Cotainr:-:%(levelname)s: %(message)s"
             )
             cotainr_console_stderr_log_formatter = cotainr_console_stdout_log_formatter
         else:
-            cotainr_log_level = logging.INFO
+            if verbosity == -1:
+                cotainr_log_level = logging.CRITICAL
+            else:
+                cotainr_log_level = logging.INFO
             cotainr_console_stdout_log_formatter = logging.Formatter(
-                "Cotainr$ %(message)s"
+                "Cotainr:-: %(message)s"
             )
             cotainr_console_stderr_log_formatter = logging.Formatter(
                 # Only show levelname for WARNINGs and above
-                "Cotainr:%(levelname)s$ %(message)s"
+                "Cotainr:-:%(levelname)s: %(message)s"
             )
 
         # Setup cotainr CLI log handlers
-        cotainr_console_stdout_handler = tracing.QueuedStreamHandler(stream=sys.stdout)
+        cotainr_console_stdout_handler = tracing.QueuedStreamHandler(
+            queue=self.console_log_msg_queue, stream=sys.stdout
+        )
         cotainr_console_stdout_handler.setLevel(cotainr_log_level)
         cotainr_console_stdout_handler.setFormatter(
             cotainr_console_stdout_log_formatter
@@ -494,7 +513,9 @@ class CotainrCLI:
             # Avoid also emitting WARNINGs and above on stdout
             OnlyDebugInfoLevelFilter()
         )
-        cotainr_console_stderr_handler = tracing.QueuedStreamHandler(stream=sys.stderr)
+        cotainr_console_stderr_handler = tracing.QueuedStreamHandler(
+            queue=self.console_log_msg_queue, stream=sys.stderr
+        )
         cotainr_console_stderr_handler.setLevel(logging.WARNING)
         cotainr_console_stderr_handler.setFormatter(
             cotainr_console_stderr_log_formatter
@@ -513,8 +534,7 @@ def main(*args, **kwargs):
     # Create CotainrCLI to parse command line args and run the specified
     # subcommand
     cli = CotainrCLI()
-    cli.subcommand.execute()
-    tracing.console_progress_handler.stop()
+    cli.execute()
 
 
 def _extract_help_from_docstring(*, arg, docstring):

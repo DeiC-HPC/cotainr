@@ -7,9 +7,6 @@ import sys
 import threading
 import time
 
-io_lock = threading.Lock()
-console_msg_queue = queue.Queue()  # TODO: handle global
-
 
 class QueuedStreamHandler(logging.Handler):
     """
@@ -17,15 +14,17 @@ class QueuedStreamHandler(logging.Handler):
     to a queue.
     """
 
-    def __init__(self, stream=None):
+    def __init__(self, *, queue, stream=None):
         """
         Initialize the handler.
         """
         super().__init__()
+        self.queue = queue
         if stream is None:
-            stream = sys.stderr
-        self.queue = console_msg_queue
-        self.stream = stream
+            self.stream = sys.stderr
+        else:
+            self.stream = stream
+
         self.StreamMsg = collections.namedtuple("StreamMsg", ["msg", "stream"])
 
     def emit(self, record):
@@ -46,16 +45,30 @@ class QueuedStreamHandler(logging.Handler):
         except Exception:
             self.handleError(record)
 
+    # TODO: def flush()?
 
-class ProgressHandler:
-    def __init__(self):
+
+class ConsoleProgressHandler:
+    def __init__(self, queue):
         """Construct the progress handler"""
-        self._queue = console_msg_queue  # TODO: handle global
+        self._queue = queue
         self._spinner_cycle = itertools.cycle("⣾⣷⣯⣟⡿⢿⣻⣽")
         self._spinner_thread = threading.Thread(target=self._spinner_run_sequence)
         self._stop = threading.Event()
         self._sleep_interval = 0.1
         self._print_width = shutil.get_terminal_size()[0] - 2
+
+        # \033[2K erases the old line to avoid the extra two
+        # characters at the end of the line stemming from the shift
+        # of the line due to the spinner character and a whitespace
+        self._clear_line_code = "\r\033[2K"
+
+    def __enter__(self):
+        self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._queue.join()
+        self.stop()
 
     def start(self):
         """
@@ -66,49 +79,47 @@ class ProgressHandler:
 
     def _spinner_run_sequence(self):
         current_item = None
-        while not self._stop.is_set() and current_item is None:
-            # Poll for first SteamMsg on queue
-            try:
-                current_item = self._queue.get_nowait()
-            except queue.Empty:
-                pass
-
-            time.sleep(self._sleep_interval)
-
         while not self._stop.is_set():
-            # Check for new SteamMsg
+            time.sleep(self._sleep_interval)
             try:
-                new_item = self._queue.get_nowait()
-                with io_lock:
-                    # Print old StreamMsg
-                    # \033[2K erases the old line to avoid the extra two
-                    # characters at the end of the line stemming from the shift
-                    # of the line due to the spinner character and a whitespace
+                if current_item is None:
+                    # Poll for first SteamMsg on queue
+                    current_item = self._queue.get_nowait()
+                else:
+                    # Check for new SteamMsg
+                    new_item = self._queue.get_nowait()
+
+                    # Print old StreamMsg if a new one is ready
                     print(
-                        f"\033[2K{current_item.msg}",
+                        f"{self._clear_line_code}{current_item.msg}",
                         file=current_item.stream,
                         flush=True,
                     )
-                current_item = new_item
+                    current_item = new_item
+
+                self._queue.task_done()
+
             except queue.Empty:
-                pass
+                if current_item is None:
+                    # 
+                    continue
 
             # Update spinner
-            with io_lock:
-                print(
-                    f"{next(self._spinner_cycle)} {current_item.msg[:self._print_width]}",
-                    end="\r",
-                    file=current_item.stream,
-                    flush=True,
-                )
+            print(
+                f"{self._clear_line_code}{next(self._spinner_cycle)} "
+                f"{current_item.msg[:self._print_width]}",
+                end="",  # no newline to keep overwriting current line
+                file=current_item.stream,
+                flush=True,
+            )
 
-            time.sleep(self._sleep_interval)
-
+        # Print final StreamMsg without spinner (if any)
         if current_item is not None:
-            # Print final StreamMsg (if any arrived)
-            with io_lock:
-                print(
-                    f"\033[2K{current_item.msg}", file=current_item.stream, flush=True)
+            print(
+                f"{self._clear_line_code}{current_item.msg}",
+                file=current_item.stream,
+                flush=True,
+            )
 
     def stop(self):
         """Stop the printing process"""
@@ -116,13 +127,9 @@ class ProgressHandler:
         self._spinner_thread.join()
 
 
-console_progress_handler = ProgressHandler()
-console_progress_handler.start() # TODO
-
-
 class LogDispatcher:
     # TODO: Cleanup and document
-    def __init__(self, *, name, map_log_level_func, verbosity):
+    def __init__(self, *, name, map_log_level_func, verbosity, console_log_msg_queue):
         log_level = self._determine_log_level(verbosity=verbosity)
 
         # Setup cotainr log format
@@ -131,13 +138,17 @@ class LogDispatcher:
                 "%(asctime)s - %(name)s:%(levelname)s$ %(message)s"
             )
         else:
-            console_log_formatter = logging.Formatter(f"{name}$ %(message)s")
+            console_log_formatter = logging.Formatter(f"{name}:-: %(message)s")
 
         # Setup log handlers
-        console_stdout_handler = QueuedStreamHandler(stream=sys.stdout)
+        console_stdout_handler = QueuedStreamHandler(
+            queue=console_log_msg_queue, stream=sys.stdout
+        )
         console_stdout_handler.setLevel(log_level)
         console_stdout_handler.setFormatter(console_log_formatter)
-        console_stderr_handler = QueuedStreamHandler(stream=sys.stderr)
+        console_stderr_handler = QueuedStreamHandler(
+            queue=console_log_msg_queue, stream=sys.stderr
+        )
         console_stderr_handler.setLevel(log_level)
         console_stderr_handler.setFormatter(console_log_formatter)
 
