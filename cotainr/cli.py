@@ -31,7 +31,6 @@ import argparse
 import logging
 from pathlib import Path
 import platform
-import queue
 import re
 import shutil
 import subprocess
@@ -195,42 +194,42 @@ class Build(CotainrSubcommand):
     def execute(self):
         """Execute the "build" subcommand."""
         t_start_build = time.time()
-        logger.info("Creating Singularity Sandbox...")
-        with container.SingularitySandbox(
-            base_image=self.base_image,
-            verbosity=self.verbosity,
-            console_log_msg_queue=self.console_log_msg_queue,
-        ) as sandbox:
-            if self.conda_env is not None:
-                # Install supplied conda env
-                logger.info("Installing Conda environment: %s...", self.conda_env)
-                conda_env_name = "conda_container_env"
-                conda_env_file = sandbox.sandbox_dir / self.conda_env.name
-                shutil.copyfile(self.conda_env, conda_env_file)
-                conda_install = pack.CondaInstall(sandbox=sandbox)
-                conda_install.add_environment(
-                    path=conda_env_file, name=conda_env_name
-                )
-                sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
+        with tracing.ConsoleSpinner():
+            logger.info("Creating Singularity Sandbox...")
+            with container.SingularitySandbox(
+                base_image=self.base_image,
+                verbosity=self.verbosity,
+            ) as sandbox:
+                if self.conda_env is not None:
+                    # Install supplied conda env
+                    logger.info("Installing Conda environment: %s...", self.conda_env)
+                    conda_env_name = "conda_container_env"
+                    conda_env_file = sandbox.sandbox_dir / self.conda_env.name
+                    shutil.copyfile(self.conda_env, conda_env_file)
+                    conda_install = pack.CondaInstall(sandbox=sandbox)
+                    conda_install.add_environment(
+                        path=conda_env_file, name=conda_env_name
+                    )
+                    sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
-                # Clean-up unused files
-                logger.info("Cleaning up unused Conda files...")
-                conda_install.cleanup_unused_files()
-                logger.info(
-                    "Finished installing conda environment: %s", self.conda_env
-                )
+                    # Clean-up unused files
+                    logger.info("Cleaning up unused Conda files...")
+                    conda_install.cleanup_unused_files()
+                    logger.info(
+                        "Finished installing conda environment: %s", self.conda_env
+                    )
 
-            logger.info("Adding metadata to container...")
-            sandbox.add_metadata()
-            logger.info("Building container image...")
-            sandbox.build_image(path=self.image_path)
+                logger.info("Adding metadata to container...")
+                sandbox.add_metadata()
+                logger.info("Building container image...")
+                sandbox.build_image(path=self.image_path)
 
-        t_end_build = time.time()
-        logger.info(
-            "Finished building %s in %s",
-            self.image_path,
-            time.strftime("%H:%M:%S", time.gmtime(t_end_build - t_start_build)),
-        )
+            t_end_build = time.time()
+            logger.info(
+                "Finished building %s in %s",
+                self.image_path,
+                time.strftime("%H:%M:%S", time.gmtime(t_end_build - t_start_build)),
+            )
 
 
 class Info(CotainrSubcommand):
@@ -456,23 +455,19 @@ class CotainrCLI:
             key: val for key, val in vars(self.args).items() if key != "subcommand_cls"
         }
 
-        # Setup root logger to catch all internal cotainr logging
-        self.console_log_msg_queue = queue.Queue()
-        self._setup_cotainr_cli_logging(verbosity=subcommand_args.get("verbosity", 0))
+        # Setup cotainr root logger to catch all internal cotainr logging
+        self._setup_cotainr_cli_logging(
+            verbosity=subcommand_args.get("verbosity", 0)
+        )  # TODO make it a main command arg
 
-        # Run subcommand
+        # Setup subcommand
         try:
             self.subcommand = self.args.subcommand_cls(**subcommand_args)
-            self.subcommand.console_log_msg_queue = self.console_log_msg_queue
         except AttributeError:
             # TODO: Add proper exception logs throughout (and not here...)
             logger.exception("EXCEPTION: running subcommand")
             # Print help and exit if no subcommand was given
             self.subcommand = _NoSubcommand(parser=parser)
-
-    def execute(self):
-        with tracing.ConsoleProgressHandler(queue=self.console_log_msg_queue):
-            self.subcommand.execute()
 
     def _setup_cotainr_cli_logging(self, *, verbosity):
         # TODO: document
@@ -502,9 +497,7 @@ class CotainrCLI:
             )
 
         # Setup cotainr CLI log handlers
-        cotainr_console_stdout_handler = tracing.QueuedStreamHandler(
-            queue=self.console_log_msg_queue, stream=sys.stdout
-        )
+        cotainr_console_stdout_handler = logging.StreamHandler(stream=sys.stdout)
         cotainr_console_stdout_handler.setLevel(cotainr_log_level)
         cotainr_console_stdout_handler.setFormatter(
             cotainr_console_stdout_log_formatter
@@ -513,9 +506,7 @@ class CotainrCLI:
             # Avoid also emitting WARNINGs and above on stdout
             OnlyDebugInfoLevelFilter()
         )
-        cotainr_console_stderr_handler = tracing.QueuedStreamHandler(
-            queue=self.console_log_msg_queue, stream=sys.stderr
-        )
+        cotainr_console_stderr_handler = logging.StreamHandler(stream=sys.stderr)
         cotainr_console_stderr_handler.setLevel(logging.WARNING)
         cotainr_console_stderr_handler.setFormatter(
             cotainr_console_stderr_log_formatter
@@ -534,7 +525,7 @@ def main(*args, **kwargs):
     # Create CotainrCLI to parse command line args and run the specified
     # subcommand
     cli = CotainrCLI()
-    cli.execute()
+    cli.subcommand.execute()
 
 
 def _extract_help_from_docstring(*, arg, docstring):

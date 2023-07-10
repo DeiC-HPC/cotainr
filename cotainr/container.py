@@ -55,7 +55,7 @@ class SingularitySandbox:
     #TODO: Cleanup and document
     """
 
-    def __init__(self, *, base_image, verbosity, console_log_msg_queue):
+    def __init__(self, *, base_image, verbosity):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
@@ -64,7 +64,6 @@ class SingularitySandbox:
             name=__class__.__name__,
             map_log_level_func=self._map_log_level,
             verbosity=verbosity,
-            console_log_msg_queue=console_log_msg_queue
         )
 
     def __enter__(self):
