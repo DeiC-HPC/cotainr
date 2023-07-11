@@ -28,6 +28,7 @@ main(\*args, \*\*kwargs)
 
 from abc import ABC, abstractmethod
 import argparse
+from datetime import datetime
 import logging
 from pathlib import Path
 import platform
@@ -47,43 +48,8 @@ from . import _minimum_dependency_version as _min_dep_ver
 logger = logging.getLogger(__name__)
 
 
-class CommonParentParsers:
-    # TODO: Cleanup and document (also in docs)
-    # TODO: --no-color
-
-    @staticmethod
-    def _verbose_quiet_parser():
-        verbose_quiet_parser = argparse.ArgumentParser(add_help=False)
-        verbose_quiet_group = verbose_quiet_parser.add_mutually_exclusive_group()
-        verbose_quiet_group.add_argument(
-            "--verbose",
-            "-v",
-            action="count",
-            dest="verbosity",
-            default=0,
-            help=(
-                "increase the verbosity of the output from cotainr. "
-                "Can be used multiple times: Once for INFO, twice for DEBUG, "
-                "and three times for TRACE."
-            ),
-        )
-        verbose_quiet_group.add_argument(
-            "--quiet",
-            "-q",
-            action="store_const",
-            const=-1,
-            dest="verbosity",
-            help="do not show any non-CRITICAL output from cotainr.",
-        )
-        return verbose_quiet_parser
-
-    verbose_quiet = _verbose_quiet_parser()
-
-
 class CotainrSubcommand(ABC):
     """Abstract base class for `CotainrCLI` subcommands."""
-
-    _parent_parsers = []
 
     @classmethod
     def add_arguments(cls, *, parser):
@@ -127,19 +93,23 @@ class Build(CotainrSubcommand):
     TODO: Cleanup and document
     """
 
-    _parent_parsers = [CommonParentParsers.verbose_quiet]
-
     def __init__(
         self,
         *,
-        verbosity,
         image_path,
         base_image=None,
         conda_env=None,
         system=None,
+        verbosity,
+        log_to_file,
     ):
         """Construct the "build" subcommand."""
         self.verbosity = verbosity
+        self.log_file_prefix = (
+            (f"cotainr_build_{datetime.now().isoformat().replace(':', '.')}")
+            if log_to_file
+            else None
+        )
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
             val = input(
@@ -176,12 +146,12 @@ class Build(CotainrSubcommand):
             help=_extract_help_from_docstring(arg="image_path", docstring=cls.__doc__),
             type=Path,
         )
-        group = parser.add_mutually_exclusive_group(required=True)
-        group.add_argument(
+        system_group = parser.add_mutually_exclusive_group(required=True)
+        system_group.add_argument(
             "--base-image",
             help=_extract_help_from_docstring(arg="base_image", docstring=cls.__doc__),
         )
-        group.add_argument(
+        system_group.add_argument(
             "--system",
             help=_extract_help_from_docstring(arg="system", docstring=cls.__doc__),
         )
@@ -189,6 +159,35 @@ class Build(CotainrSubcommand):
             "--conda-env",
             help=_extract_help_from_docstring(arg="conda_env", docstring=cls.__doc__),
             type=Path,
+        )
+        verbose_quiet_group = parser.add_mutually_exclusive_group()
+        verbose_quiet_group.add_argument(
+            "--verbose",
+            "-v",
+            action="count",
+            dest="verbosity",
+            default=0,
+            help=(
+                "increase the verbosity of the output from cotainr. "
+                "Can be used multiple times: Once for INFO, twice for DEBUG, "
+                "and three times for TRACE."  # TODO extract from docstring
+            ),
+        )
+        verbose_quiet_group.add_argument(
+            "--quiet",
+            "-q",
+            action="store_const",
+            const=-1,
+            dest="verbosity",
+            help="do not show any non-CRITICAL output from cotainr.",  # TODO extract from docstring
+        )
+        parser.add_argument(
+            "--log-to-file",
+            action="store_true",
+            help=(
+                "create files containing all logging "
+                "information shown on stdout/stderr."  # TODO extract from docstring
+            ),
         )
 
     def execute(self):
@@ -199,6 +198,7 @@ class Build(CotainrSubcommand):
             with container.SingularitySandbox(
                 base_image=self.base_image,
                 verbosity=self.verbosity,
+                log_file_prefix=self.log_file_prefix,
             ) as sandbox:
                 if self.conda_env is not None:
                     # Install supplied conda env
@@ -444,7 +444,6 @@ class CotainrCLI:
                     name=subcommand_cls.__name__.lower(),
                     help=subcommand_doc_summary,
                     description=subcommand_doc_summary,
-                    parents=subcommand_cls._parent_parsers,
                 )
                 subcommand_cls.add_arguments(parser=sub_parser)
                 sub_parser.set_defaults(subcommand_cls=subcommand_cls)
@@ -455,11 +454,6 @@ class CotainrCLI:
             key: val for key, val in vars(self.args).items() if key != "subcommand_cls"
         }
 
-        # Setup cotainr root logger to catch all internal cotainr logging
-        self._setup_cotainr_cli_logging(
-            verbosity=subcommand_args.get("verbosity", 0)
-        )  # TODO make it a main command arg
-
         # Setup subcommand
         try:
             self.subcommand = self.args.subcommand_cls(**subcommand_args)
@@ -469,7 +463,13 @@ class CotainrCLI:
             # Print help and exit if no subcommand was given
             self.subcommand = _NoSubcommand(parser=parser)
 
-    def _setup_cotainr_cli_logging(self, *, verbosity):
+        # Setup CLI logging
+        self._setup_cotainr_cli_logging(
+            verbosity=self.subcommand.verbosity,
+            log_file_prefix=self.subcommand.log_file_prefix,
+        )
+
+    def _setup_cotainr_cli_logging(self, *, verbosity, log_file_prefix=None):
         # TODO: document
         class OnlyDebugInfoLevelFilter(logging.Filter):
             def filter(self, record):
@@ -478,46 +478,50 @@ class CotainrCLI:
         # Setup cotainr CLI log level and format
         if verbosity >= 2:
             cotainr_log_level = logging.DEBUG
-            cotainr_console_stdout_log_formatter = logging.Formatter(
+            cotainr_stdout_log_formatter = logging.Formatter(
                 "%(asctime)s - %(name)s::%(funcName)s::%(lineno)d::"
                 "Cotainr:-:%(levelname)s: %(message)s"
             )
-            cotainr_console_stderr_log_formatter = cotainr_console_stdout_log_formatter
+            cotainr_stderr_log_formatter = cotainr_stdout_log_formatter
         else:
             if verbosity == -1:
                 cotainr_log_level = logging.CRITICAL
             else:
                 cotainr_log_level = logging.INFO
-            cotainr_console_stdout_log_formatter = logging.Formatter(
-                "Cotainr:-: %(message)s"
-            )
-            cotainr_console_stderr_log_formatter = logging.Formatter(
+            cotainr_stdout_log_formatter = logging.Formatter("Cotainr:-: %(message)s")
+            cotainr_stderr_log_formatter = logging.Formatter(
                 # Only show levelname for WARNINGs and above
                 "Cotainr:-:%(levelname)s: %(message)s"
             )
 
-        # Setup cotainr CLI log handlers
-        cotainr_console_stdout_handler = logging.StreamHandler(stream=sys.stdout)
-        cotainr_console_stdout_handler.setLevel(cotainr_log_level)
-        cotainr_console_stdout_handler.setFormatter(
-            cotainr_console_stdout_log_formatter
-        )
-        cotainr_console_stdout_handler.addFilter(
-            # Avoid also emitting WARNINGs and above on stdout
-            OnlyDebugInfoLevelFilter()
-        )
-        cotainr_console_stderr_handler = logging.StreamHandler(stream=sys.stderr)
-        cotainr_console_stderr_handler.setLevel(logging.WARNING)
-        cotainr_console_stderr_handler.setFormatter(
-            cotainr_console_stderr_log_formatter
-        )
+        # Setup cotainr log handlers
+        cotainr_stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
+        cotainr_stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
+        if log_file_prefix is not None:
+            cotainr_stdout_handlers.append(
+                logging.FileHandler(f"{log_file_prefix}.out")
+            )
+            cotainr_stderr_handlers.append(
+                logging.FileHandler(f"{log_file_prefix}.err")
+            )
+
+        for stdout_handler in cotainr_stdout_handlers:
+            stdout_handler.setLevel(cotainr_log_level)
+            stdout_handler.setFormatter(cotainr_stdout_log_formatter)
+            stdout_handler.addFilter(
+                # Avoid also emitting WARNINGs and above on stdout
+                OnlyDebugInfoLevelFilter()
+            )
+
+        for stderr_handler in cotainr_stderr_handlers:
+            stderr_handler.setLevel(logging.WARNING)
+            stderr_handler.setFormatter(cotainr_stderr_log_formatter)
 
         # Define cotainr root logger
         root_logger = logging.getLogger("cotainr")
         root_logger.setLevel(cotainr_log_level)
-        root_logger.addHandler(cotainr_console_stdout_handler)
-        root_logger.addHandler(cotainr_console_stderr_handler)
-        # TODO: Add FileHandler
+        for handler in cotainr_stdout_handlers + cotainr_stderr_handlers:
+            root_logger.addHandler(handler)
 
 
 def main(*args, **kwargs):

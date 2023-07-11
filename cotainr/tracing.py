@@ -97,37 +97,41 @@ class MessageSpinner:
 
 class LogDispatcher:
     # TODO: Cleanup and document
-    def __init__(self, *, name, map_log_level_func, verbosity):
+    def __init__(self, *, name, map_log_level_func, verbosity, log_file_prefix=None):
         log_level = self._determine_log_level(verbosity=verbosity)
+        self.map_log_level = map_log_level_func
 
         # Setup cotainr log format
         if verbosity >= 2:
-            console_log_formatter = logging.Formatter(
+            log_formatter = logging.Formatter(
                 "%(asctime)s - %(name)s:%(levelname)s %(message)s"
             )
         else:
-            console_log_formatter = logging.Formatter(f"{name}:-: %(message)s")
+            log_formatter = logging.Formatter(f"{name}:-: %(message)s")
 
         # Setup log handlers
-        console_stdout_handler = logging.StreamHandler(stream=sys.stdout)
-        console_stdout_handler.setLevel(log_level)
-        console_stdout_handler.setFormatter(console_log_formatter)
-        console_stderr_handler = logging.StreamHandler(stream=sys.stderr)
-        console_stderr_handler.setLevel(log_level)
-        console_stderr_handler.setFormatter(console_log_formatter)
+        stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
+        stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
+        if log_file_prefix is not None:
+            stdout_handlers.append(logging.FileHandler(f"{log_file_prefix}.out"))
+            stderr_handlers.append(logging.FileHandler(f"{log_file_prefix}.err"))
+        for handler in stdout_handlers + stderr_handlers:
+            handler.setLevel(log_level)
+            handler.setFormatter(log_formatter)
 
+        # Setup loggers
         self.logger_stdout = logging.getLogger(f"{name}.stdout")
-        self.logger_stdout.addHandler(console_stdout_handler)
         self.logger_stdout.setLevel(log_level)
+        for handler in stdout_handlers:
+            self.logger_stdout.addHandler(handler)
+
         self.logger_stderr = logging.getLogger(f"{name}.stderr")
-        self.logger_stderr.addHandler(console_stderr_handler)
         self.logger_stderr.setLevel(log_level)
-        self.map_log_level = map_log_level_func
-        # TODO: Add FileHandler
+        for handler in stderr_handlers:
+            self.logger_stderr.addHandler(handler)
 
     def log_to_stdout(self, msg):
         self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
-        # TODO: consider stripping level in msg
 
     def log_to_stderr(self, msg):
         self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())
