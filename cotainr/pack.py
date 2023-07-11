@@ -13,11 +13,16 @@ CondaInstall
     A Conda installation in a container sandbox.
 """
 
+import logging
 from pathlib import Path
 import time
 import random
 import urllib.error
 import urllib.request
+
+from . import tracing
+
+logger = logging.getLogger(__name__)
 
 
 class CondaInstall:
@@ -41,10 +46,19 @@ class CondaInstall:
         The Conda prefix used for the Conda install.
     """
 
-    def __init__(self, *, sandbox, prefix="/opt/conda"):
+    def __init__(
+        self, *, sandbox, prefix="/opt/conda", verbosity, log_file_path=None
+    ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
         self.prefix = prefix
+        self.verbosity = verbosity
+        self.log_dispatcher = tracing.LogDispatcher(
+            name=__class__.__name__,
+            map_log_level_func=self._map_log_level,
+            verbosity=verbosity,
+            log_file_path=log_file_path,
+        )
 
         # Download Conda installer
         conda_installer_path = (
@@ -73,8 +87,8 @@ class CondaInstall:
         name : str
             The name to use for the installed Conda environment.
         """
-        self.sandbox.run_command_in_container(
-            cmd=f"conda env create -f {path} -n {name}"
+        self._run_command_in_sandbox(
+            cmd=f"conda env create -f {path} -n {name}" + self._conda_verbosity_arg
         )
 
     def cleanup_unused_files(self):
@@ -83,7 +97,9 @@ class CondaInstall:
 
         Equivalent to calling "conda clean -a".
         """
-        self.sandbox.run_command_in_container(cmd="conda clean -y -a")
+        self._run_command_in_sandbox(
+            cmd="conda clean -y -a" + self._conda_verbosity_arg
+        )
 
     def _bootstrap_conda(self, *, installer_path):
         """
@@ -95,7 +111,7 @@ class CondaInstall:
             The path of the Conda installer to run to bootstrap Conda.
         """
         # Run Conda installer
-        self.sandbox.run_command_in_container(
+        self._run_command_in_sandbox(
             cmd=f"bash {installer_path.name} -b -s -p {self.prefix}"
         )
 
@@ -108,15 +124,16 @@ class CondaInstall:
         self._check_conda_bootstrap_integrity()
 
         # Update the installed Conda package manager to the latest version
-        self.sandbox.run_command_in_container(
-            cmd="conda update -y -n base -c conda-forge conda"
+        self._run_command_in_sandbox(
+            cmd=(
+                "conda update -y -n base -c conda-forge conda"
+                + self._conda_verbosity_arg
+            )
         )
 
     def _check_conda_bootstrap_integrity(self):
         """Raise RuntimeError if multiple interfering Conda installs are found."""
-        source_check_process = self.sandbox.run_command_in_container(
-            cmd="conda info --base"
-        )
+        source_check_process = self._run_command_in_sandbox(cmd="conda info --base")
         if source_check_process.stdout.strip() != f"{self.prefix}":
             raise RuntimeError(
                 "Multiple Conda installs interfere. "
@@ -154,3 +171,42 @@ class CondaInstall:
 
         else:
             raise url_error
+
+    def _run_command_in_sandbox(self, *, cmd):
+        # TODO: document
+        return self.sandbox.run_command_in_container(
+            cmd=cmd, custom_log_dispatcher=self.log_dispatcher
+        )
+
+    @property
+    def _conda_verbosity_arg(self):
+        if self.verbosity <= 0:
+            return " -q"
+        elif self.verbosity == 2:
+            return " -v"
+        elif self.verbosity == 3:
+            return " -vv"
+        elif self.verbosity >= 4:
+            return " -vvv"
+        else:
+            return ""
+
+    @staticmethod
+    def _map_log_level(msg):
+        if (
+            msg.startswith("DEBUG")
+            or msg.startswith("VERBOSE")
+            or msg.startswith("TRACE")
+        ):
+            return logging.DEBUG
+        elif msg.startswith("INFO"):
+            return logging.INFO
+        elif msg.startswith("WARNING"):
+            return logging.WARNING
+        elif msg.startswith("ERROR"):
+            return logging.ERROR
+        elif msg.startswith("CRITICAL"):
+            return logging.CRITICAL
+        else:
+            # If no prefix on message, assume its INFO level
+            return logging.INFO

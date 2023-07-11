@@ -55,7 +55,7 @@ class SingularitySandbox:
     #TODO: Cleanup and document
     """
 
-    def __init__(self, *, base_image, verbosity, log_file_prefix=None):
+    def __init__(self, *, base_image, verbosity, log_file_path=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
@@ -64,7 +64,7 @@ class SingularitySandbox:
             name=__class__.__name__,
             map_log_level_func=self._map_log_level,
             verbosity=verbosity,
-            log_file_prefix=log_file_prefix,
+            log_file_path=log_file_path,
         )
 
     def __enter__(self):
@@ -183,7 +183,7 @@ class SingularitySandbox:
             ),
         )
 
-    def run_command_in_container(self, *, custom_log_dispatcher=None, cmd):
+    def run_command_in_container(self, *, cmd, custom_log_dispatcher=None):
         """
         Run a command in the container sandbox.
 

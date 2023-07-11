@@ -1,10 +1,13 @@
 import functools
 import itertools
 import logging
+import re
 import shutil
 import sys
 import threading
 import time
+
+logger = logging.getLogger(__name__)
 
 
 class StreamWriteProxy:
@@ -25,6 +28,7 @@ class ConsoleSpinner:
         # TODO: DOC: Modify true sys.std* to allow for context change at any point in time
         self._stdout_proxy = StreamWriteProxy(stream=sys.stdout)
         self._stderr_proxy = StreamWriteProxy(stream=sys.stderr)
+        self._as_atomic = threading.Lock()
         self._spinning_msg = None
 
     def __enter__(self):
@@ -43,13 +47,14 @@ class ConsoleSpinner:
         sys.stderr.write = self._stderr_proxy.true_stream_write
 
     def update_spinner_msg(self, s, /, *, stream):
-        if self._spinning_msg is not None:
-            # Stop currently spinning message
-            self._spinning_msg.stop()
+        with self._as_atomic:  # updating the spinning msg must be an atomic operation
+            if self._spinning_msg is not None:
+                # Stop currently spinning message
+                self._spinning_msg.stop()
 
-        # Start spinning the new message
-        self._spinning_msg = MessageSpinner(msg=s, stream=stream)
-        self._spinning_msg.start()
+            # Start spinning the new message
+            self._spinning_msg = MessageSpinner(msg=s, stream=stream)
+            self._spinning_msg.start()
 
 
 class MessageSpinner:
@@ -62,6 +67,7 @@ class MessageSpinner:
         self._stop_signal = threading.Event()
         self._sleep_interval = 0.1
         self._print_width = shutil.get_terminal_size()[0] - 2
+        self._ansi_escape_re = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
         self._running = False
 
         # \033[2K erases the old line to avoid the extra two
@@ -81,6 +87,7 @@ class MessageSpinner:
 
     def _spin_msg(self):
         msg = self._msg.rstrip("\n")  # we control newlines ourselves
+        msg = self._ansi_escape_re.sub("", msg)  # strip any ANSI escape codes
         while not self._stop_signal.is_set():
             # Update spinner
             print(
@@ -97,7 +104,7 @@ class MessageSpinner:
 
 class LogDispatcher:
     # TODO: Cleanup and document
-    def __init__(self, *, name, map_log_level_func, verbosity, log_file_prefix=None):
+    def __init__(self, *, name, map_log_level_func, verbosity, log_file_path=None):
         log_level = self._determine_log_level(verbosity=verbosity)
         self.map_log_level = map_log_level_func
 
@@ -112,9 +119,13 @@ class LogDispatcher:
         # Setup log handlers
         stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
         stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
-        if log_file_prefix is not None:
-            stdout_handlers.append(logging.FileHandler(f"{log_file_prefix}.out"))
-            stderr_handlers.append(logging.FileHandler(f"{log_file_prefix}.err"))
+        if log_file_path is not None:
+            stdout_handlers.append(
+                logging.FileHandler(log_file_path.with_suffix(".out"))
+            )
+            stderr_handlers.append(
+                logging.FileHandler(log_file_path.with_suffix(".err"))
+            )
         for handler in stdout_handlers + stderr_handlers:
             handler.setLevel(log_level)
             handler.setFormatter(log_formatter)
@@ -129,6 +140,16 @@ class LogDispatcher:
         self.logger_stderr.setLevel(log_level)
         for handler in stderr_handlers:
             self.logger_stderr.addHandler(handler)
+
+        # TODO: implement filters
+
+        logger.debug(
+            "LogDispatcher: %s, LEVEL: %s, STDOUT handlers: %s, STDERR handlers: %s",
+            name,
+            log_level,
+            self.logger_stdout.handlers,
+            self.logger_stderr.handlers,
+        )
 
     def log_to_stdout(self, msg):
         self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())

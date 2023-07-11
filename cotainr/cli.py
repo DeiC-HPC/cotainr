@@ -105,8 +105,9 @@ class Build(CotainrSubcommand):
     ):
         """Construct the "build" subcommand."""
         self.verbosity = verbosity
-        self.log_file_prefix = (
-            (f"cotainr_build_{datetime.now().isoformat().replace(':', '.')}")
+        self.log_file_path = (
+            Path(".").resolve()
+            / f"cotainr_build_{datetime.now().isoformat().replace(':', '.')}"
             if log_to_file
             else None
         )
@@ -169,8 +170,8 @@ class Build(CotainrSubcommand):
             default=0,
             help=(
                 "increase the verbosity of the output from cotainr. "
-                "Can be used multiple times: Once for INFO, twice for DEBUG, "
-                "and three times for TRACE."  # TODO extract from docstring
+                "Can be used multiple times: Once for subprocess output, twice for INFO, "
+                "three times for DEBUG, and four times for TRACE."  # TODO extract from docstring
             ),
         )
         verbose_quiet_group.add_argument(
@@ -198,7 +199,7 @@ class Build(CotainrSubcommand):
             with container.SingularitySandbox(
                 base_image=self.base_image,
                 verbosity=self.verbosity,
-                log_file_prefix=self.log_file_prefix,
+                log_file_path=self.log_file_path,
             ) as sandbox:
                 if self.conda_env is not None:
                     # Install supplied conda env
@@ -206,7 +207,11 @@ class Build(CotainrSubcommand):
                     conda_env_name = "conda_container_env"
                     conda_env_file = sandbox.sandbox_dir / self.conda_env.name
                     shutil.copyfile(self.conda_env, conda_env_file)
-                    conda_install = pack.CondaInstall(sandbox=sandbox)
+                    conda_install = pack.CondaInstall(
+                        sandbox=sandbox,
+                        verbosity=self.verbosity,
+                        log_file_path=self.log_file_path,
+                    )
                     conda_install.add_environment(
                         path=conda_env_file, name=conda_env_name
                     )
@@ -466,10 +471,10 @@ class CotainrCLI:
         # Setup CLI logging
         self._setup_cotainr_cli_logging(
             verbosity=self.subcommand.verbosity,
-            log_file_prefix=self.subcommand.log_file_prefix,
+            log_file_path=self.subcommand.log_file_path,
         )
 
-    def _setup_cotainr_cli_logging(self, *, verbosity, log_file_prefix=None):
+    def _setup_cotainr_cli_logging(self, *, verbosity, log_file_path=None):
         # TODO: document
         class OnlyDebugInfoLevelFilter(logging.Filter):
             def filter(self, record):
@@ -497,12 +502,12 @@ class CotainrCLI:
         # Setup cotainr log handlers
         cotainr_stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
         cotainr_stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
-        if log_file_prefix is not None:
+        if log_file_path is not None:
             cotainr_stdout_handlers.append(
-                logging.FileHandler(f"{log_file_prefix}.out")
+                logging.FileHandler(log_file_path.with_suffix(".out"))
             )
             cotainr_stderr_handlers.append(
-                logging.FileHandler(f"{log_file_prefix}.err")
+                logging.FileHandler(log_file_path.with_suffix(".err"))
             )
 
         for stdout_handler in cotainr_stdout_handlers:
