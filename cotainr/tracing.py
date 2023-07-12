@@ -65,8 +65,8 @@ class MessageSpinner:
 
         self._spinner_cycle = itertools.cycle("⣾⣷⣯⣟⡿⢿⣻⣽")
         self._spinner_thread = threading.Thread(target=self._spin_msg)
+        self._spinner_sleep_interval = 0.1
         self._stop_signal = threading.Event()
-        self._sleep_interval = 0.075
         self._print_width = (
             shutil.get_terminal_size()[0] - 2
         )  # account for spinner + whitespace
@@ -89,12 +89,17 @@ class MessageSpinner:
             self._running = False
 
     def _spin_msg(self):
-        # strip any newlines and ANSI escape codes that may interfere with
+        # Strip any newlines and ANSI escape codes that may interfere with
         # our manipulation of the console
         msg = self._msg.rstrip("\n")
         msg = self._ansi_escape_re.sub(
             "", msg
         )  # TODO: does this remove colors as well?
+
+        # Delay spinning a bit to avoid flaky message updates when new messages arrive promptly
+        time.sleep(self._spinner_sleep_interval / 10)
+
+        # Start spinning
         while not self._stop_signal.is_set():
             # Update spinner
             print(
@@ -103,7 +108,7 @@ class MessageSpinner:
                 end="",  # keep overwriting current line
                 file=self._stream,
             )
-            time.sleep(self._sleep_interval)
+            time.sleep(self._spinner_sleep_interval)
 
         # Print message without spinner (incl. trailing newline)
         print(f"{self._clear_line_code}{msg}", file=self._stream)
@@ -111,7 +116,9 @@ class MessageSpinner:
 
 class LogDispatcher:
     # TODO: Cleanup and document
-    def __init__(self, *, name, map_log_level_func, verbosity, log_file_path=None):
+    def __init__(
+        self, *, name, map_log_level_func, verbosity, log_file_path=None, filters=None
+    ):
         log_level = self._determine_log_level(verbosity=verbosity)
         self.map_log_level = map_log_level_func
 
@@ -136,6 +143,9 @@ class LogDispatcher:
         for handler in stdout_handlers + stderr_handlers:
             handler.setLevel(log_level)
             handler.setFormatter(log_formatter)
+            if filters is not None:
+                for filter in filters:
+                    handler.addFilter(filter)
 
         # Setup loggers
         self.logger_stdout = logging.getLogger(f"{name}.out")

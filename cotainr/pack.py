@@ -17,6 +17,7 @@ import logging
 from pathlib import Path
 import time
 import random
+import re
 import urllib.error
 import urllib.request
 
@@ -46,9 +47,7 @@ class CondaInstall:
         The Conda prefix used for the Conda install.
     """
 
-    def __init__(
-        self, *, sandbox, prefix="/opt/conda", verbosity, log_file_path=None
-    ):
+    def __init__(self, *, sandbox, prefix="/opt/conda", verbosity, log_file_path=None):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
         self.prefix = prefix
@@ -58,6 +57,7 @@ class CondaInstall:
             map_log_level_func=self._map_log_level,
             verbosity=verbosity,
             log_file_path=log_file_path,
+            filters=self._logging_filters,
         )
 
         # Download Conda installer
@@ -190,6 +190,29 @@ class CondaInstall:
             return " -vvv"
         else:
             return ""
+
+    @property
+    def _logging_filters(self):
+        class NoEmptyLinesFilter(logging.Filter):
+            # Replace any empty lines including lines only containing the
+            # "cursor up" ANSI escape code
+            def filter(self, record):
+                return record.msg.replace("\x1b[A", "") != ""
+
+        class OnlyFinalProgressbarFilter(logging.Filter):
+            # Assume a progress bar line like
+            # [some text]|[some text]|[progress bar characters]| [percentage complete]% [ansi escape codes]
+            # Only include final 100% complete line
+            progress_bar_re = re.compile(
+                r"^(.+?)\|(.+?)\|[ \#0-9]+?\|[ ]{1,3}[0-9]{1,2}\%"
+            )
+
+            def filter(self, record):
+                return not self.progress_bar_re.match(record.msg)
+
+        logging_filters = [NoEmptyLinesFilter(), OnlyFinalProgressbarFilter()]
+
+        return logging_filters
 
     @staticmethod
     def _map_log_level(msg):
