@@ -1,3 +1,4 @@
+import contextlib
 import functools
 import itertools
 import logging
@@ -47,7 +48,7 @@ class ConsoleSpinner:
         sys.stderr.write = self._stderr_proxy.true_stream_write
 
     def update_spinner_msg(self, s, /, *, stream):
-        with self._as_atomic:  # updating the spinning msg must be an atomic operation
+        with self._as_atomic:  # make sure that only a single thread at a time can update the spinning message
             if self._spinning_msg is not None:
                 # Stop currently spinning message
                 self._spinning_msg.stop()
@@ -65,8 +66,10 @@ class MessageSpinner:
         self._spinner_cycle = itertools.cycle("⣾⣷⣯⣟⡿⢿⣻⣽")
         self._spinner_thread = threading.Thread(target=self._spin_msg)
         self._stop_signal = threading.Event()
-        self._sleep_interval = 0.1
-        self._print_width = shutil.get_terminal_size()[0] - 2
+        self._sleep_interval = 0.075
+        self._print_width = (
+            shutil.get_terminal_size()[0] - 2
+        )  # account for spinner + whitespace
         self._ansi_escape_re = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
         self._running = False
 
@@ -86,8 +89,12 @@ class MessageSpinner:
             self._running = False
 
     def _spin_msg(self):
-        msg = self._msg.rstrip("\n")  # we control newlines ourselves
-        msg = self._ansi_escape_re.sub("", msg)  # strip any ANSI escape codes
+        # strip any newlines and ANSI escape codes that may interfere with
+        # our manipulation of the console
+        msg = self._msg.rstrip("\n")
+        msg = self._ansi_escape_re.sub(
+            "", msg
+        )  # TODO: does this remove colors as well?
         while not self._stop_signal.is_set():
             # Update spinner
             print(
@@ -114,7 +121,7 @@ class LogDispatcher:
                 "%(asctime)s - %(name)s:%(levelname)s %(message)s"
             )
         else:
-            log_formatter = logging.Formatter(f"{name}:-: %(message)s")
+            log_formatter = logging.Formatter("%(name)s:-: %(message)s")
 
         # Setup log handlers
         stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
@@ -131,12 +138,12 @@ class LogDispatcher:
             handler.setFormatter(log_formatter)
 
         # Setup loggers
-        self.logger_stdout = logging.getLogger(f"{name}.stdout")
+        self.logger_stdout = logging.getLogger(f"{name}.out")
         self.logger_stdout.setLevel(log_level)
         for handler in stdout_handlers:
             self.logger_stdout.addHandler(handler)
 
-        self.logger_stderr = logging.getLogger(f"{name}.stderr")
+        self.logger_stderr = logging.getLogger(f"{name}.err")
         self.logger_stderr.setLevel(log_level)
         for handler in stderr_handlers:
             self.logger_stderr.addHandler(handler)
@@ -156,6 +163,13 @@ class LogDispatcher:
 
     def log_to_stderr(self, msg):
         self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())
+
+    @contextlib.contextmanager
+    def prefix_stderr_name(self, *, prefix):
+        logger_stderr_name = self.logger_stderr.name
+        self.logger_stderr.name = prefix + "/" + logger_stderr_name
+        yield
+        self.logger_stderr.name = logger_stderr_name
 
     @staticmethod
     def _determine_log_level(*, verbosity):

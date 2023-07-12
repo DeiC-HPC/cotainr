@@ -267,15 +267,17 @@ class SingularitySandbox:
 
     def _subprocess_runner(self, *, custom_log_dispatcher=None, args, **kwargs):
         """Wrap the choice of subprocess runner."""
-        return util.stream_subprocess(
-            log_dispatcher=(
-                self.log_dispatcher
-                if custom_log_dispatcher is None
-                else custom_log_dispatcher
-            ),
-            args=args,
-            **kwargs,
-        )
+        if custom_log_dispatcher is not None:
+            with custom_log_dispatcher.prefix_stderr_name(
+                prefix=self.__class__.__name__
+            ):
+                return util.stream_subprocess(
+                    log_dispatcher=custom_log_dispatcher, args=args, **kwargs
+                )
+        else:
+            return util.stream_subprocess(
+                log_dispatcher=self.log_dispatcher, args=args, **kwargs
+            )
 
     @staticmethod
     def _map_log_level(msg):
