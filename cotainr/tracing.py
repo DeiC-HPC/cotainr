@@ -17,8 +17,8 @@ class ColoredOutputFormatter(logging.Formatter):
         # https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
         logging.DEBUG: "\x1b[38;5;8m",  # gray
         logging.WARNING: "\x1b[38;5;3m",  # yellow
-        logging.ERROR: "\x1b[38;5;1m",  # red
-        logging.CRITICAL: "\x1b[38;5;196m",  # intense red
+        logging.ERROR: "\x1b[38;5;1m",  # dark red
+        logging.CRITICAL: "\x1b[38;5;160m",  # brighter red
     }
     reset_color = "\x1b[0m"
 
@@ -30,19 +30,6 @@ class ColoredOutputFormatter(logging.Formatter):
             return super().format(color_record)
         else:
             return super().format(record)
-
-
-class StreamWriteProxy:
-    # TODO: DOC: Unable to copy sys.stdout
-    def __init__(self, *, stream):
-        self.stream = stream
-        self.true_stream_write = stream.write
-
-    def write(self, s, /):
-        self.true_stream_write(s)
-
-    def __getattr__(self, name):
-        return getattr(self.stream, name)
 
 
 class ConsoleSpinner:
@@ -77,6 +64,95 @@ class ConsoleSpinner:
             # Start spinning the new message
             self._spinning_msg = MessageSpinner(msg=s, stream=stream)
             self._spinning_msg.start()
+
+
+class LogDispatcher:
+    def __init__(
+        self,
+        *,
+        name,
+        map_log_level_func,
+        verbosity,
+        log_file_path=None,
+        no_color=False,
+        filters=None,
+    ):
+        log_level = self._determine_log_level(verbosity=verbosity)
+        self.map_log_level = map_log_level_func
+
+        # Setup cotainr log format
+        if verbosity >= 2:
+            log_fmt = "%(asctime)s - %(name)s:%(levelname)s %(message)s"
+        else:
+            log_fmt = "%(name)s:-: %(message)s"
+
+        # Setup log handlers
+        stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
+        stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
+
+        if log_file_path is not None:
+            stdout_handlers.append(
+                logging.FileHandler(log_file_path.with_suffix(".out"))
+            )
+            stderr_handlers.append(
+                logging.FileHandler(log_file_path.with_suffix(".err"))
+            )
+        for handler in stdout_handlers + stderr_handlers:
+            handler.setLevel(log_level)
+            handler.setFormatter(logging.Formatter(log_fmt))
+            if filters is not None:
+                for filter in filters:
+                    handler.addFilter(filter)
+
+        if not no_color:
+            # Replace console formatters with one that colors the output
+            stdout_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
+            stderr_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
+
+        # Setup loggers
+        self.logger_stdout = logging.getLogger(f"{name}.out")
+        self.logger_stdout.setLevel(log_level)
+        for handler in stdout_handlers:
+            self.logger_stdout.addHandler(handler)
+
+        self.logger_stderr = logging.getLogger(f"{name}.err")
+        self.logger_stderr.setLevel(log_level)
+        for handler in stderr_handlers:
+            self.logger_stderr.addHandler(handler)
+
+        logger.debug(
+            "LogDispatcher: %s, LEVEL: %s, STDOUT handlers: %s, STDERR handlers: %s",
+            name,
+            log_level,
+            self.logger_stdout.handlers,
+            self.logger_stderr.handlers,
+        )
+
+    def log_to_stdout(self, msg):
+        self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
+
+    def log_to_stderr(self, msg):
+        self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())
+
+    @contextlib.contextmanager
+    def prefix_stderr_name(self, *, prefix):
+        logger_stderr_name = self.logger_stderr.name
+        self.logger_stderr.name = prefix + "/" + logger_stderr_name
+        yield
+        self.logger_stderr.name = logger_stderr_name
+
+    @staticmethod
+    def _determine_log_level(*, verbosity):
+        if verbosity == -1:
+            log_level = logging.CRITICAL
+        elif verbosity == 0:
+            log_level = logging.WARNING
+        elif verbosity in [1, 2]:
+            log_level = logging.INFO
+        elif verbosity >= 3:
+            log_level = logging.DEBUG
+
+        return log_level
 
 
 class MessageSpinner:
@@ -142,93 +218,14 @@ class MessageSpinner:
         print(f"{self._clear_line_code}{msg}", file=self._stream)
 
 
-class LogDispatcher:
-    # TODO: Cleanup and document
-    def __init__(
-        self,
-        *,
-        name,
-        map_log_level_func,
-        verbosity,
-        log_file_path=None,
-        no_color=False,
-        filters=None,
-    ):
-        log_level = self._determine_log_level(verbosity=verbosity)
-        self.map_log_level = map_log_level_func
+class StreamWriteProxy:
+    # TODO: DOC: Unable to copy sys.stdout
+    def __init__(self, *, stream):
+        self._stream = stream
+        self.true_stream_write = stream.write
 
-        # Setup cotainr log format
-        if verbosity >= 2:
-            log_fmt = "%(asctime)s - %(name)s:%(levelname)s %(message)s"
-        else:
-            log_fmt = "%(name)s:-: %(message)s"
+    def write(self, s, /):
+        self.true_stream_write(s)
 
-        # Setup log handlers
-        stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
-        stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
-
-        if log_file_path is not None:
-            stdout_handlers.append(
-                logging.FileHandler(log_file_path.with_suffix(".out"))
-            )
-            stderr_handlers.append(
-                logging.FileHandler(log_file_path.with_suffix(".err"))
-            )
-        for handler in stdout_handlers + stderr_handlers:
-            handler.setLevel(log_level)
-            handler.setFormatter(logging.Formatter(log_fmt))
-            if filters is not None:
-                for filter in filters:
-                    handler.addFilter(filter)
-
-        if not no_color:
-            # Replace console formatters with one that colors the output
-            stdout_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
-            stderr_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
-
-        # Setup loggers
-        self.logger_stdout = logging.getLogger(f"{name}.out")
-        self.logger_stdout.setLevel(log_level)
-        for handler in stdout_handlers:
-            self.logger_stdout.addHandler(handler)
-
-        self.logger_stderr = logging.getLogger(f"{name}.err")
-        self.logger_stderr.setLevel(log_level)
-        for handler in stderr_handlers:
-            self.logger_stderr.addHandler(handler)
-
-        # TODO: implement filters
-
-        logger.debug(
-            "LogDispatcher: %s, LEVEL: %s, STDOUT handlers: %s, STDERR handlers: %s",
-            name,
-            log_level,
-            self.logger_stdout.handlers,
-            self.logger_stderr.handlers,
-        )
-
-    def log_to_stdout(self, msg):
-        self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
-
-    def log_to_stderr(self, msg):
-        self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())
-
-    @contextlib.contextmanager
-    def prefix_stderr_name(self, *, prefix):
-        logger_stderr_name = self.logger_stderr.name
-        self.logger_stderr.name = prefix + "/" + logger_stderr_name
-        yield
-        self.logger_stderr.name = logger_stderr_name
-
-    @staticmethod
-    def _determine_log_level(*, verbosity):
-        if verbosity == -1:
-            log_level = logging.CRITICAL
-        elif verbosity == 0:
-            log_level = logging.WARNING
-        elif verbosity == 1:
-            log_level = logging.INFO
-        elif verbosity >= 2:
-            log_level = logging.DEBUG
-
-        return log_level
+    def __getattr__(self, name):
+        return getattr(self._stream, name)

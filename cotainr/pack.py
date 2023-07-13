@@ -192,10 +192,13 @@ class CondaInstall:
         if self.verbosity <= 0:
             return " -q"
         elif self.verbosity == 2:
+            # Conda INFO
             return " -v"
         elif self.verbosity == 3:
+            # Conda DEBUG
             return " -vv"
         elif self.verbosity >= 4:
+            # Conda TRACE
             return " -vvv"
         else:
             return ""

@@ -86,11 +86,18 @@ class Build(CotainrSubcommand):
         Path to a Conda environment.yml file to install and activate in the
         container.
     system : str
-        Which system/partition you will be running the container on, will set base
-        image and other parameters for a simpler container creation.
-        Running the info command will tell you more about the system and what is
-        available.
-    TODO: Cleanup and document
+        Which system/partition you will be running the container on, will set
+        base image and other parameters for a simpler container creation.
+        Running the info command will tell you more about the system and what
+        is available.
+    verbosity : int, optional
+        The verbosity of the output from cotainr: -1 for only CRITICAL, 0 (the
+        default) for cotainr INFO and subprocess WARNING, 1 for subprocess
+        output as well, 2 for subprocess INFO, 3 for DEBUG, and 4 for TRACE.
+    log_to_file : bool
+        Create files containing all logging information shown on stdout/stderr.
+    no_color : bool
+        Do not use colored console output.
     """
 
     def __init__(
@@ -100,7 +107,7 @@ class Build(CotainrSubcommand):
         base_image=None,
         conda_env=None,
         system=None,
-        verbosity,
+        verbosity=0,
         log_to_file,
         no_color,
     ):
@@ -170,8 +177,9 @@ class Build(CotainrSubcommand):
             default=0,
             help=(
                 "increase the verbosity of the output from cotainr. "
-                "Can be used multiple times: Once for subprocess output, twice for INFO, "
-                "three times for DEBUG, and four times for TRACE."  # TODO extract from docstring
+                "Can be used multiple times: Once for subprocess output, "
+                "twice for subprocess INFO, three times for DEBUG, "
+                "and four times for TRACE"
             ),
         )
         verbose_quiet_group.add_argument(
@@ -180,20 +188,17 @@ class Build(CotainrSubcommand):
             action="store_const",
             const=-1,
             dest="verbosity",
-            help="do not show any non-CRITICAL output from cotainr.",  # TODO extract from docstring
+            help="do not show any non-CRITICAL output from cotainr",
         )
         parser.add_argument(
             "--log-to-file",
             action="store_true",
-            help=(
-                "create files containing all logging "
-                "information shown on stdout/stderr."  # TODO extract from docstring
-            ),
+            help=_extract_help_from_docstring(arg="log_to_file", docstring=cls.__doc__),
         )
         parser.add_argument(
             "--no-color",
             action="store_true",
-            help="avoid coloring console output.",  # TODO extract from docstring
+            help=_extract_help_from_docstring(arg="no_color", docstring=cls.__doc__),
         )
 
     def execute(self):
@@ -253,8 +258,8 @@ class Info(CotainrSubcommand):
 
     def __init__(self):
         """Construct the "info" subcommand."""
-        self._checkmark = "\033[92mOK\033[0m"  # green OK
-        self._nocheckmark = "\033[91mERROR\033[0m"  # red ERROR
+        self._checkmark = "\x1b[38;5;2mOK\x1b[0m"  # green OK
+        self._nocheckmark = "\xb1[38;5;1mERROR\x1b[0m"  # red ERROR
         self._tabs_width = 4
 
     def execute(self):
@@ -470,8 +475,6 @@ class CotainrCLI:
         try:
             self.subcommand = self.args.subcommand_cls(**subcommand_args)
         except AttributeError:
-            # TODO: Add proper exception logs throughout (and not here...)
-            logger.exception("EXCEPTION: running subcommand")
             # Print help and exit if no subcommand was given
             self.subcommand = _NoSubcommand(parser=parser)
 

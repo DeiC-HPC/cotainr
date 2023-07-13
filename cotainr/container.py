@@ -26,7 +26,6 @@ from . import __version__ as _cotainr_version
 from . import tracing
 from . import util
 
-# TODO: Add loggers all over
 logger = logging.getLogger(__name__)
 
 
@@ -52,7 +51,6 @@ class SingularitySandbox:
     sandbox_dir : :class:`os.PathLike` or None
         The path to the temporary directory containing the sandbox if within a
         sandbox context, otherwise it is None.
-    #TODO: Cleanup and document
     """
 
     def __init__(self, *, base_image, verbosity, log_file_path=None, no_color=False):
@@ -85,7 +83,7 @@ class SingularitySandbox:
         self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
         self.sandbox_dir.mkdir(exist_ok=False)
         self._subprocess_runner(
-            args=self._add_output_formatting_args(
+            args=self._add_verbosity_arg(
                 args=[
                     "singularity",
                     "--nocolor",
@@ -172,7 +170,7 @@ class SingularitySandbox:
         self._assert_within_sandbox_context()
 
         self._subprocess_runner(
-            args=self._add_output_formatting_args(
+            args=self._add_verbosity_arg(
                 args=[
                     "singularity",
                     "--nocolor",
@@ -196,7 +194,6 @@ class SingularitySandbox:
         ----------
         cmd : str
             The command to run in the container sandbox.
-        TODO: Update
 
         Returns
         -------
@@ -228,7 +225,7 @@ class SingularitySandbox:
         try:
             process = self._subprocess_runner(
                 custom_log_dispatcher=custom_log_dispatcher,
-                args=self._add_output_formatting_args(
+                args=self._add_verbosity_arg(
                     args=[
                         "singularity",
                         "--nocolor",
@@ -257,11 +254,11 @@ class SingularitySandbox:
         if self.sandbox_dir is None:
             raise ValueError("The operation is only valid inside a sandbox context.")
 
-    def _add_output_formatting_args(self, *, args):
-        # TODO: document
+    def _add_verbosity_arg(self, *, args):
         if self.verbosity <= 0:
             args.insert(1, "--quiet")
-        elif self.verbosity >= 2:
+        elif self.verbosity >= 3:
+            # Assume --verbose is a debug level
             args.insert(1, "--verbose")
 
         return args
@@ -282,7 +279,6 @@ class SingularitySandbox:
 
     @staticmethod
     def _map_log_level(msg):
-        # TODO: Cleanup and document
         if msg.startswith("DEBUG") or msg.startswith("VERBOSE"):
             return logging.DEBUG
         elif msg.startswith("INFO") or msg.startswith("LOG"):
