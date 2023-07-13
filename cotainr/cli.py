@@ -102,9 +102,11 @@ class Build(CotainrSubcommand):
         system=None,
         verbosity,
         log_to_file,
+        no_color,
     ):
         """Construct the "build" subcommand."""
         self.verbosity = verbosity
+        self.no_color = no_color
         self.log_file_path = (
             Path(".").resolve()
             / f"cotainr_build_{datetime.now().isoformat().replace(':', '.')}"
@@ -136,8 +138,6 @@ class Build(CotainrSubcommand):
                 )
         else:
             self.conda_env = None
-
-        self.console_log_msg_queue = None
 
     @classmethod
     def add_arguments(cls, *, parser):
@@ -190,6 +190,11 @@ class Build(CotainrSubcommand):
                 "information shown on stdout/stderr."  # TODO extract from docstring
             ),
         )
+        parser.add_argument(
+            "--no-color",
+            action="store_true",
+            help="avoid coloring console output.",  # TODO extract from docstring
+        )
 
     def execute(self):
         """Execute the "build" subcommand."""
@@ -200,6 +205,7 @@ class Build(CotainrSubcommand):
                 base_image=self.base_image,
                 verbosity=self.verbosity,
                 log_file_path=self.log_file_path,
+                no_color=self.no_color,
             ) as sandbox:
                 if self.conda_env is not None:
                     # Install supplied conda env
@@ -211,6 +217,7 @@ class Build(CotainrSubcommand):
                         sandbox=sandbox,
                         verbosity=self.verbosity,
                         log_file_path=self.log_file_path,
+                        no_color=self.no_color,
                     )
                     conda_install.add_environment(
                         path=conda_env_file, name=conda_env_name
@@ -470,11 +477,14 @@ class CotainrCLI:
 
         # Setup CLI logging
         self._setup_cotainr_cli_logging(
-            verbosity=self.subcommand.verbosity,
-            log_file_path=self.subcommand.log_file_path,
+            verbosity=subcommand_args.get("verbosity", 0),
+            log_file_path=subcommand_args.get("log_file_path", None),
+            no_color=subcommand_args.get("no_color", False),
         )
 
-    def _setup_cotainr_cli_logging(self, *, verbosity, log_file_path=None):
+    def _setup_cotainr_cli_logging(
+        self, *, verbosity, log_file_path=None, no_color=False
+    ):
         # TODO: document
         class OnlyDebugInfoLevelFilter(logging.Filter):
             def filter(self, record):
@@ -483,21 +493,18 @@ class CotainrCLI:
         # Setup cotainr CLI log level and format
         if verbosity >= 2:
             cotainr_log_level = logging.DEBUG
-            cotainr_stdout_log_formatter = logging.Formatter(
+            cotainr_stdout_fmt = (
                 "%(asctime)s - %(name)s::%(funcName)s::%(lineno)d::"
                 "Cotainr:-:%(levelname)s: %(message)s"
             )
-            cotainr_stderr_log_formatter = cotainr_stdout_log_formatter
+            cotainr_stderr_fmt = cotainr_stdout_fmt
         else:
             if verbosity == -1:
                 cotainr_log_level = logging.CRITICAL
             else:
                 cotainr_log_level = logging.INFO
-            cotainr_stdout_log_formatter = logging.Formatter("Cotainr:-: %(message)s")
-            cotainr_stderr_log_formatter = logging.Formatter(
-                # Only show levelname for WARNINGs and above
-                "Cotainr:-:%(levelname)s: %(message)s"
-            )
+            cotainr_stdout_fmt = "Cotainr:-: %(message)s"
+            cotainr_stderr_fmt = "Cotainr:-:%(levelname)s: %(message)s"
 
         # Setup cotainr log handlers
         cotainr_stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
@@ -512,7 +519,7 @@ class CotainrCLI:
 
         for stdout_handler in cotainr_stdout_handlers:
             stdout_handler.setLevel(cotainr_log_level)
-            stdout_handler.setFormatter(cotainr_stdout_log_formatter)
+            stdout_handler.setFormatter(logging.Formatter(cotainr_stdout_fmt))
             stdout_handler.addFilter(
                 # Avoid also emitting WARNINGs and above on stdout
                 OnlyDebugInfoLevelFilter()
@@ -520,7 +527,16 @@ class CotainrCLI:
 
         for stderr_handler in cotainr_stderr_handlers:
             stderr_handler.setLevel(logging.WARNING)
-            stderr_handler.setFormatter(cotainr_stderr_log_formatter)
+            stderr_handler.setFormatter(logging.Formatter(cotainr_stderr_fmt))
+
+        if not no_color:
+            # Replace console formatters with one that colors the output
+            cotainr_stdout_handlers[0].setFormatter(
+                tracing.ColoredOutputFormatter(cotainr_stdout_fmt)
+            )
+            cotainr_stderr_handlers[0].setFormatter(
+                tracing.ColoredOutputFormatter(cotainr_stderr_fmt)
+            )
 
         # Define cotainr root logger
         root_logger = logging.getLogger("cotainr")

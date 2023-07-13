@@ -1,3 +1,4 @@
+import copy
 import contextlib
 import functools
 import itertools
@@ -9,6 +10,26 @@ import threading
 import time
 
 logger = logging.getLogger(__name__)
+
+
+class ColoredOutputFormatter(logging.Formatter):
+    log_level_fg_colors = {
+        # https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
+        logging.DEBUG: "\x1b[38;5;8m",  # gray
+        logging.WARNING: "\x1b[38;5;3m",  # yellow
+        logging.ERROR: "\x1b[38;5;1m",  # red
+        logging.CRITICAL: "\x1b[38;5;196m",  # intense red
+    }
+    reset_color = "\x1b[0m"
+
+    def format(self, record):
+        fg_color = self.log_level_fg_colors.get(record.levelno, "")
+        if fg_color:
+            color_record = copy.copy(record)
+            color_record.msg = fg_color + record.msg + self.reset_color
+            return super().format(color_record)
+        else:
+            return super().format(record)
 
 
 class StreamWriteProxy:
@@ -70,13 +91,21 @@ class MessageSpinner:
         self._print_width = (
             shutil.get_terminal_size()[0] - 2
         )  # account for spinner + whitespace
-        self._ansi_escape_re = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+        self._ansi_escape_re = re.compile(
+            # Based on r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])" from
+            # https://stackoverflow.com/a/14693789
+            # with all Select Graphics Rendition (SGR) codes (those ending with "m")
+            # passed through. See also:
+            # https://notes.burke.libbey.me/ansi-escape-codes/
+            r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*([@-l]|[n-~]))"
+        )
         self._running = False
 
         # \033[2K erases the old line to avoid the extra two
         # characters at the end of the line stemming from the shift
         # of the line due to the leading spinner character and a whitespace
-        self._clear_line_code = "\r\033[2K"
+        self._clear_line_code = "\r" + "\x1B[2K"
+        self._reset_SGR = "\x1b[0m"
 
     def start(self):
         self._spinner_thread.start()
@@ -92,19 +121,18 @@ class MessageSpinner:
         # Strip any newlines and ANSI escape codes that may interfere with
         # our manipulation of the console
         msg = self._msg.rstrip("\n")
-        msg = self._ansi_escape_re.sub(
-            "", msg
-        )  # TODO: does this remove colors as well?
+        msg = self._ansi_escape_re.sub("", msg)
 
         # Delay spinning a bit to avoid flaky message updates when new messages arrive promptly
-        time.sleep(self._spinner_sleep_interval / 10)
+        time.sleep(self._spinner_sleep_interval / 4)
 
         # Start spinning
         while not self._stop_signal.is_set():
             # Update spinner
             print(
-                f"{self._clear_line_code}{next(self._spinner_cycle)} "
-                f"{msg[:self._print_width]}",  # restrict output to terminal width
+                f"{self._clear_line_code}{next(self._spinner_cycle)} "  # spinner
+                f"{msg[:self._print_width]}"  # restrict msg output to terminal width
+                f"{self._reset_SGR}",  # reset SGR - in case we clipped it from the msg
                 end="",  # keep overwriting current line
                 file=self._stream,
             )
@@ -117,22 +145,28 @@ class MessageSpinner:
 class LogDispatcher:
     # TODO: Cleanup and document
     def __init__(
-        self, *, name, map_log_level_func, verbosity, log_file_path=None, filters=None
+        self,
+        *,
+        name,
+        map_log_level_func,
+        verbosity,
+        log_file_path=None,
+        no_color=False,
+        filters=None,
     ):
         log_level = self._determine_log_level(verbosity=verbosity)
         self.map_log_level = map_log_level_func
 
         # Setup cotainr log format
         if verbosity >= 2:
-            log_formatter = logging.Formatter(
-                "%(asctime)s - %(name)s:%(levelname)s %(message)s"
-            )
+            log_fmt = "%(asctime)s - %(name)s:%(levelname)s %(message)s"
         else:
-            log_formatter = logging.Formatter("%(name)s:-: %(message)s")
+            log_fmt = "%(name)s:-: %(message)s"
 
         # Setup log handlers
         stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
         stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
+
         if log_file_path is not None:
             stdout_handlers.append(
                 logging.FileHandler(log_file_path.with_suffix(".out"))
@@ -142,10 +176,15 @@ class LogDispatcher:
             )
         for handler in stdout_handlers + stderr_handlers:
             handler.setLevel(log_level)
-            handler.setFormatter(log_formatter)
+            handler.setFormatter(logging.Formatter(log_fmt))
             if filters is not None:
                 for filter in filters:
                     handler.addFilter(filter)
+
+        if not no_color:
+            # Replace console formatters with one that colors the output
+            stdout_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
+            stderr_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
 
         # Setup loggers
         self.logger_stdout = logging.getLogger(f"{name}.out")

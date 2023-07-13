@@ -47,7 +47,15 @@ class CondaInstall:
         The Conda prefix used for the Conda install.
     """
 
-    def __init__(self, *, sandbox, prefix="/opt/conda", verbosity, log_file_path=None):
+    def __init__(
+        self,
+        *,
+        sandbox,
+        prefix="/opt/conda",
+        verbosity,
+        log_file_path=None,
+        no_color=False,
+    ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
         self.prefix = prefix
@@ -57,6 +65,7 @@ class CondaInstall:
             map_log_level_func=self._map_log_level,
             verbosity=verbosity,
             log_file_path=log_file_path,
+            no_color=no_color,
             filters=self._logging_filters,
         )
 
