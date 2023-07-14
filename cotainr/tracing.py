@@ -10,6 +10,7 @@ import shutil
 import sys
 import threading
 import time
+import typing
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +162,7 @@ class LogDispatcher:
 @dataclasses.dataclass
 class LogSettings:
     verbosity: int = 0
-    log_file_path: pathlib.Path | None = None
+    log_file_path: typing.Optional[pathlib.Path] = None
     no_color: bool = False
 
 
