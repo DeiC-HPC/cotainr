@@ -63,8 +63,8 @@ def stream_subprocess(*, log_dispatcher=None, args, **kwargs):
     Run a the command described by `args` while streaming stdout and stderr.
 
     The command described by `args` is run in a subprocess with that
-    subprocess' stdout and stderr streamed to the stdout. Extra `kwargs` are
-    passed to `Popen` when opening the subprocess.
+    subprocess' stdout and stderr streamed to the main process. Extra `kwargs`
+    are passed to `Popen` when opening the subprocess.
 
     Parameters
     ----------
