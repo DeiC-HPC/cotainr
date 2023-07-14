@@ -53,18 +53,20 @@ class SingularitySandbox:
         sandbox context, otherwise it is None.
     """
 
-    def __init__(self, *, base_image, verbosity, log_file_path=None, no_color=False):
+    def __init__(self, *, base_image, log_settings=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
-        self.verbosity = verbosity
-        self.log_dispatcher = tracing.LogDispatcher(
-            name=__class__.__name__,
-            map_log_level_func=self._map_log_level,
-            verbosity=verbosity,
-            log_file_path=log_file_path,
-            no_color=no_color,
-        )
+        if log_settings is not None:
+            self.verbosity = log_settings.verbosity
+            self.log_dispatcher = tracing.LogDispatcher(
+                name=__class__.__name__,
+                map_log_level_func=self._map_log_level,
+                log_settings=log_settings,
+            )
+        else:
+            self.verbosity = 0
+            self.log_dispatcher = None
 
     def __enter__(self):
         """

@@ -132,7 +132,8 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
     ----------
     stream_handle : io.TextIOWrapper
         The text stream to print and capture.
-    print_dispatch : ...
+    print_dispatch : Callable
+        The callable to use for printing.
     """
     captured_stream = []
     for line in stream_handle:

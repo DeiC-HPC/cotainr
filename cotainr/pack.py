@@ -47,27 +47,21 @@ class CondaInstall:
         The Conda prefix used for the Conda install.
     """
 
-    def __init__(
-        self,
-        *,
-        sandbox,
-        prefix="/opt/conda",
-        verbosity,
-        log_file_path=None,
-        no_color=False,
-    ):
+    def __init__(self, *, sandbox, prefix="/opt/conda", log_settings=None):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
         self.prefix = prefix
-        self.verbosity = verbosity
-        self.log_dispatcher = tracing.LogDispatcher(
-            name=__class__.__name__,
-            map_log_level_func=self._map_log_level,
-            verbosity=verbosity,
-            log_file_path=log_file_path,
-            no_color=no_color,
-            filters=self._logging_filters,
-        )
+        if log_settings is not None:
+            self.verbosity = log_settings.verbosity
+            self.log_dispatcher = tracing.LogDispatcher(
+                name=__class__.__name__,
+                map_log_level_func=self._map_log_level,
+                filters=self._logging_filters,
+                log_settings=log_settings,
+            )
+        else:
+            self.verbosity = 0
+            self.log_dispatcher = None
 
         # Download Conda installer
         conda_installer_path = (
@@ -205,11 +199,19 @@ class CondaInstall:
 
     @property
     def _logging_filters(self):
-        class NoEmptyLinesFilter(logging.Filter):
-            # Replace any empty lines including lines only containing the
-            # "cursor up" ANSI escape code
+        class StripANSIEscapeCodes(logging.Filter):
+            # In-place strip all ANSI escape codes
+            # Regex from https://stackoverflow.com/a/14693789
+            ansi_escape_re = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
             def filter(self, record):
-                return record.msg.replace("\x1b[A", "") != ""
+                record.msg = self.ansi_escape_re.sub("", record.msg)
+                return True
+
+        class NoEmptyLinesFilter(logging.Filter):
+            # Remove any empty lines
+            def filter(self, record):
+                return record.msg != ""
 
         class OnlyFinalProgressbarFilter(logging.Filter):
             # Assume a progress bar line like
@@ -222,7 +224,13 @@ class CondaInstall:
             def filter(self, record):
                 return not self.progress_bar_re.match(record.msg)
 
-        logging_filters = [NoEmptyLinesFilter(), OnlyFinalProgressbarFilter()]
+        logging_filters = [
+            # The order matters as filters are applied in order.
+            # ANSI escape codes must be removed before filtering empty lines.
+            StripANSIEscapeCodes(),
+            NoEmptyLinesFilter(),
+            OnlyFinalProgressbarFilter(),
+        ]
 
         return logging_filters
 

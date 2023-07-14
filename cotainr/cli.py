@@ -112,13 +112,15 @@ class Build(CotainrSubcommand):
         no_color,
     ):
         """Construct the "build" subcommand."""
-        self.verbosity = verbosity
-        self.no_color = no_color
-        self.log_file_path = (
-            Path(".").resolve()
-            / f"cotainr_build_{datetime.now().isoformat().replace(':', '.')}"
-            if log_to_file
-            else None
+        self.log_settings = tracing.LogSettings(
+            verbosity=verbosity,
+            log_file_path=(
+                Path(".").resolve()
+                / f"cotainr_build_{datetime.now().isoformat().replace(':', '.')}"
+                if log_to_file
+                else None
+            ),
+            no_color=no_color,
         )
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
@@ -205,24 +207,19 @@ class Build(CotainrSubcommand):
         """Execute the "build" subcommand."""
         t_start_build = time.time()
         with tracing.ConsoleSpinner():
-            logger.info("Creating Singularity Sandbox...")
+            logger.info("Creating Singularity Sandbox")
             with container.SingularitySandbox(
-                base_image=self.base_image,
-                verbosity=self.verbosity,
-                log_file_path=self.log_file_path,
-                no_color=self.no_color,
+                base_image=self.base_image, log_settings=self.log_settings
             ) as sandbox:
                 if self.conda_env is not None:
                     # Install supplied conda env
-                    logger.info("Installing Conda environment: %s...", self.conda_env)
+                    logger.info("Installing Conda environment: %s", self.conda_env)
                     conda_env_name = "conda_container_env"
                     conda_env_file = sandbox.sandbox_dir / self.conda_env.name
                     shutil.copyfile(self.conda_env, conda_env_file)
                     conda_install = pack.CondaInstall(
                         sandbox=sandbox,
-                        verbosity=self.verbosity,
-                        log_file_path=self.log_file_path,
-                        no_color=self.no_color,
+                        log_settings=self.log_settings,
                     )
                     conda_install.add_environment(
                         path=conda_env_file, name=conda_env_name
@@ -230,15 +227,15 @@ class Build(CotainrSubcommand):
                     sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
                     # Clean-up unused files
-                    logger.info("Cleaning up unused Conda files...")
+                    logger.info("Cleaning up unused Conda files")
                     conda_install.cleanup_unused_files()
                     logger.info(
                         "Finished installing conda environment: %s", self.conda_env
                     )
 
-                logger.info("Adding metadata to container...")
+                logger.info("Adding metadata to container")
                 sandbox.add_metadata()
-                logger.info("Building container image...")
+                logger.info("Building container image")
                 sandbox.build_image(path=self.image_path)
 
             t_end_build = time.time()
@@ -480,21 +477,21 @@ class CotainrCLI:
 
         # Setup CLI logging
         self._setup_cotainr_cli_logging(
-            verbosity=subcommand_args.get("verbosity", 0),
-            log_file_path=subcommand_args.get("log_file_path", None),
-            no_color=subcommand_args.get("no_color", False),
+            log_settings=getattr(
+                self.subcommand,
+                "log_settings",
+                tracing.LogSettings(),
+            )
         )
 
-    def _setup_cotainr_cli_logging(
-        self, *, verbosity, log_file_path=None, no_color=False
-    ):
+    def _setup_cotainr_cli_logging(self, *, log_settings):
         # TODO: document
         class OnlyDebugInfoLevelFilter(logging.Filter):
             def filter(self, record):
                 return record.levelno <= logging.INFO
 
         # Setup cotainr CLI log level and format
-        if verbosity >= 2:
+        if log_settings.verbosity >= 2:
             cotainr_log_level = logging.DEBUG
             cotainr_stdout_fmt = (
                 "%(asctime)s - %(name)s::%(funcName)s::%(lineno)d::"
@@ -502,7 +499,7 @@ class CotainrCLI:
             )
             cotainr_stderr_fmt = cotainr_stdout_fmt
         else:
-            if verbosity == -1:
+            if log_settings.verbosity == -1:
                 cotainr_log_level = logging.CRITICAL
             else:
                 cotainr_log_level = logging.INFO
@@ -512,12 +509,12 @@ class CotainrCLI:
         # Setup cotainr log handlers
         cotainr_stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
         cotainr_stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
-        if log_file_path is not None:
+        if log_settings.log_file_path is not None:
             cotainr_stdout_handlers.append(
-                logging.FileHandler(log_file_path.with_suffix(".out"))
+                logging.FileHandler(log_settings.log_file_path.with_suffix(".out"))
             )
             cotainr_stderr_handlers.append(
-                logging.FileHandler(log_file_path.with_suffix(".err"))
+                logging.FileHandler(log_settings.log_file_path.with_suffix(".err"))
             )
 
         for stdout_handler in cotainr_stdout_handlers:
@@ -532,7 +529,7 @@ class CotainrCLI:
             stderr_handler.setLevel(logging.WARNING)
             stderr_handler.setFormatter(logging.Formatter(cotainr_stderr_fmt))
 
-        if not no_color:
+        if not log_settings.no_color:
             # Replace console formatters with one that colors the output
             cotainr_stdout_handlers[0].setFormatter(
                 tracing.ColoredOutputFormatter(cotainr_stdout_fmt)

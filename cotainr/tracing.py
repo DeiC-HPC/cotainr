@@ -1,8 +1,10 @@
 import copy
 import contextlib
+import dataclasses
 import functools
 import itertools
 import logging
+import pathlib
 import re
 import shutil
 import sys
@@ -72,16 +74,17 @@ class LogDispatcher:
         *,
         name,
         map_log_level_func,
-        verbosity,
-        log_file_path=None,
-        no_color=False,
         filters=None,
+        log_settings,
     ):
-        log_level = self._determine_log_level(verbosity=verbosity)
         self.map_log_level = map_log_level_func
+        self.verbosity = log_settings.verbosity
+        self.log_file_path = log_settings.log_file_path
+        self.no_color = log_settings.no_color
+        log_level = self._determine_log_level(verbosity=log_settings.verbosity)
 
         # Setup cotainr log format
-        if verbosity >= 2:
+        if self.verbosity >= 2:
             log_fmt = "%(asctime)s - %(name)s:%(levelname)s %(message)s"
         else:
             log_fmt = "%(name)s:-: %(message)s"
@@ -90,12 +93,12 @@ class LogDispatcher:
         stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
         stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
 
-        if log_file_path is not None:
+        if self.log_file_path is not None:
             stdout_handlers.append(
-                logging.FileHandler(log_file_path.with_suffix(".out"))
+                logging.FileHandler(self.log_file_path.with_suffix(".out"))
             )
             stderr_handlers.append(
-                logging.FileHandler(log_file_path.with_suffix(".err"))
+                logging.FileHandler(self.log_file_path.with_suffix(".err"))
             )
         for handler in stdout_handlers + stderr_handlers:
             handler.setLevel(log_level)
@@ -104,7 +107,7 @@ class LogDispatcher:
                 for filter in filters:
                     handler.addFilter(filter)
 
-        if not no_color:
+        if not self.no_color:
             # Replace console formatters with one that colors the output
             stdout_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
             stderr_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
@@ -155,6 +158,13 @@ class LogDispatcher:
         return log_level
 
 
+@dataclasses.dataclass
+class LogSettings:
+    verbosity: int = 0
+    log_file_path: pathlib.Path | None = None
+    no_color: bool = False
+
+
 class MessageSpinner:
     def __init__(self, *, msg, stream):
         self._msg = msg
@@ -165,21 +175,23 @@ class MessageSpinner:
         self._spinner_sleep_interval = 0.1
         self._stop_signal = threading.Event()
         self._print_width = (
-            shutil.get_terminal_size()[0] - 2
-        )  # account for spinner + whitespace
+            # account for leading spinner + whitespace (2 chars)
+            # and trailing dots (3 chars)
+            shutil.get_terminal_size()[0]
+            - 5
+        )
         self._ansi_escape_re = re.compile(
             # Based on r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])" from
-            # https://stackoverflow.com/a/14693789
-            # with all Select Graphics Rendition (SGR) codes (those ending with "m")
-            # passed through. See also:
-            # https://notes.burke.libbey.me/ansi-escape-codes/
+            # https://stackoverflow.com/a/14693789 with all "Select Graphics
+            # Rendition (SGR)" codes (those ending with "m") passed through.
+            # See also: https://notes.burke.libbey.me/ansi-escape-codes/
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*([@-l]|[n-~]))"
         )
         self._running = False
 
-        # \033[2K erases the old line to avoid the extra two
-        # characters at the end of the line stemming from the shift
-        # of the line due to the leading spinner character and a whitespace
+        # \033[2K erases the old line to avoid the extra two characters at the
+        # end of the line stemming from the shift of the line due to the
+        # leading spinner character and a whitespace
         self._clear_line_code = "\r" + "\x1B[2K"
         self._reset_SGR = "\x1b[0m"
 
@@ -194,21 +206,30 @@ class MessageSpinner:
             self._running = False
 
     def _spin_msg(self):
+        # Delay spinning a bit to avoid flaky message updates when new messages
+        # arrive promptly
+        time.sleep(self._spinner_sleep_interval / 4)
+
         # Strip any newlines and ANSI escape codes that may interfere with
-        # our manipulation of the console
+        # our manipulation of the console (not SGRs, though)
         msg = self._msg.rstrip("\n")
         msg = self._ansi_escape_re.sub("", msg)
 
-        # Delay spinning a bit to avoid flaky message updates when new messages arrive promptly
-        time.sleep(self._spinner_sleep_interval / 4)
+        # Construct a messages that is guaranteed to fit on one line with the spinner
+        one_line_msg = (
+            # Make room for the spinner and 3 trailing dots and make sure to
+            # keep the "reset SGR" code if its present
+            msg[: (self._print_width - len(self._reset_SGR))] + self._reset_SGR
+            if msg.endswith(self._reset_SGR)
+            else msg[: self._print_width]
+        ) + "..."
 
         # Start spinning
         while not self._stop_signal.is_set():
             # Update spinner
             print(
                 f"{self._clear_line_code}{next(self._spinner_cycle)} "  # spinner
-                f"{msg[:self._print_width]}"  # restrict msg output to terminal width
-                f"{self._reset_SGR}",  # reset SGR - in case we clipped it from the msg
+                f"{one_line_msg}",
                 end="",  # keep overwriting current line
                 file=self._stream,
             )
