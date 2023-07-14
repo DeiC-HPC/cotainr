@@ -108,8 +108,8 @@ class Build(CotainrSubcommand):
         conda_env=None,
         system=None,
         verbosity=0,
-        log_to_file,
-        no_color,
+        log_to_file=False,
+        no_color=False,
     ):
         """Construct the "build" subcommand."""
         self.log_settings = tracing.LogSettings(
