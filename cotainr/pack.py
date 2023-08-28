@@ -14,8 +14,10 @@ CondaInstall
 """
 
 from pathlib import Path
-import time
 import random
+import subprocess
+import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -41,16 +43,26 @@ class CondaInstall:
         The Conda prefix used for the Conda install.
     """
 
-    def __init__(self, *, sandbox, prefix="/opt/conda"):
+    def __init__(self, *, sandbox, prefix="/opt/conda", license_accepted=False):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
         self.prefix = prefix
+        self.license_accepted = license_accepted
 
         # Download Conda installer
         conda_installer_path = (
             Path(self.sandbox.sandbox_dir).resolve() / "conda_installer.sh"
         )
         self._download_conda_installer(path=conda_installer_path)
+
+        # Make sure the user has accepted the Conda installer license
+        if not license_accepted:
+            self._display_license_for_acceptance(installer_path=conda_installer_path)
+        else:
+            print(
+                "You have accepted the Conda installer license via the command line "
+                "option '--accept-licenses'."
+            )
 
         # Bootstrap Conda environment in container
         self._bootstrap_conda(installer_path=conda_installer_path)
@@ -122,6 +134,65 @@ class CondaInstall:
                 "Multiple Conda installs interfere. "
                 "We risk destroying the Conda install in "
                 f"{source_check_process.stdout.strip()}. Aborting!"
+            )
+
+    def _display_license_for_acceptance(self, *, installer_path):
+        """
+        Extract and display Conda installer license for acceptance.
+
+        Runs the Conda installer to extract the license, displays it to the
+        user, and prompts for acceptance of the license terms. Exits if the
+        license terms are not accepted.
+
+        Parameters
+        ----------
+        installer_path : pathlib.Path
+            The path of the Conda installer to run to bootstrap Conda.
+
+        Raises
+        ------
+        RuntimeError
+            If unable to extract a license from the Conda installer.
+
+        Notes
+        -----
+        This assumes that the Conda installer, as it is run, prompts the user
+        for pressing ENTER to display the license, then displays the license
+        and prompts the user to answer "yes" to accept the license terms.
+
+        We try to "forward" this flow to the user by extracting the text shown
+        when running the installer and pressing ENTER. We then prompt for a
+        "yes" to the license terms.
+        """
+        with subprocess.Popen(
+            ["bash", f"{installer_path.name}"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True,
+        ) as process:
+            license, _ = process.communicate(
+                # "press" ENTER to display the license and capture it
+                "\n"
+            )
+            process.kill()  # We only use this process to extract the license
+
+        if license:
+            license = license.replace(
+                # remove prompt for pressing enter (as we have already done this...)
+                "Please, press ENTER to continue\n>>> ",
+                "\n",
+            )
+            print(license)
+            val = input()  # prompt user for acceptance of license terms
+            if val != "yes":
+                print("You have not accepted the Conda installer license. Aborting!")
+                sys.exit(0)
+
+            self.license_accepted = True
+            print("You have accepted the Conda installer license.")
+        else:
+            raise RuntimeError(
+                "No license seems to be displayed by the Conda installer."
             )
 
     def _download_conda_installer(self, *, path):
