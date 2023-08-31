@@ -35,6 +35,31 @@ class TestConstructor:
         assert conda_install.prefix == "/opt/conda"
         assert conda_install.license_accepted
 
+    def test_beforehand_license_acceptance(
+        self,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        capsys,
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            CondaInstall(sandbox=sandbox, license_accepted=True)
+
+        # Check that the message about accepting Miniforge license on
+        # beforehand is shown
+        (
+            _sandbox_create_cmd,
+            miniforge_license_accept_cmd,
+            _conda_bootstrap_cmd,
+            _conda_bootstrap_clean_cmd,
+        ) = (
+            capsys.readouterr().out.strip().split("\n")
+        )
+        assert miniforge_license_accept_cmd == (
+            "You have accepted the Miniforge installer license via the command line option "
+            "'--accept-licenses'."
+        )
+
     def test_cleanup(
         self,
         capsys,
@@ -174,6 +199,26 @@ class Test_CheckCondaBootstrapIntegrity:
         )
         assert exc_msg.endswith("Aborting!")
         assert "'conda', 'info', '--base'" in exc_msg
+
+
+class Test_DisplayMiniforgeLicenseForAcceptance:
+    def test_acccepting_license(self):
+        1 / 0
+
+    def test_not_accepting_license(self):
+        1 / 0
+
+    def test_installer_not_showing_license(self):
+        1 / 0
+
+    def test_press_ENTER(self):
+        1 / 0
+
+    def test_print_license(self):
+        1 / 0
+
+    def test_replace_prompt_for_error(self):
+        1 / 0
 
 
 class Test_DownloadCondaInstaller:

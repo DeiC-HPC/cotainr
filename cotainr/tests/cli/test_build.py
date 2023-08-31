@@ -21,6 +21,7 @@ from ..container.patches import (
 )
 from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
+    patch_disable_conda_install_display_miniforge_license_for_acceptance,
     patch_disable_conda_install_download_miniforge_installer,
 )
 from ..util.patches import patch_system_with_actual_file, patch_empty_system
@@ -57,6 +58,7 @@ class TestConstructor:
         else:
             assert build.base_image == base_image
         assert build.conda_env is None
+        assert not build.accept_licenses
 
     @pytest.mark.parametrize(
         "base_image,system",
@@ -103,6 +105,15 @@ class TestConstructor:
         build = Build(image_path=image_path, base_image=base_image)
         assert build.base_image == base_image
 
+    def test_specifying_accept_licenses(self):
+        # See also the matching TestAddArguments test below
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        build = Build(
+            image_path=image_path, base_image=base_image, accept_licenses=True
+        )
+        assert build.accept_licenses
+
 
 class TestAddArguments:
     def test_not_specifying_base_image_or_system(self, capsys):
@@ -129,6 +140,7 @@ class TestAddArguments:
         assert args.image_path.name == image_path
         assert isinstance(args.base_image, str)
         assert args.base_image == base_image
+        assert not args.accept_licenses
 
     def test_only_specifying_required_args_system(self, patch_system_with_actual_file):
         # See also the matching TestConstructor test above
@@ -141,6 +153,7 @@ class TestAddArguments:
         assert args.image_path.name == image_path
         assert isinstance(args.system, str)
         assert args.system == system
+        assert not args.accept_licenses
 
     def test_specifying_both_system_and_base_image(self, capsys):
         image_path = "some_image_path_6021"
@@ -174,6 +187,19 @@ class TestAddArguments:
         )
         assert isinstance(args.conda_env, Path)
         assert args.conda_env.name == conda_env
+
+    def test_specifying_accept_licenses(self):
+        # See also the matching TestConstructor test above
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(
+                f"{image_path} --base-image={base_image} --accept-licenses"
+            )
+        )
+        assert args.accept_licenses
 
 
 class TestExecute:
@@ -276,6 +302,25 @@ class TestExecute:
             s in sandbox_build_cmd
             for s in ["'singularity'", "'build'", f"{image_path}"]
         )
+
+    def test_no_beforehand_license_acceptance(
+        self,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_conda_install_display_miniforge_license_for_acceptance,
+    ):
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        conda_env = "some_conda_env_6021"
+        conda_env_content = "Some conda env content 6021"
+        Path(conda_env).write_text(conda_env_content)
+        with pytest.raises(SystemExit, match="^PATCH: Showing license terms for "):
+            Build(
+                image_path=image_path,
+                base_image=base_image,
+                conda_env=conda_env,
+                accept_licenses=False,
+            ).execute()
 
 
 class TestHelpMessage:

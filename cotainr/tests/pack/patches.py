@@ -7,6 +7,8 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
+import sys
+
 import pytest
 
 import cotainr.pack
@@ -29,6 +31,25 @@ def patch_disable_conda_install_bootstrap_conda(monkeypatch):
 
     monkeypatch.setattr(
         cotainr.pack.CondaInstall, "_bootstrap_conda", mock_bootstrap_conda
+    )
+
+
+@pytest.fixture
+def patch_disable_conda_install_display_miniforge_license_for_acceptance(monkeypatch):
+    """
+    Disable CondaInstall._display_miniforge_license_for_acceptance(...).
+
+    The explicit request for an acceptance of the Miniforge license terms is
+    replaced by a mock exits with a message about what would have happened.
+    """
+
+    def mock_display_miniforge_license_for_acceptance(self, *, installer_path):
+        sys.exit("PATCH: Showing license terms for {installer_path}")
+
+    monkeypatch.setattr(
+        cotainr.pack.CondaInstall,
+        "_display_miniforge_license_for_acceptance",
+        mock_display_miniforge_license_for_acceptance,
     )
 
 

@@ -79,8 +79,8 @@ class CondaInstall:
             )
         else:
             print(
-                "You have accepted the Miniforge installer license via the command line "
-                "option '--accept-licenses'."
+                "You have accepted the Miniforge installer license via the command "
+                "line option '--accept-licenses'."
             )
 
         # Bootstrap Conda environment in container
