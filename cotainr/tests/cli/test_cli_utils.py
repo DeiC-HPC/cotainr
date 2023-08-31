@@ -32,7 +32,7 @@ class TestExtractHelpFromDocstring:
         ):
             _extract_help_from_docstring(arg="some_arg", docstring=docstring)
 
-    def test_description_lower_case(self):
+    def test_description_first_letter_lower_case(self):
         docstring = """
         Parameters
         ----------
@@ -40,7 +40,7 @@ class TestExtractHelpFromDocstring:
             The INTEGER
         """
         help_msg = _extract_help_from_docstring(arg="some_arg", docstring=docstring)
-        assert help_msg == "the integer"
+        assert help_msg == "the INTEGER"
 
     def test_description_period_strip(self):
         docstring = """

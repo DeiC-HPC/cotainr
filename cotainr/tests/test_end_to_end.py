@@ -29,7 +29,8 @@ def test_conda_env_build(
         args=shlex.split(
             f"build {build_container_path} "
             f"--base-image={data_cached_ubuntu_sif} "
-            f"--conda-env={conda_env_path}"
+            f"--conda-env={conda_env_path} "
+            "--accept-licenses"
         )
     ).subcommand.execute()
 
