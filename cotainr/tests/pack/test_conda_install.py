@@ -8,6 +8,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import re
+import subprocess
 import urllib.error
 
 import pytest
@@ -18,6 +19,7 @@ from .patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_miniforge_installer,
 )
+from .stubs import StubEmptyLicensePopen, StubShowLicensePopen
 from ..container.data import data_cached_ubuntu_sif
 from ..container.patches import patch_disable_singularity_sandbox_subprocess_runner
 
@@ -202,23 +204,113 @@ class Test_CheckCondaBootstrapIntegrity:
 
 
 class Test_DisplayMiniforgeLicenseForAcceptance:
-    def test_acccepting_license(self):
-        1 / 0
+    def test_acccepting_license(
+        self,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        capsys,
+        monkeypatch,
+    ):
+        monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
+        monkeypatch.setattr("builtins.input", lambda: "yes")
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox)
 
-    def test_not_accepting_license(self):
-        1 / 0
+        stdout_lines = capsys.readouterr().out.strip().split("\n")
+        assert "You have accepted the Miniforge installer license." in stdout_lines
+        assert conda_install.license_accepted
 
-    def test_installer_not_showing_license(self):
-        1 / 0
+    @pytest.mark.parametrize("answer", ["n", "N", "", "some_answer_6021"])
+    def test_not_accepting_license(
+        self,
+        answer,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        capsys,
+        monkeypatch,
+    ):
+        monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
+        monkeypatch.setattr("builtins.input", lambda: answer)
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            with pytest.raises(SystemExit):
+                CondaInstall(sandbox=sandbox)
 
-    def test_press_ENTER(self):
-        1 / 0
+        stdout_lines = capsys.readouterr().out.strip().split("\n")
+        assert (
+            "You have not accepted the Miniforge installer license. Aborting!"
+        ) in stdout_lines
 
-    def test_print_license(self):
-        1 / 0
+    def test_installer_not_showing_license(
+        self,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        monkeypatch,
+    ):
+        monkeypatch.setattr(subprocess, "Popen", StubEmptyLicensePopen)
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            with pytest.raises(
+                RuntimeError,
+                match="^No license seems to be displayed by the Miniforge installer.$",
+            ):
+                CondaInstall(sandbox=sandbox)
 
-    def test_replace_prompt_for_error(self):
-        1 / 0
+    def test_license_interaction_handling(
+        self,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        capsys,
+        monkeypatch,
+    ):
+        monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
+        monkeypatch.setattr("builtins.input", lambda: "yes")
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            CondaInstall(sandbox=sandbox)
+
+        stdout = capsys.readouterr().out.strip()
+        stdout_lines = stdout.split("\n")
+
+        # Check that we send the "ENTER" and kill the process.
+        assert "StubShowLicensePopen received: input='\\n'." in stdout_lines
+        assert "StubShowLicensePopen killed." in stdout_lines
+
+        # Check that the prompt for "ENTER" is not displayed to the user
+        assert "Please, press ENTER to continue\n>>> " not in stdout
+
+        # Check that the license is displayed to the user
+        assert "STUB:\n\n\nThis is the license terms..." in stdout
+
+    @pytest.mark.conda_integration
+    def test_miniforge_still_showing_license(
+        self,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        capsys,
+        monkeypatch,
+    ):
+        monkeypatch.setattr("builtins.input", lambda: "yes")
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox)
+
+        stdout = capsys.readouterr().out.strip()
+
+        # Check that various lines that we expect to always be part of
+        # https://github.com/conda-forge/miniforge/blob/main/LICENSE are still
+        # shown to the user when extracting and showing the Miniforge license
+        # terms from the installer - just to have an idea that the license is
+        # still being shown correctly to the user
+        assert (
+            "Miniforge installer code uses BSD-3-Clause license as stated below."
+        ) in stdout
+        assert (
+            "Miniforge installer comes with a boostrapping executable that is used\n"
+            "when installing miniforge and is deleted after miniforge is installed."
+        ) in stdout
+        assert "conda-forge" in stdout
+        assert "All rights reserved." in stdout
 
 
 class Test_DownloadCondaInstaller:
