@@ -174,6 +174,7 @@ class MessageSpinner:
         self._spinner_cycle = itertools.cycle("⣾⣷⣯⣟⡿⢿⣻⣽")
         self._spinner_thread = threading.Thread(target=self._spin_msg)
         self._spinner_sleep_interval = 0.1
+        self._spinner_delay_time = 0.025
         self._stop_signal = threading.Event()
         self._print_width = (
             # account for leading spinner + whitespace (2 chars)
@@ -209,7 +210,7 @@ class MessageSpinner:
     def _spin_msg(self):
         # Delay spinning a bit to avoid flaky message updates when new messages
         # arrive promptly
-        time.sleep(self._spinner_sleep_interval / 4)
+        time.sleep(self._spinner_delay_time)
 
         # Strip any newlines and ANSI escape codes that may interfere with
         # our manipulation of the console (not SGRs, though)
