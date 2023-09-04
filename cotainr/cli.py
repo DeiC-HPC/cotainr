@@ -426,9 +426,10 @@ def _extract_help_from_docstring(*, arg, docstring):
     Returns
     -------
     arg_description : str
-        The argument description formatted as as done in the default arguments
-        provided by an `argparse.ArgumentParser`, i.e. a single line, no
-        leading white space, first letter lower case, and no trailing period.
+        The argument description formatted in a similar way to the default
+        arguments provided by an `argparse.ArgumentParser`, i.e. a single line,
+        no leading white space, first letter lower case, and no trailing
+        period.
 
     Raises
     ------
