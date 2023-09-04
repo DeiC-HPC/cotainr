@@ -43,6 +43,9 @@ class SingularitySandbox:
     base_image : str
         Base image to use for the container which may be any valid
         Apptainer/Singularity <BUILD SPEC>.
+    log_settings : :class:`~cotainr.tracing.LogSettings`, optional
+        The data used to setup the logging machinery (the default is None which
+        implies that the logging machinery is not used).
 
     Attributes
     ----------
@@ -51,6 +54,9 @@ class SingularitySandbox:
     sandbox_dir : :class:`os.PathLike` or None
         The path to the temporary directory containing the sandbox if within a
         sandbox context, otherwise it is None.
+    log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`.
+        The log dispatcher used to process stdout/stderr message from
+        Singularity commands that run in sandbox.
     """
 
     def __init__(self, *, base_image, log_settings=None):
@@ -58,14 +64,14 @@ class SingularitySandbox:
         self.base_image = base_image
         self.sandbox_dir = None
         if log_settings is not None:
-            self.verbosity = log_settings.verbosity
+            self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
                 name=__class__.__name__,
                 map_log_level_func=self._map_log_level,
                 log_settings=log_settings,
             )
         else:
-            self.verbosity = 0
+            self._verbosity = 0
             self.log_dispatcher = None
 
     def __enter__(self):
@@ -196,6 +202,10 @@ class SingularitySandbox:
         ----------
         cmd : str
             The command to run in the container sandbox.
+        custom_log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
+            The custom log dispatcher to use when running the command (the
+            default is None which implies that the `SingularitySandbox` log
+            dispatcher is used).
 
         Returns
         -------
@@ -257,17 +267,59 @@ class SingularitySandbox:
             raise ValueError("The operation is only valid inside a sandbox context.")
 
     def _add_verbosity_arg(self, *, args):
-        if self.verbosity <= 0:
-            args.insert(1, "--quiet")
-        elif self.verbosity >= 3:
-            # Assume --verbose is a debug level
-            args.insert(1, "--verbose")
+        """
+        Add a verbosity level to Singularity commands.
+
+        A mapping of the internal cotainr verbosity level to `Singularity
+        verbosity flags
+        <https://apptainer.org/docs/user/main/cli/apptainer.html#options>`_.
+
+        Parameters
+        ----------
+        args : list
+            The list of command line arguments constituting the full
+            singularity command.
+
+        Returns
+        -------
+        args : list
+            The updated list of singularity command line arguments.
+        """
+        if self._verbosity < 0:
+            # --silent (-s)
+            args.insert(1, "-s")
+        elif self._verbosity == 0:
+            # --quiet (-q)
+            args.insert(1, "-q")
+        elif self._verbosity >= 3:
+            # Assume --verbose (-v) is a debug level
+            args.insert(1, "-v")
 
         return args
 
     def _subprocess_runner(self, *, custom_log_dispatcher=None, args, **kwargs):
-        """Wrap the choice of subprocess runner."""
+        """
+        Wrap the choice of subprocess runner.
+
+        Parameters
+        ----------
+        custom_log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
+            The custom log dispatcher to use when running the command (the
+            default is None which implies that the `SingularitySandbox` log
+            dispatcher is used).
+        args : list or str
+            Subprocess arguments.
+        kwargs : dict
+            Keyword arguments passed to the subprocess runner.
+
+        Returns
+        -------
+        process : :class:`subprocess.CompletedProcess`
+            Information about the process that ran in the container sandbox.
+        """
         if custom_log_dispatcher is not None:
+            # When the command to be run in the container provides its own
+            # log_dispatcher
             with custom_log_dispatcher.prefix_stderr_name(
                 prefix=self.__class__.__name__
             ):
@@ -275,12 +327,27 @@ class SingularitySandbox:
                     log_dispatcher=custom_log_dispatcher, args=args, **kwargs
                 )
         else:
+            # Use the SingularitySandbox log_dispatcher
             return util.stream_subprocess(
                 log_dispatcher=self.log_dispatcher, args=args, **kwargs
             )
 
     @staticmethod
     def _map_log_level(msg):
+        """
+        Attempt to infer log level for a message.
+
+        Parameters
+        ----------
+        msg : str
+            The message to infer log level for.
+
+        Returns
+        -------
+        log_level : int
+            One of the standard log levels (DEBUG, INFO, WARNING, ERROR, or
+            CRITICAL).
+        """
         if msg.startswith("DEBUG") or msg.startswith("VERBOSE"):
             return logging.DEBUG
         elif msg.startswith("INFO") or msg.startswith("LOG"):

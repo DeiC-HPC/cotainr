@@ -485,8 +485,26 @@ class CotainrCLI:
         )
 
     def _setup_cotainr_cli_logging(self, *, log_settings):
-        # TODO: document
+        """
+        Setup logging for the cotainr main CLI.
+
+        Setting up the logging for the cotainr main CLI includes:
+        - Defining log levels based on CLI verbosity arguments.
+        - Defining log message formats based on CLI verbosity arguments.
+        - Creating log handlers for console output.
+        - Creating log handlers for log file output, if requested.
+        - Setting up colored console output, if requested.
+        - Defining the cotainr "root logger".
+
+        Parameters
+        ----------
+        log_settings : :class:`~cotainr.tracing.LogSettings`
+            The log settings to use for the cotainr main CLI logging.
+        """
+
         class OnlyDebugInfoLevelFilter(logging.Filter):
+            """A simple logging filter that removes records >=INFO."""
+
             def filter(self, record):
                 return record.levelno <= logging.INFO
 

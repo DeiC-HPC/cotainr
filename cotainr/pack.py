@@ -52,7 +52,7 @@ class CondaInstall:
         self.sandbox = sandbox
         self.prefix = prefix
         if log_settings is not None:
-            self.verbosity = log_settings.verbosity
+            self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
                 name=__class__.__name__,
                 map_log_level_func=self._map_log_level,
@@ -60,7 +60,7 @@ class CondaInstall:
                 log_settings=log_settings,
             )
         else:
-            self.verbosity = 0
+            self._verbosity = 0
             self.log_dispatcher = None
 
         # Download Conda installer
@@ -183,15 +183,22 @@ class CondaInstall:
 
     @property
     def _conda_verbosity_arg(self):
-        if self.verbosity <= 0:
+        """
+        Add a verbosity level to Conda commands.
+
+        A mapping of the internal cotainr verbosity level to `Conda verbosity
+        flags
+        <https://docs.conda.io/projects/conda/en/latest/commands/create.html#Output,%20Prompt,%20and%20Flow%20Control%20Options>`_.
+        """
+        if self._verbosity <= 0:
             return " -q"
-        elif self.verbosity == 2:
+        elif self._verbosity == 2:
             # Conda INFO
             return " -v"
-        elif self.verbosity == 3:
+        elif self._verbosity == 3:
             # Conda DEBUG
             return " -vv"
-        elif self.verbosity >= 4:
+        elif self._verbosity >= 4:
             # Conda TRACE
             return " -vvv"
         else:
