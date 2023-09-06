@@ -1,0 +1,9 @@
+name: lumi_cotainr_demo
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy=1.25.2
+  - pip
+  - pip:
+    - env-var=1.0.1
