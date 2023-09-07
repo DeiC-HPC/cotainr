@@ -1,0 +1,13 @@
+{\rtf1\ansi\uc0\deff0{\fonttbl{\f0\fmodern\fprq1\fcharset0;}}{\colortbl;\red187\green187\blue187;\red61\green123\blue123;\red156\green101\blue0;\red0\green128\blue0;\red176\green0\blue64;\red102\green102\blue102;\red170\green34\blue255;\red0\green0\blue255;\red203\green63\blue56;\red25\green23\blue124;\red136\green0\blue0;\red118\green118\blue0;\red113\green113\blue113;\red104\green120\blue34;\red186\green33\blue33;\red164\green90\blue119;\red170\green93\blue31;\red0\green0\blue128;\red128\green0\blue128;\red160\green0\blue0;\red0\green132\blue0;\red228\green0\blue0;\red0\green68\blue221;\red255\green0\blue0;}\f0 \fs30{\cf18\b # }pygmentize{\cf1  }-l{\cf1  }console{\cf1  }-f{\cf1  }rtf{\cf1  }-O{\cf1  }{\cf10 fontsize}{\cf6 =}{\cf6 30}{\cf1  }-o{\cf1  }bash_snippets.rtf{\cf1   }bash_snippets.sh{\cf1 \par
+}{\cf18\b # }open/{\cf6 (}copy/paste{\cf1  }to{\cf6 )}{\cf1  }RTF{\cf1  }file{\cf1  }{\cf4\b in}{\cf1  }MS{\cf1  }Word,{\cf1  }{\cf4\b then}{\cf1  }copy{\cf1  }MS{\cf1  }Word{\cf1  }content{\cf1  }to{\cf1  }MS{\cf1  }PowerPoint{\cf1  }to{\cf1  }keep{\cf1  }formatting{\cf1  }and{\cf1  }colors{\cf1 \par
+}{\cf18\b $ }conda{\cf1  }env{\cf1  }create{\cf1  }--file{\cf1  }my_conda_env.yml{\cf1 \par
+}{\cf18\b $ }cotainr{\cf1  }build{\cf1  }my_container.sif{\cf1  }--system{\cf1  }lumi-g{\cf1  }--conda-env{\cf1  }my_conda_env.yml{\cf1 \par
+}{\cf13 \par
+}{\cf18\b $ }module{\cf1  }load{\cf1  }LUMI{\cf1 \par
+}{\cf18\b $ }module{\cf1  }load{\cf1  }cotainr{\cf1 \par
+}{\cf13 \par
+}{\cf18\b $ }cotainr{\cf1  }build{\cf1  }my_container.sif{\cf1  }--system{\cf1  }lumi-c{\cf1  }--conda-env{\cf1  }my_conda_env.yml{\cf1 \par
+}{\cf13 \par
+}{\cf18\b $ }singularity{\cf1  }shell{\cf1  }my_container.sif{\cf1 \par
+}{\cf18\b $ }srun{\cf1  }--account{\cf6 =}<YOUR_PROJECT>{\cf1  }--partition{\cf6 =}debug{\cf1  }singularity{\cf1  }{\cf4 exec}{\cf1  }my_container.sif{\cf1  }python3{\cf1  }my_script.py{\cf1 \par
+}}
