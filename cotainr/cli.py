@@ -84,12 +84,16 @@ class Build(CotainrSubcommand):
         Apptainer/Singularity <BUILD SPEC>.
     conda_env : :class:`os.PathLike`, optional
         Path to a Conda environment.yml file to install and activate in the
-        container.
+        container. When installing a Conda environment, you must accept the
+        Miniforge license terms, as specified during the build process.
     system : str
-        Which system/partition you will be running the container on, will set
+        Which system/partition you will be running the container on. This sets
         base image and other parameters for a simpler container creation.
         Running the info command will tell you more about the system and what
         is available.
+    accept_licenses : bool, default=False
+        Accept all license terms (if any) needed for completing the container
+        build process.
     verbosity : int, optional
         The verbosity of the output from cotainr: -1 for only CRITICAL, 0 (the
         default) for cotainr INFO and subprocess WARNING, 1 for subprocess
@@ -107,6 +111,7 @@ class Build(CotainrSubcommand):
         base_image=None,
         conda_env=None,
         system=None,
+        accept_licenses=False,
         verbosity=0,
         log_to_file=False,
         no_color=False,
@@ -131,6 +136,7 @@ class Build(CotainrSubcommand):
             if val != "y":
                 sys.exit(0)
 
+        self.accept_licenses = accept_licenses
         self.base_image = base_image
         systems = util.get_systems()
         if system is not None:
@@ -169,6 +175,13 @@ class Build(CotainrSubcommand):
             "--conda-env",
             help=_extract_help_from_docstring(arg="conda_env", docstring=cls.__doc__),
             type=Path,
+        )
+        parser.add_argument(
+            "--accept-licenses",
+            help=_extract_help_from_docstring(
+                arg="accept_licenses", docstring=cls.__doc__
+            ),
+            action="store_true",
         )
         verbose_quiet_group = parser.add_mutually_exclusive_group()
         verbose_quiet_group.add_argument(
@@ -219,6 +232,7 @@ class Build(CotainrSubcommand):
                     shutil.copyfile(self.conda_env, conda_env_file)
                     conda_install = pack.CondaInstall(
                         sandbox=sandbox,
+                        license_accepted=self.accept_licenses,
                         log_settings=self.log_settings,
                     )
                     conda_install.add_environment(
@@ -582,6 +596,14 @@ def _extract_help_from_docstring(*, arg, docstring):
     docstring : str
         The numpydoc docstring in which `arg` is documented.
 
+    Returns
+    -------
+    arg_description : str
+        The argument description formatted in a similar way to the default
+        arguments provided by an `argparse.ArgumentParser`, i.e. a single line,
+        no leading white space, first letter lower case, and no trailing
+        period.
+
     Raises
     ------
     KeyError
@@ -593,7 +615,9 @@ def _extract_help_from_docstring(*, arg, docstring):
         if arg_found:
             if " : " in line or line.strip() == "":
                 # No more description lines, return the description
-                return "".join(arg_desc).strip().lower().rstrip(".")
+                arg_description = "".join(arg_desc).strip().rstrip(".")
+                arg_description = arg_description[0].lower() + arg_description[1:]
+                return arg_description
             else:
                 # Extract line as part of arg description
                 arg_desc.extend([line.strip(), " "])

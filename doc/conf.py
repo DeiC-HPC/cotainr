@@ -41,6 +41,7 @@ extensions = [
     "myst_parser",
 ]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+templates_path = ["_templates"]
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 numpydoc_class_members_toctree = False
 
@@ -70,6 +71,7 @@ html_theme_options = {
     "github_url": f"https://github.com/{html_context['github_user']}/{html_context['github_repo']}",
     "use_edit_page_button": True,
     "navbar_start": ["navbar-logo", "version-switcher"],
+    "footer_start": ["cotainr_footer"],
     "switcher": {
         "json_url": switcher_json,
         "version_match": switcher_version,

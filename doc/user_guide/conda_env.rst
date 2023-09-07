@@ -4,6 +4,11 @@ Conda Environments
 ==================
 Adding a `conda environment <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_ to a container may be easily done using `cotainr`.
 
+.. admonition:: Make sure you have the rights to use the packages in your conda environment
+    :class: warning
+
+    When adding a conda environment, it is the responsibility of the user of `cotainr` to make sure they have the necessary rights to use the conda channels/repositories and packages specified in the conda environment, e.g. if `using the default Anaconda repositories <https://www.anaconda.com/blog/anaconda-commercial-edition-faq>`_.
+
 As an example, consider the following `conda environment file <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#sharing-an-environment>`_, `my_conda_env.yml`:
 
 .. admonition:: Base image requirement
@@ -35,6 +40,11 @@ The conda environment is automatically activated when the container is run, allo
     $ singularity exec my_conda_env_container.sif python3 -c "import numpy; print(numpy.__version__)"
     1.23.5
 
+.. admonition:: You must accept the Miniforge license to add a conda environment
+  :class: note
+
+  Bootstrapping of the conda environment in the container is done using `Miniforge <https://github.com/conda-forge/miniforge>`_. As part of the bootstrap process, you must accept the `Miniforge license terms <https://github.com/conda-forge/miniforge/blob/main/LICENSE>`_. This can be done either by accepting them during the container build process, or by specifying the :code:`--accept-licenses` option when invoking :code:`cotainr build`.
+
 
 Pip packages
 ------------
@@ -48,6 +58,7 @@ Pip packages
     dependencies:
       - python=3.11.0
       - numpy=1.23.5
+      - pip
       - pip:
         - scipy==1.9.3
 
