@@ -24,6 +24,7 @@ from ..pack.patches import (
     patch_disable_conda_install_display_miniforge_license_for_acceptance,
     patch_disable_conda_install_download_miniforge_installer,
 )
+from ..tracing.patches import patch_disable_console_spinner
 from ..util.patches import patch_system_with_actual_file, patch_empty_system
 
 
@@ -209,6 +210,7 @@ class TestExecute:
         # add_metadata fails as there is no sandbox_dir and labels.json since
         # we request patch_disable_singularity_sandbox_subprocess_runner.
         patch_disable_add_metadata,
+        patch_disable_console_spinner,
         capsys,
     ):
         image_path = "some_image_path_6021"
@@ -235,6 +237,7 @@ class TestExecute:
         patch_disable_conda_install_download_miniforge_installer,
         patch_save_singularity_sandbox_context,
         patch_disable_add_metadata,
+        patch_disable_console_spinner,
         capsys,
     ):
         image_path = "some_image_path_6021"
@@ -332,6 +335,7 @@ class TestHelpMessage:
             # Capsys apparently assumes an 80 char terminal (?) - thus extra '\n'
             "usage: cotainr build [-h] (--base-image BASE_IMAGE | --system SYSTEM)\n"
             "                     [--conda-env CONDA_ENV] [--accept-licenses]\n"
+            "                     [--verbose | --quiet] [--log-to-file] [--no-color]\n"
             "                     image_path\n\n"
             "Build a container.\n\n"
             "positional arguments:\n"
@@ -353,4 +357,12 @@ class TestHelpMessage:
             "                        terms, as specified during the build process\n"
             "  --accept-licenses     accept all license terms (if any) needed for\n"
             "                        completing the container build process\n"
+            "  --verbose, -v         increase the verbosity of the output from cotainr. Can\n"
+            "                        be used multiple times: Once for subprocess output,\n"
+            "                        twice for subprocess INFO, three times for DEBUG, and\n"
+            "                        four times for TRACE\n"
+            "  --quiet, -q           do not show any non-CRITICAL output from cotainr\n"
+            "  --log-to-file         create files containing all logging information shown\n"
+            "                        on stdout/stderr\n"
+            "  --no-color            do not use colored console output\n"
         )

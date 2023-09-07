@@ -270,7 +270,7 @@ class Info(CotainrSubcommand):
     def __init__(self):
         """Construct the "info" subcommand."""
         self._checkmark = "\x1b[38;5;2mOK\x1b[0m"  # green OK
-        self._nocheckmark = "\xb1[38;5;1mERROR\x1b[0m"  # red ERROR
+        self._nocheckmark = "\x1b[38;5;1mERROR\x1b[0m"  # red ERROR
         self._tabs_width = 4
 
     def execute(self):

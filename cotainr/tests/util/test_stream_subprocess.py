@@ -7,6 +7,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
+import functools
 import io
 import platform
 import subprocess
@@ -83,7 +84,10 @@ class Test_PrintAndCaptureStream:
     def test_print_stdout_roundtrip(self, capsys):
         stdout_lines = ["Test line 1", "Test line 2", "Test line 3"]
         input_stream = io.StringIO("\n".join(stdout_lines))
-        _print_and_capture_stream(stream_handle=input_stream, print_stream=sys.stdout)
+        print_dispatch = functools.partial(print, end="", file=sys.stdout)
+        _print_and_capture_stream(
+            stream_handle=input_stream, print_dispatch=print_dispatch
+        )
         captured_io = capsys.readouterr()
         assert captured_io.out.split("\n") == stdout_lines
 
@@ -91,7 +95,8 @@ class Test_PrintAndCaptureStream:
         input_text = "Test line 1\nTest line 2"
         input_stream = io.StringIO(input_text)
         output_stream = io.StringIO()
+        print_dispatch = functools.partial(print, end="", file=output_stream)
         captured_stream = _print_and_capture_stream(
-            stream_handle=input_stream, print_stream=output_stream
+            stream_handle=input_stream, print_dispatch=print_dispatch
         )
         assert output_stream.getvalue() == "".join(captured_stream)
