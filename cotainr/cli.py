@@ -11,12 +11,12 @@ Classes
 -------
 CotainrSubcommand(ABC)
     Abstract base class for `CotainrCLI` subcommands.
-Build
+Build(CotainrSubcommand)
     Build a container. (The "build" subcommand.)
 CotainrCLI
     Build Apptainer/Singularity containers for HPC systems in user space. (The
     main CLI command.)
-Info
+Info(CotainrSubcommand)
     Obtain info about the state of all required dependencies for building a
     container. (The "info" subcommand.)
 

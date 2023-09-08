@@ -37,7 +37,6 @@ class CondaInstall:
     license terms
     <https://github.com/conda-forge/miniforge/blob/main/LICENSE>`_.
 
-
     Parameters
     ----------
     sandbox : :class:`~cotainr.container.SingularitySandbox`
@@ -47,6 +46,9 @@ class CondaInstall:
     license_accepted : bool, default=False
         The flag to indicate whether or not the user has already accepted the
         Miniforge license terms.
+    log_settings : :class:`~cotainr.tracing.LogSettings`, optional
+        The data used to setup the logging machinery (the default is None which
+        implies that the logging machinery is not used).
 
     Attributes
     ----------
@@ -56,6 +58,10 @@ class CondaInstall:
         The Conda prefix used for the Conda install.
     license_accepted : bool
         Whether or not the Miniforge license terms have been accepted.
+    log_dispatcher : :class:`~cotainr.tracing.LogDispatcher` or None.
+        The log dispatcher used to process stdout/stderr message from
+        Singularity commands that run in sandbox, if the logging machinery is
+        used.
 
     Notes
     -----
@@ -66,7 +72,9 @@ class CondaInstall:
     <https://www.anaconda.com/blog/anaconda-commercial-edition-faq>`_.
     """
 
-    def __init__(self, *, sandbox, prefix="/opt/conda", license_accepted=False, log_settings=None):
+    def __init__(
+        self, *, sandbox, prefix="/opt/conda", license_accepted=False, log_settings=None
+    ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
         self.prefix = prefix
@@ -83,7 +91,7 @@ class CondaInstall:
             self._verbosity = 0
             self.log_dispatcher = None
 
-        # Download Conda installer
+        # Download Miniforge installer
         conda_installer_path = (
             Path(self.sandbox.sandbox_dir).resolve() / "conda_installer.sh"
         )
@@ -239,12 +247,17 @@ class CondaInstall:
 
     def _download_miniforge_installer(self, *, installer_path):
         """
-        Download the Miniforge installer to `path`.
+        Download the Miniforge installer to `installer_path`.
 
         Parameters
         ----------
         installer_path : pathlib.Path
             The path to download the conda installer to.
+
+        Raises
+        ------
+        urllib.error.URLError
+            If three attempts at downloading the installer all fail.
         """
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
@@ -271,7 +284,23 @@ class CondaInstall:
             raise url_error
 
     def _run_command_in_sandbox(self, *, cmd):
-        # TODO: document
+        """
+        Wrap the sandbox command runner to use class specific log_dispatcher.
+
+        Wraps calls to `self.sandbox.run_command_in_container` to use
+        self.log_dispatcher for log handling instead of the sandbox's log
+        dispatcher.
+
+        Parameters
+        ----------
+        cmd : str
+            The command to run in the container sandbox.
+
+        Returns
+        -------
+        process : :class:`subprocess.CompletedProcess`
+            Information about the process that ran in the container sandbox.
+        """
         return self.sandbox.run_command_in_container(
             cmd=cmd, custom_log_dispatcher=self.log_dispatcher
         )
@@ -279,11 +308,17 @@ class CondaInstall:
     @property
     def _conda_verbosity_arg(self):
         """
-        Add a verbosity level to Conda commands.
+        Get a verbosity level for Conda commands.
 
         A mapping of the internal cotainr verbosity level to `Conda verbosity
         flags
         <https://docs.conda.io/projects/conda/en/latest/commands/create.html#Output,%20Prompt,%20and%20Flow%20Control%20Options>`_.
+
+        Returns
+        -------
+        verbosity_arg : str
+            The verbosity arg ("-q", "-v", "-vv", etc.) to add to the Conda
+            command.
         """
         if self._verbosity <= 0:
             return " -q"
@@ -301,9 +336,23 @@ class CondaInstall:
 
     @property
     def _logging_filters(self):
+        """
+        Create logging filters for messages from conda commands.
+
+        Returns
+        -------
+        logging_filters : list of :class:`logging.Filter`.
+            The list of filters to use with the logging machinery when handling
+            messages from conda commands.
+        """
+
         class StripANSIEscapeCodes(logging.Filter):
-            # In-place strip all ANSI escape codes
-            # Regex from https://stackoverflow.com/a/14693789
+            """
+            In-place strip all ANSI escape codes.
+
+            Regex from https://stackoverflow.com/a/14693789
+            """
+
             ansi_escape_re = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
             def filter(self, record):
@@ -311,14 +360,21 @@ class CondaInstall:
                 return True
 
         class NoEmptyLinesFilter(logging.Filter):
-            # Remove any empty lines
+            """
+            Remove any empty lines.
+            """
+
             def filter(self, record):
                 return record.msg != ""
 
         class OnlyFinalProgressbarFilter(logging.Filter):
-            # Assume a progress bar line like
-            # [some text]|[some text]|[progress bar characters]| [percentage complete]% [ansi escape codes]
-            # Only include final 100% complete line
+            """
+            Only include final 100% complete line when download progress bars are shown.
+
+            Assume a progress bar line like
+            [some text]|[some text]|[progress bar characters]| [percentage complete]% [ansi escape codes]
+            """
+
             progress_bar_re = re.compile(
                 r"^(.+?)\|(.+?)\|[ \#0-9]+?\|[ ]{1,3}[0-9]{1,2}\%"
             )
@@ -338,6 +394,20 @@ class CondaInstall:
 
     @staticmethod
     def _map_log_level(msg):
+        """
+        Attempt to infer log level for a message.
+
+        Parameters
+        ----------
+        msg : str
+            The message to infer log level for.
+
+        Returns
+        -------
+        log_level : int
+            One of the standard log levels (DEBUG, INFO, WARNING, ERROR, or
+            CRITICAL).
+        """
         if (
             msg.startswith("DEBUG")
             or msg.startswith("VERBOSE")

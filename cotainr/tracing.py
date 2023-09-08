@@ -1,3 +1,18 @@
+"""
+cotainr - a user space Apptainer/Singularity container builder.
+
+Copyright DeiC, deic.dk
+Licensed under the European Union Public License (EUPL) 1.2
+- see the LICENSE file for details.
+
+This module implements utility functions.
+
+Classes
+-------
+ColoredOutputFormatter(logging.Formatter)
+    A log formatter for coloring log messages based on log level.
+
+"""
 import copy
 import contextlib
 import dataclasses
@@ -16,6 +31,17 @@ logger = logging.getLogger(__name__)
 
 
 class ColoredOutputFormatter(logging.Formatter):
+    """
+    A log formatter for coloring log messages based on log level.
+
+    Inserts ANSI escape codes to color lines based on their log level:
+
+    - logging.DEBUG : gray
+    - logging.WARNING : yellow
+    - logging.ERROR : dark read
+    - logging.CRITICAL : brighter red
+    """
+
     log_level_fg_colors = {
         # https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
         logging.DEBUG: "\x1b[38;5;8m",  # gray
@@ -26,6 +52,7 @@ class ColoredOutputFormatter(logging.Formatter):
     reset_color = "\x1b[0m"
 
     def format(self, record):
+        """Format the specified record as colored text."""
         fg_color = self.log_level_fg_colors.get(record.levelno, "")
         if fg_color:
             color_record = copy.copy(record)

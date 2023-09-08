@@ -54,9 +54,10 @@ class SingularitySandbox:
     sandbox_dir : :class:`os.PathLike` or None
         The path to the temporary directory containing the sandbox if within a
         sandbox context, otherwise it is None.
-    log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`.
+    log_dispatcher : :class:`~cotainr.tracing.LogDispatcher` or None.
         The log dispatcher used to process stdout/stderr message from
-        Singularity commands that run in sandbox.
+        Singularity commands that run in sandbox, if the logging machinery is
+        used.
     """
 
     def __init__(self, *, base_image, log_settings=None):
@@ -134,6 +135,8 @@ class SingularitySandbox:
         file.
 
         """
+        self._assert_within_sandbox_context()
+
         labels_path = self.sandbox_dir / ".singularity.d/labels.json"
         with open(labels_path, "r+") as f:
             metadata = json.load(f)

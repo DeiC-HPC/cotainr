@@ -58,7 +58,7 @@ def get_systems():
         return {}
 
 
-def stream_subprocess(*, log_dispatcher=None, args, **kwargs):
+def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     """
     Run a the command described by `args` while streaming stdout and stderr.
 
@@ -71,8 +71,10 @@ def stream_subprocess(*, log_dispatcher=None, args, **kwargs):
     args : list or str
         Program arguments. See the docstring for :class:`subprocess.Popen` for
         details.
-    TODO: Cleanup and document
-    TODO: Consider reworking to avoid API break
+    log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
+        The log dispatcher which subprocess stdout/stderr messages are
+        forwarded to (the default is None which implies that subprocess
+        messages are forwarded directly to stdout/stderr).
 
     Returns
     -------
@@ -134,6 +136,11 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
         The text stream to print and capture.
     print_dispatch : Callable
         The callable to use for printing.
+
+    Returns
+    -------
+    captured_stream : list of str
+        The lines captured from the stream.
     """
     captured_stream = []
     for line in stream_handle:
