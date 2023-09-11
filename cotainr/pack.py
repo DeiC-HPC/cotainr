@@ -103,9 +103,12 @@ class CondaInstall:
                 installer_path=conda_installer_path
             )
         else:
-            print(
-                "You have accepted the Miniforge installer license via the command "
-                "line option '--accept-licenses'."
+            self._display_message(
+                msg=(
+                    "You have accepted the Miniforge installer license via the command "
+                    "line option '--accept-licenses'."
+                ),
+                log_level=logging.WARNING,
             )
 
         # Bootstrap Conda environment in container
@@ -183,6 +186,27 @@ class CondaInstall:
                 f"{source_check_process.stdout.strip()}. Aborting!"
             )
 
+    def _display_message(self, *, msg, log_level=None):
+        """
+        Display a message to the user.
+
+        Displays the message using the logging machinery if `log_level` is not
+        `None` and a `log_dispatcher` is defined for the `CondaInstall`,
+        otherwise uses `print`.
+
+        Parameters
+        ----------
+        msg : str
+            The message to display to the user.
+        log_level : int, optional
+            The logging level to use for the message, e.g. `logging.INFO` or
+            `logging.WARNING`.
+        """
+        if self.log_dispatcher is None or log_level is None:
+            print(msg)
+        else:
+            logger.log(level=log_level, msg=msg)
+
     def _display_miniforge_license_for_acceptance(self, *, installer_path):
         """
         Extract and display Miniforge installer license for acceptance.
@@ -218,28 +242,32 @@ class CondaInstall:
             stdout=subprocess.PIPE,
             text=True,
         ) as process:
-            license, _ = process.communicate(
+            license_text, _ = process.communicate(
                 # "press" ENTER to display the license and capture it
                 "\n"
             )
             process.kill()  # We only use this process to extract the license
 
-        if license:
-            license = license.replace(
+        if license_text:
+            license_text = license_text.replace(
                 # remove prompt for pressing enter (as we have already done this...)
                 "Please, press ENTER to continue\n>>> ",
                 "\n",
             )
-            print(license)
-            val = input()  # prompt user for acceptance of license terms
+            logger.debug(f"The Miniforge displayed license is: {license_text}")
+            val = input(license_text)  # prompt user for acceptance of license terms
             if val != "yes":
-                print(
-                    "You have not accepted the Miniforge installer license. Aborting!"
+                self._display_message(
+                    msg="You have not accepted the Miniforge installer license. Aborting!",
+                    log_level=logging.CRITICAL,
                 )
                 sys.exit(0)
 
             self.license_accepted = True
-            print("You have accepted the Miniforge installer license.")
+            self._display_message(
+                msg="You have accepted the Miniforge installer license.",
+                log_level=logging.INFO,
+            )
         else:
             raise RuntimeError(
                 "No license seems to be displayed by the Miniforge installer."

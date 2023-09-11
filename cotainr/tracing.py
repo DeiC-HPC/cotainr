@@ -13,6 +13,7 @@ ColoredOutputFormatter(logging.Formatter)
     A log formatter for coloring log messages based on log level.
 
 """
+import builtins
 import copy
 import contextlib
 import dataclasses
@@ -65,8 +66,9 @@ class ColoredOutputFormatter(logging.Formatter):
 class ConsoleSpinner:
     def __init__(self):
         # TODO: DOC: Modify true sys.std* to allow for context change at any point in time
-        self._stdout_proxy = StreamWriteProxy(stream=sys.stdout)
+        self._stdout_proxy = StreamWriteProxy(stream=sys.stdout)  # TODO: consider just wrapping stream.write
         self._stderr_proxy = StreamWriteProxy(stream=sys.stderr)
+        self._true_input = builtins.input
         self._as_atomic = threading.Lock()
         self._spinning_msg = None
 
@@ -77,6 +79,7 @@ class ConsoleSpinner:
         sys.stderr.write = functools.partial(
             self.update_spinner_msg, stream=self._stderr_proxy
         )
+        builtins.input = self._thread_safe_input(builtins.input)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._spinning_msg is not None:
@@ -84,6 +87,7 @@ class ConsoleSpinner:
 
         sys.stdout.write = self._stdout_proxy.true_stream_write
         sys.stderr.write = self._stderr_proxy.true_stream_write
+        builtins.input = self._true_input
 
     def update_spinner_msg(self, s, /, *, stream):
         with self._as_atomic:  # make sure that only a single thread at a time can update the spinning message
@@ -94,6 +98,15 @@ class ConsoleSpinner:
             # Start spinning the new message
             self._spinning_msg = MessageSpinner(msg=s, stream=stream)
             self._spinning_msg.start()
+
+    def _thread_safe_input(self, input_func):
+        @functools.wraps(input_func)
+        def wrapped_input_func(*args, **kwargs):
+            with self._as_atomic:
+                self._spinning_msg.stop()
+                return input_func(*args, **kwargs)
+
+        return wrapped_input_func
 
 
 class LogDispatcher:
