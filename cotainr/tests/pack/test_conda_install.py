@@ -204,8 +204,9 @@ class Test_CheckCondaBootstrapIntegrity:
 
 
 class Test_DisplayMiniforgeLicenseForAcceptance:
-    def test_acccepting_license(
+    def test_accepting_license(
         self,
+        factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
         patch_disable_singularity_sandbox_subprocess_runner,
@@ -213,7 +214,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         monkeypatch,
     ):
         monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
-        monkeypatch.setattr("builtins.input", lambda: "yes")
+        monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
 
@@ -225,6 +226,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
     def test_not_accepting_license(
         self,
         answer,
+        factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
         patch_disable_singularity_sandbox_subprocess_runner,
@@ -232,7 +234,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         monkeypatch,
     ):
         monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
-        monkeypatch.setattr("builtins.input", lambda: answer)
+        monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             with pytest.raises(SystemExit):
                 CondaInstall(sandbox=sandbox)
@@ -259,6 +261,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
 
     def test_license_interaction_handling(
         self,
+        factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
         patch_disable_singularity_sandbox_subprocess_runner,
@@ -266,7 +269,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         monkeypatch,
     ):
         monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
-        monkeypatch.setattr("builtins.input", lambda: "yes")
+        monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             CondaInstall(sandbox=sandbox)
 
@@ -286,12 +289,13 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
     @pytest.mark.conda_integration
     def test_miniforge_still_showing_license(
         self,
+        factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_singularity_sandbox_subprocess_runner,
         capsys,
         monkeypatch,
     ):
-        monkeypatch.setattr("builtins.input", lambda: "yes")
+        monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
 

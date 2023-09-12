@@ -9,6 +9,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import argparse
 from pathlib import Path
+import re
 import shlex
 
 import pytest
@@ -89,8 +90,10 @@ class TestConstructor:
             Build(image_path=image_path, system=system)
 
     @pytest.mark.parametrize("answer", ["n", "N", "", "some_answer_6021"])
-    def test_already_existing_file_but_no(self, answer, monkeypatch):
-        monkeypatch.setattr("builtins.input", lambda _: answer)
+    def test_already_existing_file_but_no(
+        self, answer, factory_mock_input, monkeypatch
+    ):
+        monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
         Path(image_path).touch()
@@ -98,8 +101,8 @@ class TestConstructor:
             Build(image_path=image_path, base_image=base_image)
 
     @pytest.mark.parametrize("answer", ["y", "Y"])
-    def test_already_existing_file(self, answer, monkeypatch):
-        monkeypatch.setattr("builtins.input", lambda _: answer)
+    def test_already_existing_file(self, answer, factory_mock_input, monkeypatch):
+        monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
         Path(image_path).touch()
@@ -238,6 +241,7 @@ class TestExecute:
         patch_save_singularity_sandbox_context,
         patch_disable_add_metadata,
         patch_disable_console_spinner,
+        caplog,
         capsys,
     ):
         image_path = "some_image_path_6021"
@@ -266,7 +270,6 @@ class TestExecute:
         # Check sandbox interaction commands
         (
             sandbox_create_cmd,
-            miniforge_license_accept_cmd,
             conda_bootstrap_cmd,
             conda_bootstrap_clean_cmd,
             conda_env_create_cmd,
@@ -276,10 +279,6 @@ class TestExecute:
             capsys.readouterr().out.strip().split("\n")
         )
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
-        assert miniforge_license_accept_cmd == (
-            "You have accepted the Miniforge installer license via the command line option "
-            "'--accept-licenses'."
-        )
         assert all(
             s in sandbox_create_cmd
             for s in ["'singularity'", "'build'", "'--sandbox'", f"'{base_image}'"]
@@ -304,6 +303,15 @@ class TestExecute:
         assert all(
             s in sandbox_build_cmd
             for s in ["'singularity'", "'build'", f"{image_path}"]
+        )
+
+        # Check log calls
+        assert re.search(
+            r"^WARNING  cotainr\.pack\:pack\.py\:(\d+) "
+            r"You have accepted the Miniforge installer license via the command line option "
+            r"'--accept-licenses'\.$",
+            caplog.text,
+            flags=re.MULTILINE,
         )
 
     def test_no_beforehand_license_acceptance(

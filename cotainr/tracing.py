@@ -66,9 +66,9 @@ class ColoredOutputFormatter(logging.Formatter):
 class ConsoleSpinner:
     def __init__(self):
         # TODO: DOC: Modify true sys.std* to allow for context change at any point in time
-        self._stdout_proxy = StreamWriteProxy(stream=sys.stdout)  # TODO: consider just wrapping stream.write
+        self._stdout_proxy = StreamWriteProxy(stream=sys.stdout)
         self._stderr_proxy = StreamWriteProxy(stream=sys.stderr)
-        self._true_input = builtins.input
+        self._true_input_func = builtins.input
         self._as_atomic = threading.Lock()
         self._spinning_msg = None
 
@@ -87,7 +87,7 @@ class ConsoleSpinner:
 
         sys.stdout.write = self._stdout_proxy.true_stream_write
         sys.stderr.write = self._stderr_proxy.true_stream_write
-        builtins.input = self._true_input
+        builtins.input = self._true_input_func
 
     def update_spinner_msg(self, s, /, *, stream):
         with self._as_atomic:  # make sure that only a single thread at a time can update the spinning message
