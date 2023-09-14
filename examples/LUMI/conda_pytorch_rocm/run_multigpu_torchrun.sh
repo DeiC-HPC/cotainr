@@ -8,10 +8,12 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --gpus-per-task=8
 #SBATCH --output="output_%x_%j.txt"
-#SBATCH --partition=eap
+#SBATCH --partition=small-g
 #SBATCH --time=00:30:00
 #SBATCH --account=project_<your_project_id>
 
-export NCCL_SOCKET_IFNAME=hsn0,hsn1,hsn2,hsn3
+export NCCL_SOCKET_IFNAME=hsn
+export MIOPEN_USER_DB_PATH=/tmp/${USER}-miopen-cache-${SLURM_JOB_ID}
+export MIOPEN_CUSTOM_CACHE_DIR=${MIOPEN_USER_DB_PATH}
 
 srun singularity exec lumi_pytorch_rocm_demo.sif torchrun --standalone --nnodes=1 --nproc_per_node=gpu pytorch_multigpu_torchrun.py --total_epochs=10 --save_every=5
