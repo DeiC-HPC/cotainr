@@ -132,7 +132,7 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
 
     Parameters
     ----------
-    stream_handle : io.TextIOWrapper
+    stream_handle : :py:class:`io.TextIOWrapper`
         The text stream to print and capture.
     print_dispatch : Callable
         The callable to use for printing.

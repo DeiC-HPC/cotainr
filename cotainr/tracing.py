@@ -5,13 +5,22 @@ Copyright DeiC, deic.dk
 Licensed under the European Union Public License (EUPL) 1.2
 - see the LICENSE file for details.
 
-This module implements utility functions.
+This module implements functionality for tracing and logging console messages.
 
 Classes
 -------
 ColoredOutputFormatter(logging.Formatter)
     A log formatter for coloring log messages based on log level.
-
+ConsoleSpinner
+    A console messages spinner context manager.
+StreamWriteProxy
+    A proxy for manipulating the write methods of streams.
+LogDispatcher
+    A dispatcher for configuring and handling log messages.
+LogSettings
+    Dataclass containing settings for a LogDispatcher.
+MessageSpinner
+    A spinner for console messages.
 """
 import builtins
 import copy
@@ -41,6 +50,13 @@ class ColoredOutputFormatter(logging.Formatter):
     - logging.WARNING : yellow
     - logging.ERROR : dark read
     - logging.CRITICAL : brighter red
+
+    Attributes
+    ----------
+    log_level_fg_colors : dict
+        Mapping of log level to ANSI escape color codes.
+    reset_color : str
+        The ANSI escape code to reset (color) formatting.
     """
 
     log_level_fg_colors = {
@@ -64,8 +80,38 @@ class ColoredOutputFormatter(logging.Formatter):
 
 
 class ConsoleSpinner:
+    """
+    A console messages spinner context manager.
+
+    Creates a context in which messages to `sys.stdout` and `sys.stderr` are
+    prepended with a spinner to indicate that the program is still progressing
+    while we are waiting for the next message to be displayed on the console.
+
+    Notes
+    -----
+    The :class:`ConsoleSpinner` is implemented by monkeypatching
+    :py:data:`sys.stdout`, :py:data:`sys.stderr`, and :py:func:`input`.
+
+    The :py:meth:`sys.stdout.write` and :py:meth:`sys.stderr.write` methods are
+    replaced by the :meth:`_update_spinner_msg` method which starts a new
+    :class:`~cotainr.tracing.MessageSpinner` thread every time a new message is
+    written to `stdout` / `stderr`. In order to avoid an infinite recursion
+    when the text is actually written to the console, `sys.stdout` and
+    `sys.stderr` are wrapped by :class:`~cotainr.tracing.StreamWriteProxy`
+    instances.
+
+    The :py:func:`input` function is wrapped to make sure that the spinner is
+    stopped while waiting for the user to provide their input.
+
+    Nothing is done to handle the use of the :py:mod:`readline` module. It may
+    or may not work in a :class:`ConsoleSpinner` context.
+
+    This :class:`ConsoleSpinner` class is only intended to be used with the
+    :py:mod:`threading` module. It doesn't support :py:mod:`multiprocessing`.
+    """
+
     def __init__(self):
-        # TODO: DOC: Modify true sys.std* to allow for context change at any point in time
+        """Construct the ConsoleSpinner context manager."""
         self._stdout_proxy = StreamWriteProxy(stream=sys.stdout)
         self._stderr_proxy = StreamWriteProxy(stream=sys.stderr)
         self._true_input_func = builtins.input
@@ -73,24 +119,46 @@ class ConsoleSpinner:
         self._spinning_msg = None
 
     def __enter__(self):
-        sys.stdout.write = functools.partial(
-            self.update_spinner_msg, stream=self._stdout_proxy
-        )
-        sys.stderr.write = functools.partial(
-            self.update_spinner_msg, stream=self._stderr_proxy
-        )
-        builtins.input = self._thread_safe_input(builtins.input)
+        """Setup the console spinner context."""
+        with self._as_atomic:
+            # Wrap stdout, stderr, and input to prepend spinner to all console
+            # messages
+            sys.stdout.write = functools.partial(
+                self._update_spinner_msg, stream=self._stdout_proxy
+            )
+            sys.stderr.write = functools.partial(
+                self._update_spinner_msg, stream=self._stderr_proxy
+            )
+            builtins.input = self._thread_safe_input(builtins.input)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._spinning_msg is not None:
-            self._spinning_msg.stop()
+        """Tear down the console spinner context."""
+        with self._as_atomic:
+            if self._spinning_msg is not None:
+                # Stop currently spinning message
+                self._spinning_msg.stop()
+                self._spinning_msg = None
 
-        sys.stdout.write = self._stdout_proxy.true_stream_write
-        sys.stderr.write = self._stderr_proxy.true_stream_write
-        builtins.input = self._true_input_func
+            # Restore true stdout, stderr, and input
+            sys.stdout.write = self._stdout_proxy.true_stream_write
+            sys.stderr.write = self._stderr_proxy.true_stream_write
+            builtins.input = self._true_input_func
 
-    def update_spinner_msg(self, s, /, *, stream):
-        with self._as_atomic:  # make sure that only a single thread at a time can update the spinning message
+    def _update_spinner_msg(self, s, /, *, stream):
+        """
+        Update the spinning message.
+
+        Stops the current spinning messages thread and starts a new
+        :class:`~cotainr.tracing.MessageSpinner` thread for the new message.
+
+        Parameters
+        ----------
+        s : str
+            The new message to prepend with a spinner.
+        stream : :py:class:`io.TextIOWrapper`
+            The text stream on which to spin the message.
+        """
+        with self._as_atomic:
             if self._spinning_msg is not None:
                 # Stop currently spinning message
                 self._spinning_msg.stop()
@@ -100,24 +168,72 @@ class ConsoleSpinner:
             self._spinning_msg.start()
 
     def _thread_safe_input(self, input_func):
+        """
+        A decorator to make input stop spinning messages.
+
+        Stops the spinning message prior to calling the :py:func:`input` such
+        that the spinning message doesn't interfere with the user input.
+        """
+
         @functools.wraps(input_func)
         def wrapped_input_func(*args, **kwargs):
             with self._as_atomic:
-                self._spinning_msg.stop()
+                if self._spinning_msg is not None:
+                    self._spinning_msg.stop()
+                    self._spinning_msg = None
+
                 return input_func(*args, **kwargs)
 
         return wrapped_input_func
 
 
 class LogDispatcher:
+    """
+    A dispatcher for configuring and handling log messages.
+
+    Sets up the logging machinery and provides methods for logging to the
+    relevant log handlers using the correct log level - to be used in
+    subprocesses. See the :ref:`cotainr Tracing & Logging documentation page
+    <tracing_logging>` for more details.
+
+    Parameters
+    ----------
+    name : str
+        The name to use to identify this log dispatcher in log messages.
+    map_log_level_func : Callable
+        A callable that maps a message to a log level to use for the message.
+    log_settings : :class:`~cotainr.tracing.LogSettings`
+        The settings to use when setting up the logging machinery.
+    filters : list of :py:class:`logging.Filter`, optional
+        The filters to add to the log handlers (the default is None with
+        implies that no filters are added to the log handlers).
+
+    Attributes
+    ----------
+    verbosity : int
+        The cotainr verbosity level used by the log dispatcher.
+    map_log_level : Callable
+        The callable that maps a message to a log level to use for the message.
+    log_file_path : :py:class:`pathlib.Path`, optional
+        The prefix of the file path to save logs to, if specified.
+    no_color : bool
+        The indicator of whether or not to disable the coloring of console
+        message.
+    logger_stdout : :py:class:`logging.Logger`
+        The logger used to log to `stdout`.
+    logger_stderr : :py:class:`logging.Logger`
+        The logger used to log to `stderr`.
+    """
+
     def __init__(
         self,
         *,
         name,
         map_log_level_func,
-        filters=None,
         log_settings,
+        filters=None,
     ):
+        """Setup the log dispatcher."""
         self.map_log_level = map_log_level_func
         self.verbosity = log_settings.verbosity
         self.log_file_path = log_settings.log_file_path
@@ -173,13 +289,46 @@ class LogDispatcher:
         )
 
     def log_to_stdout(self, msg):
+        """
+        Log a message to `stdout`.
+
+        Determines the log level based on the `map_log_level` function and logs
+        the `msg` to `stdout` using that log level.
+
+        Parameters
+        ----------
+        msg : str
+            The message to log.
+        """
         self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
 
     def log_to_stderr(self, msg):
+        """
+        Log a message to `stderr`.
+
+        Determines the log level based on the `map_log_level` function and logs
+        the `msg` to `stderr` using that log level.
+
+        Parameters
+        ----------
+        msg : str
+            The message to log.
+        """
         self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())
 
     @contextlib.contextmanager
     def prefix_stderr_name(self, *, prefix):
+        """
+        A context manager for prefixing the `stderr` logger name.
+
+        When inside the context, the name of the `stderr` logger is changed to
+        be prefixed by "`prefix`/".
+
+        Parameters
+        ----------
+        prefix : str
+            The prefix add to the `stderr` logger name.
+        """
         logger_stderr_name = self.logger_stderr.name
         self.logger_stderr.name = prefix + "/" + logger_stderr_name
         yield
@@ -187,6 +336,20 @@ class LogDispatcher:
 
     @staticmethod
     def _determine_log_level(*, verbosity):
+        """
+        Map cotainr verbosity level to a logger and handler log level.
+
+        Parameters
+        ----------
+        verbosity : int
+            The cotainr verbosity level used by the log dispatcher.
+
+        Returns
+        -------
+        log_level : int
+            One of the standard log levels (DEBUG, INFO, WARNING, ERROR, or
+            CRITICAL).
+        """
         if verbosity == -1:
             log_level = logging.CRITICAL
         elif verbosity == 0:
@@ -201,13 +364,53 @@ class LogDispatcher:
 
 @dataclasses.dataclass
 class LogSettings:
+    """
+    Dataclass containing settings for a LogDispatcher.
+
+    Attributes
+    ----------
+    verbosity : int, default=0
+        The cotainr verbosity level used by the log dispatcher.
+    log_file_path : :py:class:`pathlib.Path`, default=None
+        The prefix of the file path to save logs to, if specified.
+    no_color : bool, default=False
+        The indicator of whether or not to disable the coloring of console
+        message.
+    """
+
     verbosity: int = 0
     log_file_path: typing.Optional[pathlib.Path] = None
     no_color: bool = False
 
 
 class MessageSpinner:
+    """
+    A spinner for console messages.
+
+    Creates a thread that continuously updates a prepended spinner to `msg` on
+    `stream`. While the spinner is active, the `msg` is truncated to fit within
+    a single line. When the spinner is stopped, the full `msg` (without
+    spinner) is written to the `stream`.
+
+    Parameters
+    ----------
+    msg : str
+        The message to prepend with a spinner.
+    stream : :py:class:`io.TextIOWrapper`
+        The text stream on which to spin the message.
+
+    Notes
+    -----
+    The spinner is added by continuously rewriting the current console line to
+    update the spinning character prepended to `msg`. This is done using CR and
+    ANSI escape codes. To avoid interfering with our manipulation of the
+    console line, trailing newlines and ANSI codes, except "Select Graphics
+    Rendition (SGR)" codes used for coloring console lines, are stripped from
+    `msg` before it is displayed on the console.
+    """
+
     def __init__(self, *, msg, stream):
+        """Construct the message spinner."""
         self._msg = msg
         self._stream = stream
 
@@ -238,16 +441,24 @@ class MessageSpinner:
         self._reset_SGR = "\x1b[0m"
 
     def start(self):
+        """Start the message spinner thread."""
         self._spinner_thread.start()
         self._running = True
 
     def stop(self):
+        """Stop the message spinner thread"""
         if self._running:
             self._stop_signal.set()
             self._spinner_thread.join()
             self._running = False
 
     def _spin_msg(self):
+        """
+        Spin the message.
+
+        This is the method that the thread is running to continuously update
+        the spinnner.
+        """
         # Delay spinning a bit to avoid flaky message updates when new messages
         # arrive promptly
         time.sleep(self._spinner_delay_time)
@@ -271,7 +482,7 @@ class MessageSpinner:
             # Update spinner
             print(
                 f"{self._clear_line_code}{next(self._spinner_cycle)} "  # spinner
-                f"{one_line_msg}",
+                f"{one_line_msg}",  # possibly truncated message
                 end="",  # keep overwriting current line
                 file=self._stream,
             )
@@ -282,13 +493,45 @@ class MessageSpinner:
 
 
 class StreamWriteProxy:
-    # TODO: DOC: Unable to copy sys.stdout
+    """
+    A proxy for manipulating the write methods of streams.
+
+    Provides a `write` method that guarantees to use the true `stream.write`
+    method in case `stream.write` is later monkeypatched. All other method
+    calls to this class are delegated to the corresponding (potentially
+    monkeypatched) methods implemented by `stream`.
+
+    Parameters
+    ----------
+    stream : :py:class:`io.TextIOWrapper`
+        The text stream to provide a proxy for.
+
+    Notes
+    -----
+    This provides a way for keeping references to the true
+    :py:meth:`sys.stdout.write` and :py:meth:`sys.stderr.write` methods. This
+    is useful in code that monkeypatches these methods since it is not possible
+    in Python to copy :py:data:`sys.stdout` and :py:data:`sys.stderr` such that
+    they can later be restored.
+    """
+
     def __init__(self, *, stream):
+        """Construct the stream write proxy."""
         self._stream = stream
         self.true_stream_write = stream.write
 
     def write(self, s, /):
-        self.true_stream_write(s)
+        """
+        Write a string to the stream using the true `stream.write` method and
+        return the number of characters written.
+
+        Parameters
+        ----------
+        s : str
+            The string to write.
+        """
+        return self.true_stream_write(s)
 
     def __getattr__(self, name):
+        """Delegate all other attribute and method calls."""
         return getattr(self._stream, name)
