@@ -12,7 +12,6 @@
 #SBATCH --time=00:30:00
 #SBATCH --account=project_<your_project_id>
 
-export NCCL_SOCKET_IFNAME=hsn
 export MIOPEN_USER_DB_PATH=/tmp/${USER}-miopen-cache-${SLURM_JOB_ID}
 export MIOPEN_CUSTOM_CACHE_DIR=${MIOPEN_USER_DB_PATH}
 
