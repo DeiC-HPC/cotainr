@@ -8,6 +8,8 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import contextlib
+import logging
+import importlib
 import io
 import os
 from pathlib import Path
@@ -35,6 +37,20 @@ def argparse_options_line():
 
 
 @pytest.fixture
+def context_reload_logging():
+    """
+    Reset the internal state of the logging module on test teardown.
+
+    Needed in tests of logging functionality where the tests end up affecting
+    the internal state of the logging module.
+
+    See https://stackoverflow.com/q/7460363 for more details.
+    """
+    yield
+    importlib.reload(logging)
+
+
+@pytest.fixture
 def context_set_umask():
     """Return a context manager providing a context with the specified umask."""
 
@@ -49,6 +65,28 @@ def context_set_umask():
                 os.umask(current_umask)
 
     return set_umask
+
+
+@pytest.fixture
+def data_log_level_names_mapping():
+    """
+    A mapping from log levels to their names.
+
+    From Python 3.11 this mapping is also available as
+    logging.getLevelNamesMapping().
+    """
+    level_names_mapping = {
+        level: logging.getLevelName(level)
+        for level in [
+            logging.CRITICAL,
+            logging.ERROR,
+            logging.WARNING,
+            logging.INFO,
+            logging.DEBUG,
+        ]
+    }
+
+    return level_names_mapping
 
 
 @pytest.fixture

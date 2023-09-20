@@ -7,7 +7,10 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
+from pathlib import Path
+
 from cotainr.cli import CotainrSubcommand
+from cotainr.tracing import LogSettings
 
 
 class StubDummyCLI:
@@ -22,6 +25,22 @@ class StubDummyCLI:
 
 class StubInvalidSubcommand:
     pass
+
+
+class StubLogSettingsSubcommand(CotainrSubcommand):
+    def __init__(self, *, verbosity, log_file_path, no_color):
+        self.log_settings = LogSettings(
+            verbosity=verbosity, log_file_path=log_file_path, no_color=no_color
+        )
+
+    @classmethod
+    def add_arguments(cls, *, parser):
+        parser.add_argument("--verbosity", type=int)
+        parser.add_argument("--log-file-path", type=Path, default=None)
+        parser.add_argument("--no-color", action="store_true")
+
+    def execute(self):
+        pass
 
 
 class StubValidSubcommand(CotainrSubcommand):

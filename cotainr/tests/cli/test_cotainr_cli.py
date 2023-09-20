@@ -6,11 +6,13 @@ Licensed under the European Union Public License (EUPL) 1.2
 - see the LICENSE file for details.
 
 """
+import logging
 
 import pytest
 
 from cotainr.cli import CotainrCLI
-from .stubs import StubValidSubcommand, StubInvalidSubcommand
+from .data import data_cotainr_info_color_log_messages
+from .stubs import StubValidSubcommand, StubInvalidSubcommand, StubLogSettingsSubcommand
 
 
 class TestConstructor:
@@ -94,3 +96,58 @@ class TestHelpMessage:
         assert stdout == self.cotainr_main_help_msg.format(
             argparse_options_line=argparse_options_line
         )
+
+
+class TestSetupCotainrCLILogging:
+    # parametrize verbosity
+    def test_cotainr_critical_logging(self):
+        1 / 0
+
+    def test_cotainr_debug_logging(self):
+        1 / 0
+
+    @pytest.mark.parametrize("verbosity", [0, 1])
+    def test_cotainr_info_logging(
+        self,
+        verbosity,
+        monkeypatch,
+        capsys,
+        context_reload_logging,
+        data_cotainr_info_color_log_messages,
+    ):
+        log_level_msgs, stdout_msgs, stderr_msgs = data_cotainr_info_color_log_messages
+        monkeypatch.setattr(CotainrCLI, "_subcommands", [StubLogSettingsSubcommand])
+        CotainrCLI(
+            args=[
+                "stublogsettingssubcommand",
+                f"--verbosity={verbosity}",
+            ]
+        )
+
+        # Log test messages to cotainr root logger
+        cotainr_root_logger = logging.getLogger("cotainr")
+        for level, msg in log_level_msgs.items():
+            cotainr_root_logger.log(level=level, msg=msg)
+
+        # Check correct log level
+        assert cotainr_root_logger.getEffectiveLevel() == logging.INFO
+
+        # Check correct handles
+        # Pytest manipulates the handler streams to capture the logging output
+        assert len(cotainr_root_logger.handlers) == 2
+        for handler in cotainr_root_logger.handlers:
+            assert isinstance(handler, logging.StreamHandler)
+
+        # Check correct loggging, incl. message format, coloring, log level, and output stream
+        outerr = capsys.readouterr()  # readouterr clears its content when returning
+        assert outerr.out.rstrip("\n").split("\n") == stdout_msgs
+        assert outerr.err.rstrip("\n").split("\n") == stderr_msgs
+
+    def test_no_color(self):
+        1 / 0
+
+    # parametrize no_color
+    def test_log_to_file(self):
+        1 / 0
+        log_file_path = None  # tmp_path / "cotainr.log"
+        # f"--log-file-path={log_file_path}",

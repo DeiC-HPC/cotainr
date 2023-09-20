@@ -62,6 +62,7 @@ class ColoredOutputFormatter(logging.Formatter):
     log_level_fg_colors = {
         # https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
         logging.DEBUG: "\x1b[38;5;8m",  # gray
+        logging.INFO: "", # no special color
         logging.WARNING: "\x1b[38;5;3m",  # yellow
         logging.ERROR: "\x1b[38;5;1m",  # dark red
         logging.CRITICAL: "\x1b[38;5;160m",  # brighter red
