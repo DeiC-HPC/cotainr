@@ -531,7 +531,7 @@ class CotainrCLI:
             )
             cotainr_stderr_fmt = cotainr_stdout_fmt
         else:
-            if log_settings.verbosity == -1:
+            if log_settings.verbosity <= -1:
                 cotainr_log_level = logging.CRITICAL
             else:
                 cotainr_log_level = logging.INFO

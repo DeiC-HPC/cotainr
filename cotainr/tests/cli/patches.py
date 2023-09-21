@@ -27,3 +27,36 @@ def patch_disable_main(monkeypatch):
         return msg
 
     monkeypatch.setattr(cotainr.cli, "main", mock_main)
+
+
+@pytest.fixture
+def patch_disable_cotainercli_init(monkeypatch):
+    """
+    Make the construction of the CotainrCLI a no-op.
+    """
+
+    def mock_init(self, *, args=None):
+        pass
+
+    monkeypatch.setattr(cotainr.cli.CotainrCLI, "__init__", mock_init)
+
+
+@pytest.fixture
+def patch_disables_cotainrcli_setup_cotainr_cli_logging(monkeypatch):
+    """
+    Disable the setup of the logging machinery for the cotainr CLI.
+
+    Replaces the `CotainrCLI._setup_cotainr_cli_logging` method with a method
+    that just prints and returns the `tracing.LogSettings` object provided to
+    it as an argument.
+    """
+
+    def mock_setup_cotainr_cli_logging(self, *, log_settings):
+        print(log_settings)
+        return log_settings
+
+    monkeypatch.setattr(
+        cotainr.cli.CotainrCLI,
+        "_setup_cotainr_cli_logging",
+        mock_setup_cotainr_cli_logging,
+    )

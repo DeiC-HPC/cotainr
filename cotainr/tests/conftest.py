@@ -36,7 +36,7 @@ def argparse_options_line():
         return "optional arguments:\n"
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def context_reload_logging():
     """
     Reset the internal state of the logging module on test teardown.
@@ -44,7 +44,7 @@ def context_reload_logging():
     Needed in tests of logging functionality where the tests end up affecting
     the internal state of the logging module.
 
-    See https://stackoverflow.com/q/7460363 for more details.
+    See https://stackoverflow.com/q/7460363 for more context.
     """
     yield
     importlib.reload(logging)
