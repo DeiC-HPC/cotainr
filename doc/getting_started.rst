@@ -52,4 +52,4 @@ In order to get started using `cotainr`, you need to download and install the `c
 .. _Singularity: https://sylabs.io/singularity/
 
 .. rubric:: Footnotes
-.. [#] As of version 3.8.0, Sylabs have change the name of their version to SingularityCE.
+.. [#] As of version 3.8.0, Sylabs have changed the name of their version to SingularityCE.
