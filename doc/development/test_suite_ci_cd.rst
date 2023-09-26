@@ -66,7 +66,7 @@ Imports in test modules are based on the following conventions:
 
 Continuous Integration (CI)
 ---------------------------
-Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions. The tests run on the GitHub-hosted `ubuntu-latest <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_ runner. When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
+Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions. The tests run on the GitHub-hosted `ubuntu-latest <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_ runner. When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
 
 - *stable*: The minimum supported version of the dependency.
 - *latest*: The latest released version of the dependency.
