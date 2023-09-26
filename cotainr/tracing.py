@@ -62,7 +62,7 @@ class ColoredOutputFormatter(logging.Formatter):
     log_level_fg_colors = {
         # https://en.wikipedia.org/wiki/ANSI_escape_code#8-bit
         logging.DEBUG: "\x1b[38;5;8m",  # gray
-        logging.INFO: "", # no special color
+        logging.INFO: "",  # no special color
         logging.WARNING: "\x1b[38;5;3m",  # yellow
         logging.ERROR: "\x1b[38;5;1m",  # dark red
         logging.CRITICAL: "\x1b[38;5;160m",  # brighter red
@@ -289,20 +289,6 @@ class LogDispatcher:
             self.logger_stderr.handlers,
         )
 
-    def log_to_stdout(self, msg):
-        """
-        Log a message to `stdout`.
-
-        Determines the log level based on the `map_log_level` function and logs
-        the `msg` to `stdout` using that log level.
-
-        Parameters
-        ----------
-        msg : str
-            The message to log.
-        """
-        self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
-
     def log_to_stderr(self, msg):
         """
         Log a message to `stderr`.
@@ -316,6 +302,20 @@ class LogDispatcher:
             The message to log.
         """
         self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())
+
+    def log_to_stdout(self, msg):
+        """
+        Log a message to `stdout`.
+
+        Determines the log level based on the `map_log_level` function and logs
+        the `msg` to `stdout` using that log level.
+
+        Parameters
+        ----------
+        msg : str
+            The message to log.
+        """
+        self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
 
     @contextlib.contextmanager
     def prefix_stderr_name(self, *, prefix):
