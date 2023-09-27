@@ -22,10 +22,10 @@ def data_cotainr_critical_color_log_messages(data_log_level_names_mapping):
         for level, level_name in data_log_level_names_mapping.items()
     }
 
-    # Expected ending of stdout messages
+    # Expected stdout messages
     stdout_msgs = [""]
 
-    # Expected ending of stderr messages
+    # Expected stderr messages
     stderr_msgs = [
         "Cotainr:-:CRITICAL: \x1b[38;5;160mLog CRITICAL 6021\x1b[0m",
     ]
@@ -46,12 +46,14 @@ def data_cotainr_debug_color_log_messages(data_log_level_names_mapping):
     }
 
     # Expected ending of stdout messages
+    # (debug messages are prepended with a time stamp)
     stdout_msgs = [
         "Cotainr:-:INFO: Log INFO 6021",
         "Cotainr:-:DEBUG: \x1b[38;5;8mLog DEBUG 6021\x1b[0m",
     ]
 
     # Expected ending of stderr messages
+    # (debug messages are prepended with a time stamp)
     stderr_msgs = [
         "Cotainr:-:CRITICAL: \x1b[38;5;160mLog CRITICAL 6021\x1b[0m",
         "Cotainr:-:ERROR: \x1b[38;5;1mLog ERROR 6021\x1b[0m",

@@ -271,43 +271,6 @@ class TestSetupCotainrCLILogging:
         assert outerr.out.rstrip("\n").split("\n") == stdout_msgs
         assert outerr.err.rstrip("\n").split("\n") == stderr_msgs
 
-    def test_no_color_on_console(
-        self,
-        capsys,
-        data_cotainr_info_no_color_log_messages,
-        patch_disable_cotainercli_init,
-    ):
-        (
-            log_level_msgs,
-            stdout_msgs,
-            stderr_msgs,
-        ) = data_cotainr_info_no_color_log_messages
-
-        # Setup the CotainerCLI logger
-        CotainrCLI()._setup_cotainr_cli_logging(
-            log_settings=LogSettings(verbosity=0, log_file_path=None, no_color=True)
-        )
-        assert "cotainr" in logging.Logger.manager.loggerDict
-
-        # Log test messages to cotainr root logger
-        cotainr_root_logger = logging.getLogger("cotainr")
-        for level, msg in log_level_msgs.items():
-            cotainr_root_logger.log(level=level, msg=msg)
-
-        # Check correct log level
-        assert cotainr_root_logger.getEffectiveLevel() == logging.INFO
-
-        # Check correct handles
-        # Pytest manipulates the handler streams to capture the logging output
-        assert len(cotainr_root_logger.handlers) == 2
-        for handler in cotainr_root_logger.handlers:
-            assert isinstance(handler, logging.StreamHandler)
-
-        # Check correct logging, incl. message format, coloring, log level, and output stream
-        outerr = capsys.readouterr()  # readouterr clears its content when returning
-        assert outerr.out.rstrip("\n").split("\n") == stdout_msgs
-        assert outerr.err.rstrip("\n").split("\n") == stderr_msgs
-
     @pytest.mark.parametrize("no_color", [True, False])
     def test_log_to_file(
         self,
@@ -356,3 +319,40 @@ class TestSetupCotainrCLILogging:
             log_file_path.with_suffix(".err").read_text().rstrip("\n").split("\n")
             == stderr_msgs
         )
+
+    def test_no_color_on_console(
+        self,
+        capsys,
+        data_cotainr_info_no_color_log_messages,
+        patch_disable_cotainercli_init,
+    ):
+        (
+            log_level_msgs,
+            stdout_msgs,
+            stderr_msgs,
+        ) = data_cotainr_info_no_color_log_messages
+
+        # Setup the CotainerCLI logger
+        CotainrCLI()._setup_cotainr_cli_logging(
+            log_settings=LogSettings(verbosity=0, log_file_path=None, no_color=True)
+        )
+        assert "cotainr" in logging.Logger.manager.loggerDict
+
+        # Log test messages to cotainr root logger
+        cotainr_root_logger = logging.getLogger("cotainr")
+        for level, msg in log_level_msgs.items():
+            cotainr_root_logger.log(level=level, msg=msg)
+
+        # Check correct log level
+        assert cotainr_root_logger.getEffectiveLevel() == logging.INFO
+
+        # Check correct handles
+        # Pytest manipulates the handler streams to capture the logging output
+        assert len(cotainr_root_logger.handlers) == 2
+        for handler in cotainr_root_logger.handlers:
+            assert isinstance(handler, logging.StreamHandler)
+
+        # Check correct logging, incl. message format, coloring, log level, and output stream
+        outerr = capsys.readouterr()  # readouterr clears its content when returning
+        assert outerr.out.rstrip("\n").split("\n") == stdout_msgs
+        assert outerr.err.rstrip("\n").split("\n") == stderr_msgs

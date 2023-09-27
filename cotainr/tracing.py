@@ -242,8 +242,8 @@ class LogDispatcher:
         log_level = self._determine_log_level(verbosity=log_settings.verbosity)
 
         # Setup cotainr log format
-        if self.verbosity >= 2:
-            log_fmt = "%(asctime)s - %(name)s:%(levelname)s %(message)s"
+        if self.verbosity >= 3:
+            log_fmt = "%(asctime)s - %(name)s:-:%(levelname)s: %(message)s"
         else:
             log_fmt = "%(name)s:-: %(message)s"
 
@@ -351,7 +351,7 @@ class LogDispatcher:
             One of the standard log levels (DEBUG, INFO, WARNING, ERROR, or
             CRITICAL).
         """
-        if verbosity == -1:
+        if verbosity <= -1:
             log_level = logging.CRITICAL
         elif verbosity == 0:
             log_level = logging.WARNING
