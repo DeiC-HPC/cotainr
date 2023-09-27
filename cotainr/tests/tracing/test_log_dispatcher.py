@@ -424,7 +424,7 @@ class TestPrefixStderrName:
         assert caplog.records[1].name == "test_dispatcher_6021.err"
 
 
-class TestDetermineLogLevel:
+class Test_DetermineLogLevel:
     @pytest.mark.parametrize(
         ["verbosity", "log_level"],
         [

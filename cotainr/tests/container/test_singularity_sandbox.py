@@ -7,11 +7,13 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
+import logging
 from pathlib import Path
 
 import pytest
 
 from cotainr.container import SingularitySandbox
+from cotainr.tracing import LogSettings
 from .data import data_cached_alpine_sif
 from ..util.patches import patch_disable_stream_subprocess
 
@@ -22,6 +24,21 @@ class TestConstructor:
         sandbox = SingularitySandbox(base_image=base_image)
         assert sandbox.base_image == base_image
         assert sandbox.sandbox_dir is None
+        assert sandbox.log_dispatcher is None
+        assert sandbox._verbosity == 0
+
+    def test_setup_log_dispatcher(self):
+        log_settings = LogSettings(verbosity=1)
+        sandbox = SingularitySandbox(
+            base_image="my_base_image_6021", log_settings=log_settings
+        )
+        assert sandbox._verbosity == 1
+        assert sandbox.log_dispatcher.verbosity == log_settings.verbosity
+        assert sandbox.log_dispatcher.log_file_path == log_settings.log_file_path
+        assert sandbox.log_dispatcher.no_color == log_settings.no_color
+        assert sandbox.log_dispatcher.map_log_level is SingularitySandbox._map_log_level
+        assert sandbox.log_dispatcher.logger_stdout.name == "SingularitySandbox.out"
+        assert sandbox.log_dispatcher.logger_stderr.name == "SingularitySandbox.err"
 
 
 class TestContext:
@@ -149,3 +166,69 @@ class Test_AssertWithinSandboxContext:
             match=r"^The operation is only valid inside a sandbox context\.$",
         ):
             sandbox._assert_within_sandbox_context()
+
+
+class Test_SubprocessRunner:
+    def test_logger_prefix_for_custom_log_dispatcher(self):
+        1 / 0
+
+    def test_use_own_log_dispatcher(self):
+        1 / 0
+
+
+class Test_AddVerbosityArg:
+    @pytest.mark.parametrize(
+        ["verbosity", "verbosity_arg"],
+        [(-1, "-s"), (0, "-q"), (1, None), (2, None), (3, "-v"), (4, "-v")],
+    )
+    def test_correct_mapping_of_verbosity(self, verbosity, verbosity_arg):
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox._verbosity = verbosity
+        args = ["first_arg", "last_arg"]
+        sandbox._add_verbosity_arg(args=args)
+        if verbosity_arg is not None:
+            assert len(args) == 3
+            assert args[0] == "first_arg"
+            assert args[1] == verbosity_arg
+            assert args[2] == "last_arg"
+        else:
+            assert len(args) == 2
+            assert args[0] == "first_arg"
+            assert args[1] == "last_arg"
+
+    def test_return_args(self):
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        args = ["some_arg"]
+        returned_args = sandbox._add_verbosity_arg(args=args)
+        assert returned_args is args
+
+
+class Test_MapLogLevel:
+    @pytest.mark.parametrize(
+        ["msg", "log_level"],
+        [
+            ("DEBUG", logging.DEBUG),
+            ("VERBOSE", logging.DEBUG),
+            ("DEBUG:6021", logging.DEBUG),
+            ("VERBOSE 6021", logging.DEBUG),
+            ("INFO", logging.INFO),
+            ("LOG", logging.INFO),
+            ("INFORMATION", logging.INFO),
+            ("LOG some text", logging.INFO),
+            ("WARNING", logging.WARNING),
+            ("WARNING-log", logging.WARNING),
+            ("ERROR", logging.ERROR),
+            ("ERROR_MSG", logging.ERROR),
+            ("ABRT", logging.CRITICAL),
+            ("FATAL", logging.CRITICAL),
+            ("ABRT/mission", logging.CRITICAL),
+            ("FATALities", logging.CRITICAL),
+            ("unknown", logging.INFO),
+            (
+                "some messages containing DEBUG, VERBOSE, WARNING, ERROR, ABRT, and FATAL",
+                logging.INFO,
+            ),
+        ],
+    )
+    def test_correct_log_level_mapping(self, msg, log_level):
+        assert SingularitySandbox._map_log_level(msg=msg) == log_level

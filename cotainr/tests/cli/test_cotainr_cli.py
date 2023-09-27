@@ -138,7 +138,7 @@ class TestHelpMessage:
         )
 
 
-class TestSetupCotainrCLILogging:
+class Test_SetupCotainrCLILogging:
     @pytest.mark.parametrize("verbosity", [-1, -2, -3, -5, -1000])
     def test_cotainr_critical_logging(
         self,
