@@ -24,7 +24,7 @@ Since `cotainr` is a tool, written in `Python`_, for building `Singularity`_/`Ap
 
 - A Linux OS (since `Singularity`_/`Apptainer`_ `only runs on Linux <https://apptainer.org/docs/admin/main/installation.html#installation-on-linux>`_)
 - `Python`_ >=3.8
-- `Singularity`_ >=3.7.4 or `Apptainer`_ >=1.0.0
+- `Singularity`_ >=3.7.4 [#]_ or `Apptainer`_ >=1.0.0
 
 Additionally, some features provided by `cotainr` may impose requirements on the base images you use when building containers, e.g. when including a :ref:`conda environment <conda_environments>` the base container must have `bash <https://www.gnu.org/software/bash/>`_ installed in it.
 
@@ -121,3 +121,6 @@ Further examples of using `cotainr` are included with the source code, https://g
 .. _Apptainer: https://apptainer.org/
 .. _Python: https://www.python.org/
 .. _Singularity: https://sylabs.io/singularity/
+
+.. rubric:: Footnotes
+.. [#] As of version 3.8.0, Sylabs have changed the name of their version to SingularityCE.
