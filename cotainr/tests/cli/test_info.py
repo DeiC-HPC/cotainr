@@ -138,7 +138,7 @@ class Test_check_singularity_dependency:
         )
         assert (
             Info()._check_singularity_dependency()
-            == "Found singularity-ce 3.11.4-1 >= 3.8.0, \x1b[92mOK\x1b[0m"
+            == "Found singularity-ce 3.11.4-1 >= 3.9.1, \x1b[92mOK\x1b[0m"
         )
 
     def test_found_unknown(self, monkeypatch):
