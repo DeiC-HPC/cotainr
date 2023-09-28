@@ -13,7 +13,7 @@ from pathlib import Path
 import pytest
 
 from cotainr.container import SingularitySandbox
-from cotainr.tracing import LogSettings
+from cotainr.tracing import LogDispatcher, LogSettings
 from .data import data_cached_alpine_sif
 from ..util.patches import patch_disable_stream_subprocess
 
@@ -169,11 +169,28 @@ class Test_AssertWithinSandboxContext:
 
 
 class Test_SubprocessRunner:
-    def test_logger_prefix_for_custom_log_dispatcher(self):
-        1 / 0
+    def test_logger_prefix_for_custom_log_dispatcher(
+        self, capsys, patch_disable_stream_subprocess
+    ):
+        log_dispatcher = LogDispatcher(
+            name="test_dispatcher_6021",
+            map_log_level_func=lambda msg: logging.WARNING,
+            log_settings=LogSettings(),
+        )
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox._subprocess_runner(
+            custom_log_dispatcher=log_dispatcher, args=["some_arg_6021"]
+        )
+        stderr = capsys.readouterr().err
+        assert stderr.startswith("SingularitySandbox/test_dispatcher_6021.err")
 
-    def test_use_own_log_dispatcher(self):
-        1 / 0
+    def test_use_own_log_dispatcher(self, capsys, patch_disable_stream_subprocess):
+        sandbox = SingularitySandbox(
+            base_image="my_base_image_6021", log_settings=LogSettings(verbosity=1)
+        )
+        sandbox._subprocess_runner(args=["some_arg_6021"])
+        stderr = capsys.readouterr().err
+        assert stderr.startswith("SingularitySandbox.err")
 
 
 class Test_AddVerbosityArg:

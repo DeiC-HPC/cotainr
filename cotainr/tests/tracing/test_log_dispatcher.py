@@ -335,12 +335,9 @@ class TestLogToStderr:
         [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
     )
     def test_log_to_correct_level(self, level, caplog):
-        def loc_level_func(msg):
-            return level
-
         log_dispatcher = LogDispatcher(
             name="test_dispatcher_6021",
-            map_log_level_func=loc_level_func,
+            map_log_level_func=lambda msg: level,
             log_settings=LogSettings(verbosity=3, log_file_path=None, no_color=True),
         )
         log_dispatcher.log_to_stderr("test_6021")
@@ -350,12 +347,9 @@ class TestLogToStderr:
         assert caplog.records[0].msg == "test_6021"
 
     def test_strip_whitespace(self, caplog):
-        def loc_level_func(msg):
-            return logging.INFO
-
         log_dispatcher = LogDispatcher(
             name="test_dispatcher_6021",
-            map_log_level_func=loc_level_func,
+            map_log_level_func=lambda msg: logging.INFO,
             log_settings=LogSettings(verbosity=1, log_file_path=None, no_color=True),
         )
         for msg in ["  before", "after  ", "  before and after  "]:
@@ -374,12 +368,9 @@ class TestLogToStdout:
         [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL],
     )
     def test_log_to_correct_level(self, level, caplog):
-        def loc_level_func(msg):
-            return level
-
         log_dispatcher = LogDispatcher(
             name="test_dispatcher_6021",
-            map_log_level_func=loc_level_func,
+            map_log_level_func=lambda msg: level,
             log_settings=LogSettings(verbosity=3, log_file_path=None, no_color=True),
         )
         log_dispatcher.log_to_stdout("test_6021")
@@ -389,12 +380,9 @@ class TestLogToStdout:
         assert caplog.records[0].msg == "test_6021"
 
     def test_strip_whitespace(self, caplog):
-        def loc_level_func(msg):
-            return logging.INFO
-
         log_dispatcher = LogDispatcher(
             name="test_dispatcher_6021",
-            map_log_level_func=loc_level_func,
+            map_log_level_func=lambda msg: logging.INFO,
             log_settings=LogSettings(verbosity=1, log_file_path=None, no_color=True),
         )
         for msg in ["  before", "after  ", "  before and after  "]:
