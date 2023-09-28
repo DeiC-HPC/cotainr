@@ -123,4 +123,4 @@ Further examples of using `cotainr` are included with the source code, https://g
 .. _Singularity: https://sylabs.io/singularity/
 
 .. rubric:: Footnotes
-.. [#] As of version 3.8.0, Sylabs have changed the name of their version to SingularityCE. However, we only officially support their version from 3.9.1.
+.. [#] As of version 3.8.0, Sylabs have changed the name of their version to SingularityCE. However, we only officially support their version from 3.9.2.
