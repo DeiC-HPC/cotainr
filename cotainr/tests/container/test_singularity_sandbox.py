@@ -42,6 +42,12 @@ class TestConstructor:
 
 
 class TestContext:
+    def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            pass
+        stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
+        assert "args=['singularity', '-q', " in stdout_lines[0]
+
     @pytest.mark.singularity_integration
     def test_singularity_sandbox_creation(self, data_cached_alpine_sif):
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
@@ -95,6 +101,12 @@ class TestAddToEnv:
 
 @pytest.mark.singularity_integration
 class TestBuildImage:
+    def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.build_image(path="some_path_6021")
+        stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
+        assert "args=['singularity', '-q', " in stdout_lines[-1]
+
     def test_overwrite_existing_image(self, data_cached_alpine_sif, tmp_path):
         existing_singularity_image_path = tmp_path / "existing_image_6021"
         existing_singularity_image_path.write_bytes(data_cached_alpine_sif.read_bytes())
@@ -127,6 +139,12 @@ class TestBuildImage:
 
 @pytest.mark.singularity_integration
 class TestRunCommandInContainer:
+    def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.run_command_in_container(cmd="ls")
+        stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
+        assert "args=['singularity', '-q', " in stdout_lines[-1]
+
     def test_correct_umask(self, data_cached_alpine_sif, context_set_umask):
         test_file = "test_file_6021"
         with context_set_umask(0o007):  # default umask on LUMI
