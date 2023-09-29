@@ -307,7 +307,7 @@ class TestExecute:
 
         # Check log calls
         assert re.search(
-            r"^WARNING  cotainr\.pack\:pack\.py\:(\d+) "
+            r"^WARNING  CondaInstall\.err\:pack\.py\:(\d+) "
             r"You have accepted the Miniforge installer license via the command line option "
             r"'--accept-licenses'\.$",
             caplog.text,

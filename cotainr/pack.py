@@ -190,9 +190,12 @@ class CondaInstall:
         """
         Display a message to the user.
 
-        Displays the message using the logging machinery if `log_level` is not
-        `None` and a `log_dispatcher` is defined for the `CondaInstall`,
-        otherwise uses `print`.
+        Displays the message using the `log_dispatcher` if `log_level` is not
+        `None` and a `log_dispatcher` is defined for the `CondaInstall`.
+        Otherwise prints the message on stdout. When the `log_dispatcher` is
+        used, messages with `log_levels` of WARNING or above are sent to stderr
+        whereas massages with with `log_level` below WARNING are sent to
+        stdout.
 
         Parameters
         ----------
@@ -205,7 +208,10 @@ class CondaInstall:
         if self.log_dispatcher is None or log_level is None:
             print(msg)
         else:
-            logger.log(level=log_level, msg=msg)
+            if log_level >= logging.WARNING:
+                self.log_dispatcher.logger_stderr.log(level=log_level, msg=msg)
+            else:
+                self.log_dispatcher.logger_stdout.log(level=log_level, msg=msg)
 
     def _display_miniforge_license_for_acceptance(self, *, installer_path):
         """

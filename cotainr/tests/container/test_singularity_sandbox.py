@@ -170,7 +170,9 @@ class Test_AssertWithinSandboxContext:
 
 class Test_SubprocessRunner:
     def test_logger_prefix_for_custom_log_dispatcher(
-        self, capsys, patch_disable_stream_subprocess
+        self,
+        capsys,
+        patch_disable_stream_subprocess,
     ):
         log_dispatcher = LogDispatcher(
             name="test_dispatcher_6021",

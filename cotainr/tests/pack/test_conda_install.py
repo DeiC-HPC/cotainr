@@ -7,6 +7,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
+import logging
 import re
 import subprocess
 import urllib.error
@@ -15,6 +16,7 @@ import pytest
 
 from cotainr.container import SingularitySandbox
 from cotainr.pack import CondaInstall
+from cotainr.tracing import LogSettings
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_miniforge_installer,
@@ -36,6 +38,8 @@ class TestConstructor:
         assert conda_install.sandbox == sandbox
         assert conda_install.prefix == "/opt/conda"
         assert conda_install.license_accepted
+        assert conda_install.log_dispatcher is None
+        assert conda_install._verbosity == 0
 
     def test_beforehand_license_acceptance(
         self,
@@ -92,6 +96,25 @@ class TestConstructor:
         # Check that the conda clean (mock) command ran
         assert clean_cmd.startswith("PATCH: Ran command in sandbox:")
         assert "'conda', 'clean', '-y', '-a'" in clean_cmd
+
+    def test_setup_log_dispatcher(
+        self,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        log_settings = LogSettings(verbosity=1)
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(
+                sandbox=sandbox, license_accepted=True, log_settings=log_settings
+            )
+        assert conda_install._verbosity == 1
+        assert conda_install.log_dispatcher.verbosity == log_settings.verbosity
+        assert conda_install.log_dispatcher.log_file_path == log_settings.log_file_path
+        assert conda_install.log_dispatcher.no_color == log_settings.no_color
+        assert conda_install.log_dispatcher.map_log_level is CondaInstall._map_log_level
+        assert conda_install.log_dispatcher.logger_stdout.name == "CondaInstall.out"
+        assert conda_install.log_dispatcher.logger_stderr.name == "CondaInstall.err"
 
 
 @pytest.mark.conda_integration
@@ -201,6 +224,81 @@ class Test_CheckCondaBootstrapIntegrity:
         )
         assert exc_msg.endswith("Aborting!")
         assert "'conda', 'info', '--base'" in exc_msg
+
+
+class Test_DisplayMessage:
+    @pytest.mark.parametrize("level", [logging.DEBUG, logging.INFO])
+    def test_log_to_stdout(
+        self,
+        level,
+        caplog,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        log_settings = LogSettings(verbosity=3)
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(
+                sandbox=sandbox, license_accepted=True, log_settings=log_settings
+            )
+            conda_install._display_message(msg="test_6021", log_level=level)
+
+        assert caplog.records[-1].levelno == level
+        assert caplog.records[-1].name == "CondaInstall.out"
+        assert caplog.records[-1].msg == "test_6021"
+
+    @pytest.mark.parametrize(
+        "level", [logging.WARNING, logging.ERROR, logging.CRITICAL]
+    )
+    def test_log_to_stderr(
+        self,
+        level,
+        caplog,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        log_settings = LogSettings(verbosity=0)
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(
+                sandbox=sandbox, license_accepted=True, log_settings=log_settings
+            )
+            conda_install._display_message(msg="test_6021", log_level=level)
+
+        assert caplog.records[-1].levelno == level
+        assert caplog.records[-1].name == "CondaInstall.err"
+        assert caplog.records[-1].msg == "test_6021"
+
+    def test_no_log_dispatcher(
+        self,
+        capsys,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install._display_message(msg="test_6021", log_level=logging.INFO)
+
+        stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
+        assert stdout_lines[-1] == "test_6021"
+
+    def test_no_log_level(
+        self,
+        capsys,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        log_settings = LogSettings(verbosity=1)
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(
+                sandbox=sandbox, license_accepted=True, log_settings=log_settings
+            )
+            conda_install._display_message(msg="test_6021")
+
+        stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
+        assert stdout_lines[-1] == "test_6021"
 
 
 class Test_DisplayMiniforgeLicenseForAcceptance:
@@ -317,7 +415,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         assert "All rights reserved." in stdout
 
 
-class Test_DownloadCondaInstaller:
+class Test_DownloadMiniforgeInstaller:
     def test_installer_download_success(
         self,
         patch_urllib_urlopen_as_bytes_stream,
@@ -347,3 +445,172 @@ class Test_DownloadCondaInstaller:
                 urllib.error.URLError, match="PATCH: urlopen error forced for url="
             ):
                 CondaInstall(sandbox=sandbox)
+
+
+class Test_CondaVerbosityArg:
+    @pytest.mark.parametrize(
+        ["verbosity", "verbosity_arg"],
+        [(-1, " -q"), (0, " -q"), (1, ""), (2, " -v"), (3, " -vv"), (4, " -vvv")],
+    )
+    def test_correct_mapping_of_verbosity(
+        self,
+        verbosity,
+        verbosity_arg,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install._verbosity = verbosity
+            assert conda_install._conda_verbosity_arg == verbosity_arg
+
+
+class Test_LoggingFilters:
+    def test_correctly_ordered_list_of_filters(
+        self,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+
+        filter_names = [
+            filter_.__class__.__name__ for filter_ in conda_install._logging_filters
+        ]
+        assert filter_names == [
+            "StripANSIEscapeCodes",
+            "NoEmptyLinesFilter",
+            "OnlyFinalProgressbarFilter",
+        ]
+
+    def test_strip_ANSI_codes_filter(
+        self,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            filter_ = conda_install._logging_filters[0]
+            assert filter_.__class__.__name__ == "StripANSIEscapeCodes"
+
+        rec = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="test_path",
+            lineno=0,
+            msg=(
+                "\x1b[38;5;8msome_\x1b[38;5;3m\x1b[38;5;1m\033[38;5;160mlong\x1b[0m_message_"
+                "\033[Awith\x1b[A_a_lot_of_AN\x1b[KSI_codes_\x1b[B6021"
+            ),
+            args=None,
+            exc_info=None,
+        )
+        filter_.filter(rec)
+        assert rec.msg == "some_long_message_with_a_lot_of_ANSI_codes_6021"
+
+    @pytest.mark.parametrize(["msg", "keep"], [("", False), ("some_msg_6021", True)])
+    def test_no_empty_lines_filter(
+        self,
+        msg,
+        keep,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            filter_ = conda_install._logging_filters[1]
+            assert filter_.__class__.__name__ == "NoEmptyLinesFilter"
+
+        rec = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="test_path",
+            lineno=0,
+            msg=msg,
+            args=None,
+            exc_info=None,
+        )
+        assert filter_.filter(rec) == keep
+
+    @pytest.mark.parametrize(
+        ["msg", "keep"],
+        [
+            (
+                "CondaInstall.out:-: openssl-3.1.3        | 2.5 MB    |            |   0%",
+                False,
+            ),
+            (
+                "CondaInstall.out:-: jsonpatch-1.33       | 17 KB     | #########4 |  94%",
+                False,
+            ),
+            (
+                "CondaInstall.out:-: libnsl-2.0.0         | 32 KB     | ####9      |  49%",
+                False,
+            ),
+            (
+                "CondaInstall.out:-: zstandard-0.21.0     | 395 KB    | 4          |   4%",
+                False,
+            ),
+            (
+                "CondaInstall.out:-: python-3.11.5        | 29.4 MB   | ########## | 100%",
+                True,
+            ),
+        ],
+    )
+    def test_only_final_progressbar_filter(
+        self,
+        msg,
+        keep,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_conda_install_download_miniforge_installer,
+        patch_disable_singularity_sandbox_subprocess_runner,
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            filter_ = conda_install._logging_filters[2]
+            assert filter_.__class__.__name__ == "OnlyFinalProgressbarFilter"
+
+        rec = logging.LogRecord(
+            name="test",
+            level=logging.INFO,
+            pathname="test_path",
+            lineno=0,
+            msg=msg,
+            args=None,
+            exc_info=None,
+        )
+        assert filter_.filter(rec) == keep
+
+
+class Test_MapLogLevel:
+    @pytest.mark.parametrize(
+        ["msg", "log_level"],
+        [
+            ("DEBUG", logging.DEBUG),
+            ("VERBOSE", logging.DEBUG),
+            ("TRACE", logging.DEBUG),
+            ("DEBUG:6021", logging.DEBUG),
+            ("VERBOSE 6021", logging.DEBUG),
+            ("TRACEING my day away", logging.DEBUG),
+            ("INFO", logging.INFO),
+            ("INFORMATION", logging.INFO),
+            ("WARNING", logging.WARNING),
+            ("WARNING-log", logging.WARNING),
+            ("ERROR", logging.ERROR),
+            ("ERROR_MSG", logging.ERROR),
+            ("CRITICAL", logging.CRITICAL),
+            ("CRITICAL/mission", logging.CRITICAL),
+            ("unknown", logging.INFO),
+            ("debug something", logging.INFO),
+            (
+                "some messages containing DEBUG, VERBOSE, TRACE, WARNING, ERROR, and CRITICAL",
+                logging.INFO,
+            ),
+        ],
+    )
+    def test_correct_log_level_mapping(self, msg, log_level):
+        assert CondaInstall._map_log_level(msg=msg) == log_level
