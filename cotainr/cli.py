@@ -543,10 +543,18 @@ class CotainrCLI:
         cotainr_stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
         if log_settings.log_file_path is not None:
             cotainr_stdout_handlers.append(
-                logging.FileHandler(log_settings.log_file_path.with_suffix(".out"))
+                logging.FileHandler(
+                    log_settings.log_file_path.with_suffix(
+                        log_settings.log_file_path.suffix + ".out"
+                    )
+                )
             )
             cotainr_stderr_handlers.append(
-                logging.FileHandler(log_settings.log_file_path.with_suffix(".err"))
+                logging.FileHandler(
+                    log_settings.log_file_path.with_suffix(
+                        log_settings.log_file_path.suffix + ".err"
+                    )
+                )
             )
 
         for stdout_handler in cotainr_stdout_handlers:

@@ -61,6 +61,9 @@ class TestConstructor:
             assert build.base_image == base_image
         assert build.conda_env is None
         assert not build.accept_licenses
+        assert build.log_settings.verbosity == 0
+        assert build.log_settings.log_file_path is None
+        assert not build.log_settings.no_color
 
     @pytest.mark.parametrize(
         "base_image,system",
@@ -117,6 +120,26 @@ class TestConstructor:
             image_path=image_path, base_image=base_image, accept_licenses=True
         )
         assert build.accept_licenses
+
+    def test_specifying_log_to_file(self):
+        # See also the matching TestAddArguments test below
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        build = Build(image_path=image_path, base_image=base_image, log_to_file=True)
+        print(
+            build.log_settings.log_file_path.name,
+        )
+        assert re.match(
+            r"^cotainr_build_\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}\.\d{6}$",
+            build.log_settings.log_file_path.name,
+        )
+
+    def test_specifying_no_color(self):
+        # See also the matching TestAddArguments test below
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        build = Build(image_path=image_path, base_image=base_image, no_color=True)
+        assert build.log_settings.no_color
 
 
 class TestAddArguments:
@@ -204,6 +227,85 @@ class TestAddArguments:
             )
         )
         assert args.accept_licenses
+
+    @pytest.mark.parametrize(
+        ["verbose_arg", "verbosity"],
+        [
+            ("--verbose", 1),
+            ("--verbose --verbose", 2),
+            ("-v", 1),
+            ("-vv", 2),
+            ("-vvv", 3),
+            ("-vvvv", 4),
+        ],
+    )
+    def test_specifying_verbose(self, verbose_arg, verbosity):
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(f"{image_path} --base-image={base_image} {verbose_arg}")
+        )
+        assert args.verbosity == verbosity
+
+    @pytest.mark.parametrize(
+        ["verbose_arg", "verbosity"],
+        [
+            ("--quiet", -1),
+            ("--quiet --quiet", -1),
+            ("-q", -1),
+            ("-qq", -1),
+        ],
+    )
+    def test_specifying_quiet(self, verbose_arg, verbosity):
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(f"{image_path} --base-image={base_image} {verbose_arg}")
+        )
+        assert args.verbosity == verbosity
+
+    def test_specifying_both_verbose_and_quiet(self, capsys):
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+
+        with pytest.raises(SystemExit):
+            args = parser.parse_args(
+                args=shlex.split(
+                    f"{image_path} --base-image={base_image} --verbose --quiet"
+                )
+            )
+        stderr = capsys.readouterr().err
+        assert stderr.strip().endswith(
+            "argument --quiet/-q: not allowed with argument --verbose/-v"
+        )
+
+    def test_specifying_log_to_file(self):
+        # See also the matching TestConstructor test above
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(f"{image_path} --base-image={base_image} --log-to-file")
+        )
+        assert args.log_to_file
+
+    def test_specifying_no_color(self):
+        # See also the matching TestConstructor test above
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(f"{image_path} --base-image={base_image} --no-color")
+        )
+        assert args.no_color
 
 
 class TestExecute:

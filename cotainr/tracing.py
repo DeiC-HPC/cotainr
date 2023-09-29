@@ -253,10 +253,14 @@ class LogDispatcher:
 
         if self.log_file_path is not None:
             stdout_handlers.append(
-                logging.FileHandler(self.log_file_path.with_suffix(".out"))
+                logging.FileHandler(
+                    self.log_file_path.with_suffix(self.log_file_path.suffix + ".out")
+                )
             )
             stderr_handlers.append(
-                logging.FileHandler(self.log_file_path.with_suffix(".err"))
+                logging.FileHandler(
+                    self.log_file_path.with_suffix(self.log_file_path.suffix + ".err")
+                )
             )
         for handler in stdout_handlers + stderr_handlers:
             handler.setLevel(log_level)
