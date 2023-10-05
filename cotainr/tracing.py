@@ -394,6 +394,13 @@ class LogSettings:
     log_file_path: typing.Optional[pathlib.Path] = None
     no_color: bool = False
 
+    def __post_init__(self):
+        """Cast fields to their expected types."""
+        self.verbosity = int(self.verbosity)
+        if self.log_file_path is not None:
+            self.log_file_path = pathlib.Path(self.log_file_path)
+        self.no_color = bool(self.no_color)
+
 
 class MessageSpinner:
     """
