@@ -22,6 +22,7 @@ from .data import (
     data_log_dispatcher_info_no_color_log_messages,
     data_log_dispatcher_warning_color_log_messages,
 )
+from .stubs import AlwaysCompareFalse
 
 
 class TestConstructor:
@@ -414,13 +415,26 @@ class Test_DetermineLogLevel:
     @pytest.mark.parametrize(
         ["verbosity", "log_level"],
         [
+            (-1000, logging.CRITICAL),
+            (-2, logging.CRITICAL),
             (-1, logging.CRITICAL),
             (0, logging.WARNING),
             (1, logging.INFO),
             (2, logging.INFO),
             (3, logging.DEBUG),
             (4, logging.DEBUG),
+            (1000, logging.DEBUG),
         ],
     )
     def test_correct_mapping_of_defined_log_levels(self, verbosity, log_level):
         assert LogDispatcher._determine_log_level(verbosity=verbosity) == log_level
+
+    def test_error_on_not_equal_to_any_integer_but_comparable(self):
+        with pytest.raises(ValueError) as exc_info:
+            LogDispatcher._determine_log_level(verbosity=AlwaysCompareFalse())
+
+        assert str(exc_info.value) == (
+            "Somehow we ended up with a verbosity=AlwaysCompareFalseStub of "
+            "type(verbosity)=<class 'cotainr.tests.tracing.stubs.AlwaysCompareFalse'> "
+            "that does not compare well with integers."
+        )

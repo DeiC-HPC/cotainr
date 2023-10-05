@@ -359,10 +359,17 @@ class LogDispatcher:
             log_level = logging.CRITICAL
         elif verbosity == 0:
             log_level = logging.WARNING
-        elif verbosity in [1, 2]:
+        elif verbosity == 1 or verbosity == 2:
             log_level = logging.INFO
         elif verbosity >= 3:
             log_level = logging.DEBUG
+        else:
+            # This should not happen, but if you somehow specify e.g.
+            # verbosity=numpy.NaN, you will end up here...
+            raise ValueError(
+                f"Somehow we ended up with a {verbosity=} of {type(verbosity)=} "
+                "that does not compare well with integers."
+            )
 
         return log_level
 
