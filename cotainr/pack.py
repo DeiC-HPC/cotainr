@@ -399,7 +399,7 @@ class CondaInstall:
             """
 
             def filter(self, record):
-                return record.msg != ""
+                return record.msg.strip() != ""
 
         class OnlyFinalProgressbarFilter(logging.Filter):
             """
@@ -417,11 +417,12 @@ class CondaInstall:
                 return not self.progress_bar_re.match(record.msg)
 
         logging_filters = [
-            # The order matters as filters are applied in order.
-            # ANSI escape codes must be removed before filtering empty lines.
+            # The order matters as filters are applied in order. ANSI escape
+            # codes and partial progress bars must be removed before filtering
+            # empty lines.
             StripANSIEscapeCodes(),
-            NoEmptyLinesFilter(),
             OnlyFinalProgressbarFilter(),
+            NoEmptyLinesFilter(),
         ]
 
         return logging_filters

@@ -9,12 +9,14 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import functools
 import io
+import logging
 import platform
 import subprocess
 import sys
 
 import pytest
 
+from cotainr.tracing import LogDispatcher, LogSettings
 from cotainr.util import stream_subprocess, _print_and_capture_stream
 
 
@@ -49,6 +51,63 @@ class TestStreamSubprocess:
             env=env,
         )
         assert process.stdout.strip() == env["COTAINR_TEST_ENV_VAR"]
+
+    def test_logging_stdout(self, caplog):
+        log_level = logging.INFO
+        log_dispatcher = LogDispatcher(
+            name="test_dispatcher_6021",
+            map_log_level_func=lambda msg: log_level,
+            log_settings=LogSettings(verbosity=1, log_file_path=None, no_color=False),
+        )
+        stdout_text = """
+        Text on line 1
+
+        More text later!
+        """
+
+        stream_subprocess(
+            args=[
+                sys.executable,
+                "-c",
+                f"import os; os.write(1, {stdout_text.encode()})",
+            ],
+            log_dispatcher=log_dispatcher,
+        )
+
+        stdout_lines = stdout_text.splitlines(keepends=True)
+        assert len(stdout_lines) == len(caplog.records)
+        for line, rec in zip(stdout_lines, caplog.records):
+            assert rec.levelno == log_level
+            assert rec.name == "test_dispatcher_6021.out"
+            assert rec.msg == line
+
+    def test_logging_stderr(self, caplog):
+        log_level = logging.ERROR
+        log_dispatcher = LogDispatcher(
+            name="test_dispatcher_6021",
+            map_log_level_func=lambda msg: log_level,
+            log_settings=LogSettings(verbosity=0, log_file_path=None, no_color=False),
+        )
+        stderr_text = """
+        An error!
+        More breakage...
+        """
+
+        stream_subprocess(
+            args=[
+                sys.executable,
+                "-c",
+                f"import os; os.write(2, {stderr_text.encode()})",
+            ],
+            log_dispatcher=log_dispatcher,
+        )
+
+        stderr_lines = stderr_text.splitlines(keepends=True)
+        assert len(stderr_lines) == len(caplog.records)
+        for line, rec in zip(stderr_lines, caplog.records):
+            assert rec.levelno == log_level
+            assert rec.name == "test_dispatcher_6021.err"
+            assert rec.msg == line
 
     def test_stdout(self):
         stdout_text = """

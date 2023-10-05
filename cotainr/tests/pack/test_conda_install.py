@@ -435,6 +435,7 @@ class Test_DownloadMiniforgeInstaller:
                 b"'https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh'"
             )
 
+    @pytest.mark.conda_integration  # technically not a test that depends on Conda - but a very slow one...
     def test_installer_download_fail(
         self,
         patch_urllib_urlopen_force_fail,
@@ -481,8 +482,8 @@ class Test_LoggingFilters:
         ]
         assert filter_names == [
             "StripANSIEscapeCodes",
-            "NoEmptyLinesFilter",
             "OnlyFinalProgressbarFilter",
+            "NoEmptyLinesFilter",
         ]
 
     def test_strip_ANSI_codes_filter(
@@ -522,7 +523,7 @@ class Test_LoggingFilters:
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
-            filter_ = conda_install._logging_filters[1]
+            filter_ = conda_install._logging_filters[2]
             assert filter_.__class__.__name__ == "NoEmptyLinesFilter"
 
         rec = logging.LogRecord(
@@ -571,7 +572,7 @@ class Test_LoggingFilters:
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
-            filter_ = conda_install._logging_filters[2]
+            filter_ = conda_install._logging_filters[1]
             assert filter_.__class__.__name__ == "OnlyFinalProgressbarFilter"
 
         rec = logging.LogRecord(

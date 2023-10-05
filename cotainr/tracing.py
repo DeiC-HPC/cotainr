@@ -305,7 +305,7 @@ class LogDispatcher:
         msg : str
             The message to log.
         """
-        self.logger_stderr.log(level=self.map_log_level(msg), msg=msg.strip())
+        self.logger_stderr.log(level=self.map_log_level(msg), msg=msg)
 
     def log_to_stdout(self, msg):
         """
@@ -319,7 +319,7 @@ class LogDispatcher:
         msg : str
             The message to log.
         """
-        self.logger_stdout.log(level=self.map_log_level(msg), msg=msg.strip())
+        self.logger_stdout.log(level=self.map_log_level(msg), msg=msg)
 
     @contextlib.contextmanager
     def prefix_stderr_name(self, *, prefix):
@@ -437,6 +437,11 @@ class MessageSpinner:
             # See also: https://notes.burke.libbey.me/ansi-escape-codes/
             r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*([@-l]|[n-~]))"
         )
+        self._newline_at_end_re = re.compile(
+            # Find newlines at the end of a string even if the string is
+            # wrapped in a set of SGR codes.
+            r"\n(?=(?:\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*m))+$|$)"
+        )
         self._running = False
 
         # \033[2K erases the old line to avoid the extra two characters at the
@@ -462,7 +467,7 @@ class MessageSpinner:
         Spin the message.
 
         This is the method that the thread is running to continuously update
-        the spinnner.
+        the spinner.
         """
         # Delay spinning a bit to avoid flaky message updates when new messages
         # arrive promptly
@@ -470,8 +475,8 @@ class MessageSpinner:
 
         # Strip any newlines and ANSI escape codes that may interfere with
         # our manipulation of the console (not SGRs, though)
-        msg = self._msg.rstrip("\n")
-        msg = self._ansi_escape_re.sub("", msg)
+        msg = self._ansi_escape_re.sub("", self._msg)
+        msg = self._newline_at_end_re.sub("", msg)
 
         # Construct a messages that is guaranteed to fit on one line with the spinner
         one_line_msg = (

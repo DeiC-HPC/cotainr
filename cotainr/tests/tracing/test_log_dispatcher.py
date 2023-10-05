@@ -346,20 +346,19 @@ class TestLogToStderr:
         assert caplog.records[0].name == "test_dispatcher_6021.err"
         assert caplog.records[0].msg == "test_6021"
 
-    def test_strip_whitespace(self, caplog):
+    def test_not_stripping_whitespace(self, caplog):
         log_dispatcher = LogDispatcher(
             name="test_dispatcher_6021",
             map_log_level_func=lambda msg: logging.INFO,
             log_settings=LogSettings(verbosity=1, log_file_path=None, no_color=True),
         )
-        for msg in ["  before", "after  ", "  before and after  "]:
+        msgs = ["  before", "after  ", "  before and after  "]
+        for msg in msgs:
             log_dispatcher.log_to_stderr(msg=msg)
 
         assert len(caplog.records) == 3
         assert all(rec.name == "test_dispatcher_6021.err" for rec in caplog.records)
-        assert caplog.records[0].msg == "before"
-        assert caplog.records[1].msg == "after"
-        assert caplog.records[2].msg == "before and after"
+        assert all(msg == rec.msg for msg, rec in zip(msgs, caplog.records))
 
 
 class TestLogToStdout:
@@ -379,20 +378,19 @@ class TestLogToStdout:
         assert caplog.records[0].name == "test_dispatcher_6021.out"
         assert caplog.records[0].msg == "test_6021"
 
-    def test_strip_whitespace(self, caplog):
+    def test_not_stripping_whitespace(self, caplog):
         log_dispatcher = LogDispatcher(
             name="test_dispatcher_6021",
             map_log_level_func=lambda msg: logging.INFO,
             log_settings=LogSettings(verbosity=1, log_file_path=None, no_color=True),
         )
-        for msg in ["  before", "after  ", "  before and after  "]:
+        msgs = ["  before", "after  ", "  before and after  "]
+        for msg in msgs:
             log_dispatcher.log_to_stdout(msg=msg)
 
         assert len(caplog.records) == 3
         assert all(rec.name == "test_dispatcher_6021.out" for rec in caplog.records)
-        assert caplog.records[0].msg == "before"
-        assert caplog.records[1].msg == "after"
-        assert caplog.records[2].msg == "before and after"
+        assert all(msg == rec.msg for msg, rec in zip(msgs, caplog.records))
 
 
 class TestPrefixStderrName:
