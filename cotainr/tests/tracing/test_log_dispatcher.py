@@ -44,6 +44,29 @@ class TestConstructor:
 
         assert log_dispatcher.logger_stderr.name == "test_dispatcher_6021.err"
 
+    def test_adding_filters(self):
+        # Define test filters
+        class TestFilter1(logging.Filter):
+            pass
+
+        class TestFilter2(logging.Filter):
+            pass
+
+        filters = [TestFilter1(), TestFilter2()]
+
+        # Setup the LogDispatcher
+        log_dispatcher = LogDispatcher(
+            name="test_dispatcher_6021",
+            map_log_level_func=lambda msg: 0,  # not used in test since we log directly to loggers
+            log_settings=LogSettings(),
+            filters=filters,
+        )
+        for logger in [log_dispatcher.logger_stdout, log_dispatcher.logger_stderr]:
+            for handler in logger.handlers:
+                assert len(handler.filters) == 2
+                for handler_filter, test_filter in zip(handler.filters, filters):
+                    assert handler_filter is test_filter
+
     @pytest.mark.parametrize("verbosity", [-1, -2, -3, -5, -1000])
     def test_log_dispatcher_critical_logging(
         self,

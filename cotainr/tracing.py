@@ -454,7 +454,7 @@ class MessageSpinner:
         self._newline_at_end_re = re.compile(
             # Find newlines at the end of a string even if the string is
             # wrapped in a set of SGR codes.
-            r"\n(?=(?:\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*m))+$|$)"
+            r"\n+(?=(?:\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*m))+$|$)"
         )
         self._running = False
 

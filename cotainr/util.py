@@ -95,7 +95,10 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
         bufsize=1,
         **kwargs,
     ) as process:
-        with ThreadPoolExecutor(max_workers=2) as executor:
+        with ThreadPoolExecutor(
+            max_workers=2,
+            thread_name_prefix=f"cotainr_stream_subprocess_thread_for_{args}",
+        ) as executor:
             # (Attempt to) pass the process stdout and stderr to the terminal in real
             # time while also storing it for later inspection.
             stdout_future = executor.submit(

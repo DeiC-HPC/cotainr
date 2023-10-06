@@ -31,3 +31,24 @@ class AlwaysCompareFalse:
 
     def __repr__(self):
         return "AlwaysCompareFalseStub"
+
+
+class FixedNumberOfSpinsEvent:
+    """
+    An event that fixes the number of times the message is spun in a MessageSpinner.
+    """
+
+    def __init__(self, *, spins):
+        assert isinstance(spins, int)
+        assert spins >= 0
+        self.remaining_spins = spins
+
+    def is_set(self):
+        if self.remaining_spins == 0:
+            return True
+        else:
+            self.remaining_spins -= 1
+            return False
+
+    def set(self):
+        self.remaining_spins = 0
