@@ -8,6 +8,9 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 
+import contextlib
+
+
 class AlwaysCompareFalse:
     """A stub that returns False for all Python "rich comparisons"."""
 
@@ -52,3 +55,9 @@ class FixedNumberOfSpinsEvent:
 
     def set(self):
         self.remaining_spins = 0
+
+
+@contextlib.contextmanager
+def RaiseOnEnterContext():
+    raise NotImplementedError("Entered context")
+    yield
