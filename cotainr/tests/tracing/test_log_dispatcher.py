@@ -108,9 +108,9 @@ class TestConstructor:
             assert isinstance(logger.handlers[0], logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        outerr = capsys.readouterr()  # readouterr clears its content when returning
-        assert outerr.out.rstrip("\n").split("\n") == stdout_msgs
-        assert outerr.err.rstrip("\n").split("\n") == stderr_msgs
+        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        assert stdout.rstrip("\n").split("\n") == stdout_msgs
+        assert stderr.rstrip("\n").split("\n") == stderr_msgs
 
     @pytest.mark.parametrize("verbosity", [3, 4, 5, 1000])
     def test_log_dispatcher_debug_logging(
@@ -153,9 +153,9 @@ class TestConstructor:
             assert isinstance(logger.handlers[0], logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        outerr = capsys.readouterr()  # readouterr clears its content when returning
-        actual_stdout_msgs = outerr.out.rstrip("\n").split("\n")
-        actual_stderr_msgs = outerr.err.rstrip("\n").split("\n")
+        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        actual_stdout_msgs = stdout.rstrip("\n").split("\n")
+        actual_stderr_msgs = stderr.rstrip("\n").split("\n")
         assert len(actual_stdout_msgs) == len(expected_stdout_msgs)
         assert len(actual_stderr_msgs) == len(expected_stderr_msgs)
         debug_msg_start_re = re.compile(
@@ -211,9 +211,9 @@ class TestConstructor:
             assert isinstance(logger.handlers[0], logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        outerr = capsys.readouterr()  # readouterr clears its content when returning
-        assert outerr.out.rstrip("\n").split("\n") == stdout_msgs
-        assert outerr.err.rstrip("\n").split("\n") == stderr_msgs
+        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        assert stdout.rstrip("\n").split("\n") == stdout_msgs
+        assert stderr.rstrip("\n").split("\n") == stderr_msgs
 
     def test_log_dispatcher_warning_logging(
         self,
@@ -255,9 +255,9 @@ class TestConstructor:
             assert isinstance(logger.handlers[0], logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        outerr = capsys.readouterr()  # readouterr clears its content when returning
-        assert outerr.out.rstrip("\n").split("\n") == stdout_msgs
-        assert outerr.err.rstrip("\n").split("\n") == stderr_msgs
+        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        assert stdout.rstrip("\n").split("\n") == stdout_msgs
+        assert stderr.rstrip("\n").split("\n") == stderr_msgs
 
     @pytest.mark.parametrize("no_color", [True, False])
     def test_log_to_file(
@@ -348,9 +348,9 @@ class TestConstructor:
             assert isinstance(logger.handlers[0], logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        outerr = capsys.readouterr()  # readouterr clears its content when returning
-        assert outerr.out.rstrip("\n").split("\n") == stdout_msgs
-        assert outerr.err.rstrip("\n").split("\n") == stderr_msgs
+        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        assert stdout.rstrip("\n").split("\n") == stdout_msgs
+        assert stderr.rstrip("\n").split("\n") == stderr_msgs
 
 
 class TestLogToStderr:

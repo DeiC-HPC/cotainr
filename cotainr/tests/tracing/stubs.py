@@ -54,7 +54,7 @@ class FixedNumberOfSpinsEvent:
             return False
 
     def set(self):
-        self.remaining_spins = 0
+        pass
 
 
 @contextlib.contextmanager

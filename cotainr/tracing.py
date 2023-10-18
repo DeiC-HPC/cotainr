@@ -120,7 +120,14 @@ class ConsoleSpinner:
         self._spinning_msg = None
 
     def __enter__(self):
-        """Setup the console spinner context."""
+        """
+        Setup the console spinner context.
+
+        Returns
+        -------
+        self : :class:`ConsoleSpinner`
+            The console spinner context.
+        """
         with self._as_atomic:
             # Wrap stdout, stderr, and input to prepend spinner to all console
             # messages
@@ -131,6 +138,8 @@ class ConsoleSpinner:
                 self._update_spinner_msg, stream=self._stderr_proxy
             )
             builtins.input = self._thread_safe_input(builtins.input)
+
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Tear down the console spinner context."""
@@ -160,13 +169,18 @@ class ConsoleSpinner:
             The text stream on which to spin the message.
         """
         with self._as_atomic:
-            if self._spinning_msg is not None:
-                # Stop currently spinning message
-                self._spinning_msg.stop()
+            if s.strip():
+                # Only update the spinning message if it actually contains anything
+                # This also handles the problem with `print()` making two
+                # writes to the file descriptor, one with the message and one
+                # with the `end`.
+                if self._spinning_msg is not None:
+                    # Stop currently spinning message
+                    self._spinning_msg.stop()
 
-            # Start spinning the new message
-            self._spinning_msg = MessageSpinner(msg=s, stream=stream)
-            self._spinning_msg.start()
+                # Start spinning the new message
+                self._spinning_msg = MessageSpinner(msg=s, stream=stream)
+                self._spinning_msg.start()
 
     def _thread_safe_input(self, input_func):
         """
