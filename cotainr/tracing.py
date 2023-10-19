@@ -13,14 +13,14 @@ ColoredOutputFormatter(logging.Formatter)
     A log formatter for coloring log messages based on log level.
 ConsoleSpinner
     A console messages spinner context manager.
-StreamWriteProxy
-    A proxy for manipulating the write methods of streams.
 LogDispatcher
     A dispatcher for configuring and handling log messages.
 LogSettings
     Dataclass containing settings for a LogDispatcher.
 MessageSpinner
     A spinner for console messages.
+StreamWriteProxy
+    A proxy for manipulating the write methods of streams.
 """
 import builtins
 import copy
@@ -110,6 +110,13 @@ class ConsoleSpinner:
 
     The :py:func:`input` function is wrapped to make sure that the spinner is
     stopped while waiting for the user to provide their input.
+
+    As we only ever have a single console which we are interacting with via
+    stdin/stdout/stderr, it makes sense to have a single corresponding
+    ConsoleSpinner. We keep track of this single instance via the global
+    variable cotainr.tracing._within_console_spinner_context which is a bit
+    unclean, but a lot easier than trying to keep track of the number of times
+    we have entered a ConsoleSpinner context.
 
     Nothing is done to handle the use of the :py:mod:`readline` module. It may
     or may not work in a :class:`ConsoleSpinner` context.
