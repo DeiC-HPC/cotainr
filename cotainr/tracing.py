@@ -462,28 +462,28 @@ class LogSettings:
 
 class MessageSpinner:
     """
-        A spinner for console messages.
+    A spinner for console messages.
 
-        Creates a thread that continuously updates a prepended spinner to `msg` on
-        `stream`. While the spinner is active, the `msg` is truncated to fit within
-        a single line. When the spinner is stopped, the full `msg` (without
-        spinner) is written to the `stream`.
+    Creates a thread that continuously updates a prepended spinner to `msg` on
+    `stream`. While the spinner is active, the `msg` is truncated to fit within
+    a single line. When the spinner is stopped, the full `msg` (without
+    spinner) is written to the `stream`.
 
-        Parameters
-        ----------
-        msg : str
-            The message to prepend with a spinner.
-        stream : :py:class:`io.TextIOWrapper`
-            The text stream on which to spin the message.
-    >
-        Notes
-        -----
-        The spinner is added by continuously rewriting the current console line to
-        update the spinning character prepended to `msg`. This is done using CR and
-        ANSI escape codes. To avoid interfering with our manipulation of the
-        console line, trailing newlines and ANSI codes, except "Select Graphics
-        Rendition (SGR)" codes used for coloring console lines, are stripped from
-        `msg` before it is displayed on the console.
+    Parameters
+    ----------
+    msg : str
+        The message to prepend with a spinner.
+    stream : :py:class:`io.TextIOWrapper`
+        The text stream on which to spin the message.
+
+    Notes
+    -----
+    The spinner is added by continuously rewriting the current console line to
+    update the spinning character prepended to `msg`. This is done using CR and
+    ANSI escape codes. To avoid interfering with our manipulation of the
+    console line, trailing newlines and ANSI codes, except "Select Graphics
+    Rendition (SGR)" codes used for coloring console lines, are stripped from
+    `msg` before it is displayed on the console.
     """
 
     def __init__(self, *, msg, stream):
