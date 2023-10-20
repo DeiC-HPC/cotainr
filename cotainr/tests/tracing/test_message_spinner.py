@@ -102,13 +102,13 @@ class Test_SpinMsg:
         monkeypatch.setattr(
             safe_MessageSpinner, "_stop_signal", FixedNumberOfSpinsEvent(spins=0)
         )
-        # stop signal event patch no spin
         safe_MessageSpinner._spin_msg()
-        stream_msg = (
-            stream.getvalue()
-            .removeprefix(safe_MessageSpinner._clear_line_code)
-            .rstrip("\n")
-        )
+
+        stream_msg = stream.getvalue().rstrip("\n")
+        # This implements stream_msg.removeprefix() which is found in Python >= 3.9
+        if stream_msg.startswith(safe_MessageSpinner._clear_line_code):
+            stream_msg = stream_msg[len(safe_MessageSpinner._clear_line_code) :]
+
         assert stream_msg == no_ansi_msg
 
     @pytest.mark.parametrize(
@@ -147,11 +147,12 @@ class Test_SpinMsg:
             safe_MessageSpinner, "_stop_signal", FixedNumberOfSpinsEvent(spins=0)
         )
         safe_MessageSpinner._spin_msg()
-        stream_msg = (
-            stream.getvalue()
-            .removeprefix(safe_MessageSpinner._clear_line_code)
-            .rstrip("\n")
-        )
+
+        stream_msg = stream.getvalue().rstrip("\n")
+        # This implements stream_msg.removeprefix() which is found in Python >= 3.9
+        if stream_msg.startswith(safe_MessageSpinner._clear_line_code):
+            stream_msg = stream_msg[len(safe_MessageSpinner._clear_line_code) :]
+
         assert stream_msg == no_newline_msg
 
     @pytest.mark.parametrize(["msg", "stream"], [("test 6021", io.StringIO())])
