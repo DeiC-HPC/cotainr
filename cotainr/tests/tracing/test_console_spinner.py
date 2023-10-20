@@ -6,13 +6,12 @@ Licensed under the European Union Public License (EUPL) 1.2
 - see the LICENSE file for details.
 
 """
-import contextlib
+import concurrent.futures
 import sys
 
 import pytest
 
-import cotainr.tracing
-from cotainr.tracing import ConsoleSpinner, StreamWriteProxy
+from cotainr.tracing import ConsoleSpinner, StreamWriteProxy, console_lock
 from .patches import patch_fix_number_of_message_spins
 from .stubs import RaiseOnEnterContext
 
@@ -26,7 +25,7 @@ class TestConstructor:
         assert console_spinner._stderr_proxy._stream is sys.stderr
         assert console_spinner._true_input_func is input
         assert console_spinner._spinning_msg is None
-        assert not console_spinner._nested_context
+        assert console_spinner._in_nested_context_count == 0
 
 
 class TestContext:
@@ -38,20 +37,38 @@ class TestContext:
         stdout = capsys.readouterr().out
         assert stdout == "please_input_some_text_6021"
 
-    def test_correctly_setting_nested_context_flag(self):
+    def test_correctly_setting_nested_context_count(self):
+        console_spinner = ConsoleSpinner()
+        assert not console_lock.locked()
         with ConsoleSpinner() as level_1_spinner:
-            assert not level_1_spinner._nested_context
-            with ConsoleSpinner() as level_2_spinner:
-                assert not level_1_spinner._nested_context
-                assert level_2_spinner._nested_context
+            assert console_lock.locked()
+            assert level_1_spinner._in_nested_context_count == 0
+            with console_spinner as outer_spinner:
+                assert console_lock.locked()
+                assert level_1_spinner._in_nested_context_count == 0
+                assert outer_spinner._in_nested_context_count == 1
+                with console_spinner:
+                    assert console_lock.locked()
+                    assert level_1_spinner._in_nested_context_count == 0
+                    assert outer_spinner._in_nested_context_count == 2
+                    with ConsoleSpinner() as level_2_spinner:
+                        assert console_lock.locked()
+                        assert level_1_spinner._in_nested_context_count == 0
+                        assert outer_spinner._in_nested_context_count == 2
+                        assert level_2_spinner._in_nested_context_count == 1
 
-            assert not level_1_spinner._nested_context
+                    assert console_lock.locked()
+                    assert level_1_spinner._in_nested_context_count == 0
+                    assert outer_spinner._in_nested_context_count == 2
 
-    def test_correctly_setting_within_context_flag(self):
-        assert not cotainr.tracing._within_console_spinner_context
-        with ConsoleSpinner():
-            assert cotainr.tracing._within_console_spinner_context
-        assert not cotainr.tracing._within_console_spinner_context
+                assert console_lock.locked()
+                assert level_1_spinner._in_nested_context_count == 0
+                assert outer_spinner._in_nested_context_count == 1
+
+            assert console_lock.locked()
+            assert level_1_spinner._in_nested_context_count == 0
+
+        assert not console_lock.locked()
 
     @pytest.mark.parametrize("spins", [1])
     def test_correctly_spinning_stdout_msg(
@@ -74,6 +91,81 @@ class TestContext:
         stderr = capsys.readouterr().err
         spin_and_final_line = "\r\x1b[2K⣾ test_6021..." + "\r\x1b[2Ktest_6021\n"
         assert stderr == spin_and_final_line
+
+    @pytest.mark.parametrize("spins", [1])
+    def test_create_entering_multiple_context_swap(
+        self,
+        spins,
+        capsys,
+        monkeypatch,
+        factory_mock_input,
+        patch_fix_number_of_message_spins,
+    ):
+        monkeypatch.setattr("builtins.input", factory_mock_input())
+        console_spinner_1 = ConsoleSpinner()
+        console_spinner_2 = ConsoleSpinner()
+        with console_spinner_2:
+            sys.stdout.write("test_6021_level_1")
+            with console_spinner_1:
+                input("level_5_test_input_6021")
+                sys.stdout.write("test_6021_level_2")
+
+        stdout = capsys.readouterr().out
+        level_1_spin_and_final_line = (
+            "\r\x1b[2K⣾ test_6021_level_1..." + "\r\x1b[2Ktest_6021_level_1\n"
+        )
+        level_2_spin_and_final_line = (
+            "\r\x1b[2K⣾ test_6021_level_2..." + "\r\x1b[2Ktest_6021_level_2\n"
+        )
+        assert stdout == (
+            level_1_spin_and_final_line
+            + "level_5_test_input_6021"
+            + level_2_spin_and_final_line
+        )
+
+    @pytest.mark.parametrize("spins", [1])
+    def test_entering_multiple_context(
+        self,
+        spins,
+        capsys,
+        monkeypatch,
+        factory_mock_input,
+        patch_fix_number_of_message_spins,
+    ):
+        monkeypatch.setattr("builtins.input", factory_mock_input())
+        console_spinner = ConsoleSpinner()
+        with ConsoleSpinner():
+            sys.stdout.write("test_6021_level_1")
+            with console_spinner:
+                sys.stdout.write("test_6021_level_2")
+                with console_spinner:
+                    with ConsoleSpinner():
+                        sys.stdout.write("test_6021_level_4")
+                        with ConsoleSpinner():
+                            input("level_5_test_input_6021")
+                            with ConsoleSpinner(), console_spinner:
+                                sys.stdout.write("test_6021_level_7")
+
+        stdout = capsys.readouterr().out
+        level_1_spin_and_final_line = (
+            "\r\x1b[2K⣾ test_6021_level_1..." + "\r\x1b[2Ktest_6021_level_1\n"
+        )
+        level_2_spin_and_final_line = (
+            "\r\x1b[2K⣾ test_6021_level_2..." + "\r\x1b[2Ktest_6021_level_2\n"
+        )
+        level_4_spin_and_final_line = (
+            "\r\x1b[2K⣾ test_6021_level_4..." + "\r\x1b[2Ktest_6021_level_4\n"
+        )
+        level_7_spin_and_final_line = (
+            "\r\x1b[2K⣾ test_6021_level_7..." + "\r\x1b[2Ktest_6021_level_7\n"
+        )
+        assert stdout == (
+            level_1_spin_and_final_line
+            + level_2_spin_and_final_line
+            + level_4_spin_and_final_line
+            + "level_5_test_input_6021"
+            + level_7_spin_and_final_line
+        )
 
     def test_exiting_context_with_spinning_msg(self, capsys):
         with ConsoleSpinner():
@@ -106,43 +198,6 @@ class TestContext:
     def test_return_self(self):
         with ConsoleSpinner() as console_spinner:
             assert isinstance(console_spinner, ConsoleSpinner)
-
-    @pytest.mark.parametrize("spins", [1])
-    def test_reentering_context(
-        self,
-        spins,
-        capsys,
-        monkeypatch,
-        factory_mock_input,
-        patch_fix_number_of_message_spins,
-    ):
-        monkeypatch.setattr("builtins.input", factory_mock_input())
-        with ConsoleSpinner():
-            sys.stdout.write("test_6021_level_1")
-            with ConsoleSpinner():
-                sys.stdout.write("test_6021_level_2")
-                with ConsoleSpinner():
-                    with ConsoleSpinner():
-                        sys.stdout.write("test_6021_level_4")
-                        with ConsoleSpinner():
-                            input("level_5_test_input_6021")
-
-        stdout = capsys.readouterr().out
-        level_1_spin_and_final_line = (
-            "\r\x1b[2K⣾ test_6021_level_1..." + "\r\x1b[2Ktest_6021_level_1\n"
-        )
-        level_2_spin_and_final_line = (
-            "\r\x1b[2K⣾ test_6021_level_2..." + "\r\x1b[2Ktest_6021_level_2\n"
-        )
-        level_4_spin_and_final_line = (
-            "\r\x1b[2K⣾ test_6021_level_4..." + "\r\x1b[2Ktest_6021_level_4\n"
-        )
-        assert stdout == (
-            level_1_spin_and_final_line
-            + level_2_spin_and_final_line
-            + level_4_spin_and_final_line
-            + "level_5_test_input_6021"
-        )
 
     @pytest.mark.parametrize("spins", [1])
     def test_switching_from_stdout_to_stderr(
@@ -180,6 +235,65 @@ class TestContext:
         assert stdout == stdout_spin_and_final_line
         assert stderr == stderr_spin_and_final_line
 
+    @pytest.mark.parametrize(
+        ["spins", "num_tasks"], [(1, 1), (1, 5), (1, 10), (1, 20), (1, 100), (1, 200)]
+    )
+    def test_threadpool_console_spinner_race_condition(
+        self, spins, num_tasks, capsys, patch_fix_number_of_message_spins
+    ):
+        # This is a bit of a wacky test for the case where one starts multiple
+        # threads with individual ConsoleSpinner objects. Only one
+        # ConsoleSpinner object can control the stdout manipulation, so when
+        # this "main" context is exited in one thread, the spinner disappears
+        # in all other threads as well if they haven't managed to start the
+        # spinning message yet. This creates a race condition which we only
+        # handle by making sure that the message is indeed still printed,
+        # though without a spinner. The number of threads that don't get to
+        # have a spinner becomes random which is why we test multiple values
+        # for the number of tasks in the hope that at least one of them trigger
+        # this race condition.
+
+        def spin_msg_func():
+            with ConsoleSpinner():
+                sys.stdout.write("test_6021")
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=num_tasks, thread_name_prefix="console_spinner_thread"
+        ) as executor:
+            futures = [executor.submit(spin_msg_func) for _ in range(num_tasks)]
+
+        stdout = capsys.readouterr().out
+        stdout_lines = stdout.split("\n")
+        spin_and_final_line = "\r\x1b[2K⣾ test_6021..." + "\r\x1b[2Ktest_6021"
+        assert all(future.exception() is None for future in futures)
+        for line in stdout_lines[:-1]:
+            assert line == spin_and_final_line
+        assert stdout_lines[-1] == "test_6021" * (num_tasks - (len(stdout_lines) - 1))
+
+    @pytest.mark.parametrize(
+        ["spins", "num_tasks"], [(1, 1), (1, 5), (1, 10)]
+    )
+    def test_threadpool_same_console_spinner(
+        self, spins, num_tasks, capsys, patch_fix_number_of_message_spins
+    ):
+        # Having all these ConsoleSpinnner context wrap each other get very
+        # costly in terms of lock acquiring times which is why limit ourself to
+        # 10 tasks max in this unit test.
+        def spin_msg_func():
+            with ConsoleSpinner():
+                sys.stdout.write("test_6021")
+
+        with ConsoleSpinner():
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=num_tasks, thread_name_prefix="console_spinner_thread"
+            ) as executor:
+                futures = [executor.submit(spin_msg_func) for _ in range(num_tasks)]
+
+        stdout = capsys.readouterr().out
+        spin_and_final_line = "\r\x1b[2K⣾ test_6021..." + "\r\x1b[2Ktest_6021\n"
+        assert all(future.exception() is None for future in futures)
+        assert stdout == spin_and_final_line * num_tasks
+
     @pytest.mark.parametrize("spins", [1])
     def test_updating_via_print_function(
         self, spins, capsys, patch_fix_number_of_message_spins
@@ -195,35 +309,6 @@ class TestContext:
         assert stdout == spin_and_final_line
 
 
-class Test_Disable:
-    def test_lock(self):
-        console_spinner = ConsoleSpinner()
-        console_spinner._lock = RaiseOnEnterContext()
-        with pytest.raises(NotImplementedError, match=r"^Entered context$"):
-            with console_spinner._disable():
-                pass
-
-    def test_correctly_disabling_spinner(self, capsys):
-        with ConsoleSpinner() as console_spinner:
-            with console_spinner._disable():
-                sys.stdout.write("test_6021")
-
-        stdout = capsys.readouterr().out
-        assert stdout == "test_6021"
-
-    def test_raise_on_disable_outside_context(self):
-        console_spinner = ConsoleSpinner()
-        with pytest.raises(
-            ValueError,
-            match=(
-                r"^Disabling the spinner is only allowed inside "
-                r"the ConsoleSpinner context.$"
-            ),
-        ):
-            with console_spinner._disable():
-                pass
-
-
 class Test_UpdateSpinnerMsg:
     def test_lock(self):
         console_spinner = ConsoleSpinner()
@@ -235,9 +320,10 @@ class Test_UpdateSpinnerMsg:
     def test_first_message_correctly_started(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
-        console_spinner = ConsoleSpinner()
-        console_spinner._update_spinner_msg("test_6021", stream=sys.stdout)
-        console_spinner._spinning_msg.stop()
+        with console_lock:
+            console_spinner = ConsoleSpinner()
+            console_spinner._update_spinner_msg("test_6021", stream=sys.stdout)
+            console_spinner._spinning_msg.stop()
 
         stdout = capsys.readouterr().out
         spin_and_final_line = "\r\x1b[2K⣾ test_6021..." + "\r\x1b[2Ktest_6021\n"
@@ -247,10 +333,11 @@ class Test_UpdateSpinnerMsg:
     def test_message_correctly_updated(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
-        console_spinner = ConsoleSpinner()
-        console_spinner._update_spinner_msg("test_6021_line_1", stream=sys.stdout)
-        console_spinner._update_spinner_msg("test_6021_line_2", stream=sys.stdout)
-        console_spinner._spinning_msg.stop()
+        with console_lock:
+            console_spinner = ConsoleSpinner()
+            console_spinner._update_spinner_msg("test_6021_line_1", stream=sys.stdout)
+            console_spinner._update_spinner_msg("test_6021_line_2", stream=sys.stdout)
+            console_spinner._spinning_msg.stop()
 
         stdout = capsys.readouterr().out
         msg_1_spin_and_final_line = (
@@ -265,17 +352,24 @@ class Test_UpdateSpinnerMsg:
     def test_not_updating_on_empty_message(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
-        console_spinner = ConsoleSpinner()
-        console_spinner._update_spinner_msg("test_6021", stream=sys.stdout)
-        console_spinner._update_spinner_msg("", stream=sys.stdout)
-        console_spinner._update_spinner_msg("\n", stream=sys.stdout)
-        console_spinner._update_spinner_msg("\t", stream=sys.stdout)
-        console_spinner._update_spinner_msg("      ", stream=sys.stdout)
-        console_spinner._spinning_msg.stop()
+        with console_lock:
+            console_spinner = ConsoleSpinner()
+            console_spinner._update_spinner_msg("test_6021", stream=sys.stdout)
+            console_spinner._update_spinner_msg("", stream=sys.stdout)
+            console_spinner._update_spinner_msg("\n", stream=sys.stdout)
+            console_spinner._update_spinner_msg("\t", stream=sys.stdout)
+            console_spinner._update_spinner_msg("      ", stream=sys.stdout)
+            console_spinner._spinning_msg.stop()
 
         stdout = capsys.readouterr().out
         spin_and_final_line = "\r\x1b[2K⣾ test_6021..." + "\r\x1b[2Ktest_6021\n"
         assert stdout == spin_and_final_line
+
+    def test_updating_message_outside_console_lock(self, capsys):
+        console_spinner = ConsoleSpinner()
+        console_spinner._update_spinner_msg("test_6021", stream=sys.stdout)
+        stdout = capsys.readouterr().out
+        assert stdout == "test_6021"
 
 
 class Test_ThreadSafeInput:
@@ -285,16 +379,6 @@ class Test_ThreadSafeInput:
         wrapped_input_func = console_spinner._thread_safe_input(lambda: None)
         with pytest.raises(NotImplementedError, match=r"^Entered context$"):
             wrapped_input_func()
-
-    def test_disable_console_spinner(self, monkeypatch):
-        @contextlib.contextmanager
-        def raise_on_disable():
-            raise NotImplementedError("Entered disable context!")
-
-        console_spinner = ConsoleSpinner()
-        console_spinner._disable = raise_on_disable
-        with pytest.raises(NotImplementedError, match=r"^Entered disable context!$"):
-            console_spinner._thread_safe_input(input)()
 
     def test_stop_spinning_msg(self):
         class DummyMsg:

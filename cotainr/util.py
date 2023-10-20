@@ -86,6 +86,14 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     ------
     :class:`subprocess.CalledProcessError`
         If the subprocess returned a non-zero status code.
+
+    Notes
+    -----
+    The way we handle stdout and stderr messages in separate threads introduces
+    a race condition in cases where subprocesses write to stdout and stderr at
+    the same time. All messages are always guaranteed to be streamed to the
+    console, but they might arrive in the wrong order. We accept this "feature"
+    as is.
     """
     with subprocess.Popen(
         args,

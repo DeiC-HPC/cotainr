@@ -21,6 +21,11 @@ MessageSpinner
     A spinner for console messages.
 StreamWriteProxy
     A proxy for manipulating the write methods of streams.
+
+Attributes
+----------
+console_lock
+    The lock to acquire for manipulating the console messages.
 """
 import builtins
 import copy
@@ -37,14 +42,8 @@ import threading
 import time
 import typing
 
+console_lock = threading.Lock()
 logger = logging.getLogger(__name__)
-
-# As we only ever have a single console which we are interacting with via
-# stdin/stdout/stderr, it makes sense to have a single corresponding
-# ConsoleSpinner. We keep track of this single instance via a global variable
-# which is a bit unclean, but a lot easier than trying to keep track of the
-# number of times we have entered a ConsoleSpinner context.
-_within_console_spinner_context = False
 
 
 class ColoredOutputFormatter(logging.Formatter):
@@ -113,16 +112,19 @@ class ConsoleSpinner:
 
     As we only ever have a single console which we are interacting with via
     stdin/stdout/stderr, it makes sense to have a single corresponding
-    ConsoleSpinner. We keep track of this single instance via the global
-    variable cotainr.tracing._within_console_spinner_context which is a bit
-    unclean, but a lot easier than trying to keep track of the number of times
-    we have entered a ConsoleSpinner context.
+    ConsoleSpinner that actually manipulates stdin/stdout/stderr. We keep track
+    of this "main" instance by having it acquire the module level
+    `console_lock`.
 
     Nothing is done to handle the use of the :py:mod:`readline` module. It may
     or may not work in a :class:`ConsoleSpinner` context.
 
     This :class:`ConsoleSpinner` class is only intended to be used with the
     :py:mod:`threading` module. It doesn't support :py:mod:`multiprocessing`.
+    Using the :class:`ConsoleSpinner` within multiple threads should be
+    avoided, since this may lead to strange race conditions. If unavoidable
+    make sure that all those threads are started within a ConsoleSpinner
+    context to ensure correct operation.
     """
 
     def __init__(self):
@@ -136,10 +138,10 @@ class ConsoleSpinner:
             self._update_spinner_msg, stream=self._stderr_proxy
         )
         self._true_input_func = builtins.input
+        self._inside_this_contextmanager = False
+        self._in_nested_context_count = 0
         self._spinning_msg = None
-        self._nested_context = False
-        # The wrapped input() function re-enters the lock when disabling the spinner
-        self._lock = threading.RLock()
+        self._lock = threading.Lock()  # Lock for keeping track of spinning messages
 
     def __enter__(self):
         """
@@ -151,24 +153,25 @@ class ConsoleSpinner:
             The console spinner context.
         """
         with self._lock:
-            global _within_console_spinner_context
-            if not _within_console_spinner_context:
+            if console_lock.acquire(blocking=False):
                 # Wrap stdout, stderr, and input to prepend spinner to all console
                 # messages
                 sys.stdout.write = self._wrapped_stdout_write
                 sys.stderr.write = self._wrapped_stderr_write
                 builtins.input = self._thread_safe_input(builtins.input)
-                _within_console_spinner_context = True
             else:
-                self._nested_context = True
+                # We are already within another ConsoleSpinner context which
+                # handles the console spinner - this context does nothing
+                self._in_nested_context_count += 1
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Tear down the console spinner context."""
-        with self._lock:
-            global _within_console_spinner_context
-            if not self._nested_context and _within_console_spinner_context:
+        if self._in_nested_context_count == 0:
+            # This is the "outermost" ConsoleSpinner context - we need to
+            # properly remove the console spinner setup
+            with self._lock:
                 if self._spinning_msg is not None:
                     # Stop currently spinning message
                     self._spinning_msg.stop()
@@ -178,22 +181,9 @@ class ConsoleSpinner:
                 sys.stdout.write = self._stdout_proxy.true_stream_write
                 sys.stderr.write = self._stderr_proxy.true_stream_write
                 builtins.input = self._true_input_func
-                _within_console_spinner_context = False
-
-    @contextlib.contextmanager
-    def _disable(self):
-        """Context for temporarily disabling the spinner."""
-        with self._lock:
-            if _within_console_spinner_context:
-                sys.stdout.write = self._stdout_proxy.true_stream_write
-                sys.stderr.write = self._stderr_proxy.true_stream_write
-                yield
-                sys.stdout.write = self._wrapped_stderr_write
-                sys.stderr.write = self._wrapped_stderr_write
-            else:
-                raise ValueError(
-                    "Disabling the spinner is only allowed inside the ConsoleSpinner context."
-                )
+                console_lock.release()
+        else:
+            self._in_nested_context_count -= 1
 
     def _update_spinner_msg(self, s, /, *, stream):
         """
@@ -210,18 +200,28 @@ class ConsoleSpinner:
             The text stream on which to spin the message.
         """
         with self._lock:
-            if s.strip():
-                # Only update the spinning message if it actually contains anything
-                # This also handles the problem with `print()` making two
-                # writes to the file descriptor, one with the message and one
-                # with the `end`.
-                if self._spinning_msg is not None:
-                    # Stop currently spinning message
-                    self._spinning_msg.stop()
+            if console_lock.locked():
+                # Only start a MessageSpinner if we are still within a
+                # ConsoleSpinner context. Handles the possible race condition
+                # of another thread trying to update the spinning message while
+                # the thread owning the ConsoleSpinner context is exiting it.
+                if s.strip():
+                    # Only update the spinning message if it actually contains anything
+                    # This also handles the problem with `print()` making two
+                    # writes to the file descriptor, one with the message and one
+                    # with the `end`.
+                    if self._spinning_msg is not None:
+                        # Stop currently spinning message
+                        self._spinning_msg.stop()
 
-                # Start spinning the new message
-                self._spinning_msg = MessageSpinner(msg=s, stream=stream)
-                self._spinning_msg.start()
+                    # Start spinning the new message
+                    self._spinning_msg = MessageSpinner(msg=s, stream=stream)
+                    self._spinning_msg.start()
+            else:
+                # In case we have left the ConsoleSpinner context, simply write
+                # the message as if outside the context, since now the "true"
+                # write method should have been restored.
+                stream.write(s)
 
     def _thread_safe_input(self, input_func):
         """
@@ -238,10 +238,16 @@ class ConsoleSpinner:
                     self._spinning_msg.stop()
                     self._spinning_msg = None
 
-                with self._disable():
-                    # Temporarily disable the stdout/stderr spinner when
-                    # acquiring input
+                try:
+                    # Temporarily restore restore the true stdout/stderr writes
+                    # to allow `input()` to write its prompt without the
+                    # spinner.
+                    sys.stdout.write = self._stdout_proxy.true_stream_write
+                    sys.stderr.write = self._stderr_proxy.true_stream_write
                     return input_func(*args, **kwargs)
+                finally:
+                    sys.stdout.write = self._wrapped_stdout_write
+                    sys.stderr.write = self._wrapped_stderr_write
 
         return wrapped_input_func
 
