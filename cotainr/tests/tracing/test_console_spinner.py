@@ -74,6 +74,8 @@ class TestContext:
     def test_correctly_spinning_stdout_msg(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         with ConsoleSpinner():
             sys.stdout.write("test_6021")
 
@@ -85,6 +87,8 @@ class TestContext:
     def test_correctly_spinning_stderr_msg(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         with ConsoleSpinner():
             sys.stderr.write("test_6021")
 
@@ -101,6 +105,8 @@ class TestContext:
         factory_mock_input,
         patch_fix_number_of_message_spins,
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         monkeypatch.setattr("builtins.input", factory_mock_input())
         console_spinner_1 = ConsoleSpinner()
         console_spinner_2 = ConsoleSpinner()
@@ -132,6 +138,8 @@ class TestContext:
         factory_mock_input,
         patch_fix_number_of_message_spins,
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         monkeypatch.setattr("builtins.input", factory_mock_input())
         console_spinner = ConsoleSpinner()
         with ConsoleSpinner():
@@ -203,6 +211,8 @@ class TestContext:
     def test_switching_from_stdout_to_stderr(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         with ConsoleSpinner():
             sys.stdout.write("test_6021_stdout")
             sys.stderr.write("test_6021_stderr")
@@ -221,6 +231,8 @@ class TestContext:
     def test_switching_from_stderr_to_stdout(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         with ConsoleSpinner():
             sys.stderr.write("test_6021_stderr")
             sys.stdout.write("test_6021_stdout")
@@ -253,6 +265,8 @@ class TestContext:
         # for the number of tasks in the hope that at least one of them trigger
         # this race condition.
 
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         def spin_msg_func():
             with ConsoleSpinner():
                 sys.stdout.write("test_6021")
@@ -270,15 +284,16 @@ class TestContext:
             assert line == spin_and_final_line
         assert stdout_lines[-1] == "test_6021" * (num_tasks - (len(stdout_lines) - 1))
 
-    @pytest.mark.parametrize(
-        ["spins", "num_tasks"], [(1, 1), (1, 5), (1, 10)]
-    )
+    @pytest.mark.parametrize(["spins", "num_tasks"], [(1, 1), (1, 5), (1, 10)])
     def test_threadpool_same_console_spinner(
         self, spins, num_tasks, capsys, patch_fix_number_of_message_spins
     ):
         # Having all these ConsoleSpinnner context wrap each other get very
         # costly in terms of lock acquiring times which is why limit ourself to
         # 10 tasks max in this unit test.
+
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         def spin_msg_func():
             with ConsoleSpinner():
                 sys.stdout.write("test_6021")
@@ -298,6 +313,9 @@ class TestContext:
     def test_updating_via_print_function(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
+
         # print() works by making two writes to the file/stream:
         # 1. The actual message to write
         # 2. The `end` keyword
@@ -320,6 +338,8 @@ class Test_UpdateSpinnerMsg:
     def test_first_message_correctly_started(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         with console_lock:
             console_spinner = ConsoleSpinner()
             console_spinner._update_spinner_msg("test_6021", stream=sys.stdout)
@@ -333,6 +353,8 @@ class Test_UpdateSpinnerMsg:
     def test_message_correctly_updated(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         with console_lock:
             console_spinner = ConsoleSpinner()
             console_spinner._update_spinner_msg("test_6021_line_1", stream=sys.stdout)
@@ -352,6 +374,8 @@ class Test_UpdateSpinnerMsg:
     def test_not_updating_on_empty_message(
         self, spins, capsys, patch_fix_number_of_message_spins
     ):
+        # The `spins` parameter is passed automagically to the
+        # `patch_fix_number_of_message_spins` fixture.
         with console_lock:
             console_spinner = ConsoleSpinner()
             console_spinner._update_spinner_msg("test_6021", stream=sys.stdout)

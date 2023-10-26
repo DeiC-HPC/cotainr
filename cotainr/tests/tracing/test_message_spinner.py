@@ -32,6 +32,8 @@ def safe_MessageSpinner(msg, stream):
 class TestStart:
     @pytest.mark.parametrize(["msg", "stream"], [("test 6021", io.StringIO())])
     def test_correct_start(self, msg, stream, safe_MessageSpinner):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         assert not safe_MessageSpinner._running
         assert not safe_MessageSpinner._spinner_thread.is_alive()
         safe_MessageSpinner.start()
@@ -40,6 +42,8 @@ class TestStart:
 
     @pytest.mark.parametrize(["msg", "stream"], [("test 6021", io.StringIO())])
     def test_spinning_started(self, msg, stream, safe_MessageSpinner):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         safe_MessageSpinner.start()
         for _ in range(5):
             # wait for something to be written to the stream
@@ -57,6 +61,8 @@ class TestStart:
 class TestStop:
     @pytest.mark.parametrize(["msg", "stream"], [("test 6021", io.StringIO())])
     def test_stop_before_having_started(self, msg, stream, safe_MessageSpinner):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         assert not safe_MessageSpinner._running
         assert not safe_MessageSpinner._spinner_thread.is_alive()
         safe_MessageSpinner.stop()
@@ -65,6 +71,8 @@ class TestStop:
 
     @pytest.mark.parametrize(["msg", "stream"], [("test 6021", io.StringIO())])
     def test_stop_when_running(self, msg, stream, safe_MessageSpinner):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         assert not safe_MessageSpinner._running
         assert not safe_MessageSpinner._spinner_thread.is_alive()
         safe_MessageSpinner.start()
@@ -99,6 +107,8 @@ class Test_SpinMsg:
     def test_ansi_escape_codes_removal(
         self, msg, stream, no_ansi_msg, safe_MessageSpinner, monkeypatch
     ):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         monkeypatch.setattr(
             safe_MessageSpinner, "_stop_signal", FixedNumberOfSpinsEvent(spins=0)
         )
@@ -143,6 +153,8 @@ class Test_SpinMsg:
     def test_newline_at_end_removal(
         self, msg, stream, no_newline_msg, safe_MessageSpinner, monkeypatch
     ):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         monkeypatch.setattr(
             safe_MessageSpinner, "_stop_signal", FixedNumberOfSpinsEvent(spins=0)
         )
@@ -157,6 +169,8 @@ class Test_SpinMsg:
 
     @pytest.mark.parametrize(["msg", "stream"], [("test 6021", io.StringIO())])
     def test_spinner_cycle(self, msg, stream, safe_MessageSpinner, monkeypatch):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         monkeypatch.setattr(
             safe_MessageSpinner,
             "_stop_signal",
@@ -187,6 +201,8 @@ class Test_SpinMsg:
         ],
     )
     def test_one_line_msg(self, msg, stream, safe_MessageSpinner, monkeypatch):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         monkeypatch.setattr(
             safe_MessageSpinner, "_stop_signal", FixedNumberOfSpinsEvent(spins=1)
         )
@@ -213,6 +229,8 @@ class Test_SpinMsg:
     def test_print_final_full_message(
         self, msg, stream, safe_MessageSpinner, monkeypatch
     ):
+        # The `msg` and `stream` parameters are passed automagically to the
+        # `safe_MessageSpinner` fixture.
         monkeypatch.setattr(
             safe_MessageSpinner, "_stop_signal", FixedNumberOfSpinsEvent(spins=1)
         )
