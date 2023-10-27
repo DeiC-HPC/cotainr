@@ -11,12 +11,12 @@ Classes
 -------
 CotainrSubcommand(ABC)
     Abstract base class for `CotainrCLI` subcommands.
-Build
+Build(CotainrSubcommand)
     Build a container. (The "build" subcommand.)
 CotainrCLI
     Build Apptainer/Singularity containers for HPC systems in user space. (The
     main CLI command.)
-Info
+Info(CotainrSubcommand)
     Obtain info about the state of all required dependencies for building a
     container. (The "info" subcommand.)
 
@@ -28,17 +28,24 @@ main(\*args, \*\*kwargs)
 
 from abc import ABC, abstractmethod
 import argparse
+from datetime import datetime
+import logging
 from pathlib import Path
 import platform
 import re
 import shutil
 import subprocess
 import sys
+import time
 
 from . import container
 from . import pack
+from . import tracing
 from . import util
 from . import _minimum_dependency_version as _min_dep_ver
+
+
+logger = logging.getLogger(__name__)
 
 
 class CotainrSubcommand(ABC):
@@ -87,6 +94,14 @@ class Build(CotainrSubcommand):
     accept_licenses : bool, default=False
         Accept all license terms (if any) needed for completing the container
         build process.
+    verbosity : int, optional
+        The verbosity of the output from cotainr: -1 for only CRITICAL, 0 (the
+        default) for cotainr INFO and subprocess WARNING, 1 for subprocess
+        output as well, 2 for subprocess INFO, 3 for DEBUG, and 4 for TRACE.
+    log_to_file : bool
+        Create files containing all logging information shown on stdout/stderr.
+    no_color : bool
+        Do not use colored console output.
     """
 
     def __init__(
@@ -97,8 +112,21 @@ class Build(CotainrSubcommand):
         conda_env=None,
         system=None,
         accept_licenses=False,
+        verbosity=0,
+        log_to_file=False,
+        no_color=False,
     ):
         """Construct the "build" subcommand."""
+        self.log_settings = tracing.LogSettings(
+            verbosity=verbosity,
+            log_file_path=(
+                Path(".").resolve()
+                / f"cotainr_build_{datetime.now().isoformat().replace(':', '.')}"
+                if log_to_file
+                else None
+            ),
+            no_color=no_color,
+        )
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
             val = input(
@@ -134,12 +162,12 @@ class Build(CotainrSubcommand):
             help=_extract_help_from_docstring(arg="image_path", docstring=cls.__doc__),
             type=Path,
         )
-        group = parser.add_mutually_exclusive_group(required=True)
-        group.add_argument(
+        system_group = parser.add_mutually_exclusive_group(required=True)
+        system_group.add_argument(
             "--base-image",
             help=_extract_help_from_docstring(arg="base_image", docstring=cls.__doc__),
         )
-        group.add_argument(
+        system_group.add_argument(
             "--system",
             help=_extract_help_from_docstring(arg="system", docstring=cls.__doc__),
         )
@@ -155,24 +183,81 @@ class Build(CotainrSubcommand):
             ),
             action="store_true",
         )
+        verbose_quiet_group = parser.add_mutually_exclusive_group()
+        verbose_quiet_group.add_argument(
+            "--verbose",
+            "-v",
+            action="count",
+            dest="verbosity",
+            default=0,
+            help=(
+                "increase the verbosity of the output from cotainr. "
+                "Can be used multiple times: Once for subprocess output, "
+                "twice for subprocess INFO, three times for DEBUG, "
+                "and four times for TRACE"
+            ),
+        )
+        verbose_quiet_group.add_argument(
+            "--quiet",
+            "-q",
+            action="store_const",
+            const=-1,
+            dest="verbosity",
+            help="do not show any non-CRITICAL output from cotainr",
+        )
+        parser.add_argument(
+            "--log-to-file",
+            action="store_true",
+            help=_extract_help_from_docstring(arg="log_to_file", docstring=cls.__doc__),
+        )
+        parser.add_argument(
+            "--no-color",
+            action="store_true",
+            help=_extract_help_from_docstring(arg="no_color", docstring=cls.__doc__),
+        )
 
     def execute(self):
         """Execute the "build" subcommand."""
-        with container.SingularitySandbox(base_image=self.base_image) as sandbox:
-            if self.conda_env is not None:
-                # Install supplied conda env
-                conda_env_name = "conda_container_env"
-                conda_env_file = sandbox.sandbox_dir / self.conda_env.name
-                shutil.copyfile(self.conda_env, conda_env_file)
-                conda_install = pack.CondaInstall(
-                    sandbox=sandbox, license_accepted=self.accept_licenses
-                )
-                conda_install.add_environment(path=conda_env_file, name=conda_env_name)
-                sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
-                conda_install.cleanup_unused_files()
+        t_start_build = time.time()
+        with tracing.ConsoleSpinner():
+            logger.info("Creating Singularity Sandbox")
+            with container.SingularitySandbox(
+                base_image=self.base_image, log_settings=self.log_settings
+            ) as sandbox:
+                if self.conda_env is not None:
+                    # Install supplied conda env
+                    logger.info("Installing Conda environment: %s", self.conda_env)
+                    conda_env_name = "conda_container_env"
+                    conda_env_file = sandbox.sandbox_dir / self.conda_env.name
+                    shutil.copyfile(self.conda_env, conda_env_file)
+                    conda_install = pack.CondaInstall(
+                        sandbox=sandbox,
+                        license_accepted=self.accept_licenses,
+                        log_settings=self.log_settings,
+                    )
+                    conda_install.add_environment(
+                        path=conda_env_file, name=conda_env_name
+                    )
+                    sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
-            sandbox.add_metadata()
-            sandbox.build_image(path=self.image_path)
+                    # Clean-up unused files
+                    logger.info("Cleaning up unused Conda files")
+                    conda_install.cleanup_unused_files()
+                    logger.info(
+                        "Finished installing conda environment: %s", self.conda_env
+                    )
+
+                logger.info("Adding metadata to container")
+                sandbox.add_metadata()
+                logger.info("Building container image")
+                sandbox.build_image(path=self.image_path)
+
+            t_end_build = time.time()
+            logger.info(
+                "Finished building %s in %s",
+                self.image_path,
+                time.strftime("%H:%M:%S", time.gmtime(t_end_build - t_start_build)),
+            )
 
 
 class Info(CotainrSubcommand):
@@ -184,8 +269,8 @@ class Info(CotainrSubcommand):
 
     def __init__(self):
         """Construct the "info" subcommand."""
-        self._checkmark = "\033[92mOK\033[0m"  # green OK
-        self._nocheckmark = "\033[91mERROR\033[0m"  # red ERROR
+        self._checkmark = "\x1b[38;5;2mOK\x1b[0m"  # green OK
+        self._nocheckmark = "\x1b[38;5;1mERROR\x1b[0m"  # red ERROR
         self._tabs_width = 4
 
     def execute(self):
@@ -397,11 +482,107 @@ class CotainrCLI:
             key: val for key, val in vars(self.args).items() if key != "subcommand_cls"
         }
 
+        # Setup subcommand
         try:
             self.subcommand = self.args.subcommand_cls(**subcommand_args)
         except AttributeError:
             # Print help and exit if no subcommand was given
             self.subcommand = _NoSubcommand(parser=parser)
+
+        # Setup CLI logging
+        self._setup_cotainr_cli_logging(
+            log_settings=getattr(
+                self.subcommand,
+                "log_settings",
+                tracing.LogSettings(),
+            )
+        )
+
+    def _setup_cotainr_cli_logging(self, *, log_settings):
+        """
+        Setup logging for the cotainr main CLI.
+
+        Setting up the logging for the cotainr main CLI includes:
+        - Defining log levels based on CLI verbosity arguments.
+        - Defining log message formats based on CLI verbosity arguments.
+        - Creating log handlers for console output.
+        - Creating log handlers for log file output, if requested.
+        - Setting up colored console output, if requested.
+        - Defining the cotainr "root logger".
+
+        Parameters
+        ----------
+        log_settings : :class:`~cotainr.tracing.LogSettings`
+            The log settings to use for the cotainr main CLI logging.
+        """
+
+        class OnlyDebugInfoLevelFilter(logging.Filter):
+            """A simple logging filter that removes records >=INFO."""
+
+            def filter(self, record):
+                return record.levelno <= logging.INFO
+
+        # Setup cotainr CLI log level and format
+        if log_settings.verbosity >= 2:
+            cotainr_log_level = logging.DEBUG
+            cotainr_stdout_fmt = (
+                "%(asctime)s - %(name)s::%(funcName)s::%(lineno)d::"
+                "Cotainr:-:%(levelname)s: %(message)s"
+            )
+            cotainr_stderr_fmt = cotainr_stdout_fmt
+        else:
+            if log_settings.verbosity <= -1:
+                cotainr_log_level = logging.CRITICAL
+            else:
+                cotainr_log_level = logging.INFO
+            cotainr_stdout_fmt = "Cotainr:-: %(message)s"
+            cotainr_stderr_fmt = "Cotainr:-:%(levelname)s: %(message)s"
+
+        # Setup cotainr log handlers
+        cotainr_stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
+        cotainr_stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
+        if log_settings.log_file_path is not None:
+            cotainr_stdout_handlers.append(
+                logging.FileHandler(
+                    log_settings.log_file_path.with_suffix(
+                        log_settings.log_file_path.suffix + ".out"
+                    )
+                )
+            )
+            cotainr_stderr_handlers.append(
+                logging.FileHandler(
+                    log_settings.log_file_path.with_suffix(
+                        log_settings.log_file_path.suffix + ".err"
+                    )
+                )
+            )
+
+        for stdout_handler in cotainr_stdout_handlers:
+            stdout_handler.setLevel(cotainr_log_level)
+            stdout_handler.setFormatter(logging.Formatter(cotainr_stdout_fmt))
+            stdout_handler.addFilter(
+                # Avoid also emitting WARNINGs and above on stdout
+                OnlyDebugInfoLevelFilter()
+            )
+
+        for stderr_handler in cotainr_stderr_handlers:
+            stderr_handler.setLevel(logging.WARNING)
+            stderr_handler.setFormatter(logging.Formatter(cotainr_stderr_fmt))
+
+        if not log_settings.no_color:
+            # Replace console formatters with one that colors the output
+            cotainr_stdout_handlers[0].setFormatter(
+                tracing.ColoredOutputFormatter(cotainr_stdout_fmt)
+            )
+            cotainr_stderr_handlers[0].setFormatter(
+                tracing.ColoredOutputFormatter(cotainr_stderr_fmt)
+            )
+
+        # Define cotainr root logger
+        root_logger = logging.getLogger("cotainr")
+        root_logger.setLevel(cotainr_log_level)
+        for handler in cotainr_stdout_handlers + cotainr_stderr_handlers:
+            root_logger.addHandler(handler)
 
 
 def main(*args, **kwargs):

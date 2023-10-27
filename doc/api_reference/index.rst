@@ -10,4 +10,5 @@ The full public cotainr API is listed below.
    cotainr.cli
    cotainr.container
    cotainr.pack
+   cotainr.tracing
    cotainr.util

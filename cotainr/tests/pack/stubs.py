@@ -37,5 +37,5 @@ class StubShowLicensePopen(StubLicensePopen):
         "STUB:\n"
         "Please, press ENTER to continue\n"
         ">>> \n"
-        "This is the license terms..."
+        "This is the license terms...\n"
     )

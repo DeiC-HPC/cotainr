@@ -20,12 +20,15 @@ def patch_disable_stream_subprocess(monkeypatch):
     """
     Disable stream_subprocess(...).
 
-    The `stream_subprocess` function is replaced by a mock that prints and
-    returns a message about the process that would have been run.
+    The `stream_subprocess` function is replaced by a mock that prints to
+    stdout, logs to stderr (if a log_dispatcher is provided), and returns a
+    message about the process that would have been run.
     """
 
-    def mock_stream_subprocess(args, **kwargs):
+    def mock_stream_subprocess(*, args, log_dispatcher, **kwargs):
         msg = f"PATCH: Streamed subprocess: {args=}, {kwargs=}"
+        if log_dispatcher is not None:
+            log_dispatcher.log_to_stderr(msg)
         print(msg)
         return msg
 

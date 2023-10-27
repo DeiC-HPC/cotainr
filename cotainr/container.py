@@ -14,6 +14,7 @@ SingularitySandbox
 """
 
 import json
+import logging
 import os
 from pathlib import Path
 import shlex
@@ -22,7 +23,10 @@ import sys
 from tempfile import TemporaryDirectory
 
 from . import __version__ as _cotainr_version
+from . import tracing
 from . import util
+
+logger = logging.getLogger(__name__)
 
 
 class SingularitySandbox:
@@ -39,6 +43,9 @@ class SingularitySandbox:
     base_image : str
         Base image to use for the container which may be any valid
         Apptainer/Singularity <BUILD SPEC>.
+    log_settings : :class:`~cotainr.tracing.LogSettings`, optional
+        The data used to setup the logging machinery (the default is None which
+        implies that the logging machinery is not used).
 
     Attributes
     ----------
@@ -47,12 +54,26 @@ class SingularitySandbox:
     sandbox_dir : :class:`os.PathLike` or None
         The path to the temporary directory containing the sandbox if within a
         sandbox context, otherwise it is None.
+    log_dispatcher : :class:`~cotainr.tracing.LogDispatcher` or None.
+        The log dispatcher used to process stdout/stderr message from
+        Singularity commands that run in sandbox, if the logging machinery is
+        used.
     """
 
-    def __init__(self, *, base_image):
+    def __init__(self, *, base_image, log_settings=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
+        if log_settings is not None:
+            self._verbosity = log_settings.verbosity
+            self.log_dispatcher = tracing.LogDispatcher(
+                name=__class__.__name__,
+                map_log_level_func=self._map_log_level,
+                log_settings=log_settings,
+            )
+        else:
+            self._verbosity = 0
+            self.log_dispatcher = None
 
     def __enter__(self):
         """
@@ -71,14 +92,17 @@ class SingularitySandbox:
         self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
         self.sandbox_dir.mkdir(exist_ok=False)
         self._subprocess_runner(
-            args=[
-                "singularity",
-                "build",
-                "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
-                "--sandbox",
-                self.sandbox_dir,
-                self.base_image,
-            ]
+            args=self._add_verbosity_arg(
+                args=[
+                    "singularity",
+                    "--nocolor",
+                    "build",
+                    "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
+                    "--sandbox",
+                    self.sandbox_dir,
+                    self.base_image,
+                ]
+            ),
         )
 
         # Change directory to the sandbox
@@ -91,6 +115,36 @@ class SingularitySandbox:
         os.chdir(self._origin)
         self._tmp_dir.cleanup()
         self.sandbox_dir = None
+
+    def add_metadata(self):
+        """
+        Add metadata to the container sandbox.
+
+        The following metadata is added to the container sandbox:
+          - "cotainr.command": The full command line used to build the container.
+          - "cotainr.version": The version of cotainr used to build the container.
+          - "cotainr.url": The cotainr project url.
+
+        The container metadata may be inspected by running `singularity inspect` on the
+        built container image file.
+
+        Notes
+        -----
+        The metadata entries are added to the `.singularity.d/labels.json
+        <https://apptainer.org/docs/user/main/environment_and_metadata.html#singularity-d-directory>`_
+        file.
+
+        """
+        self._assert_within_sandbox_context()
+
+        labels_path = self.sandbox_dir / ".singularity.d/labels.json"
+        with open(labels_path, "r+") as f:
+            metadata = json.load(f)
+            metadata["cotainr.command"] = " ".join(sys.argv)
+            metadata["cotainr.version"] = _cotainr_version
+            metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
+            f.seek(0)
+            json.dump(metadata, f)
 
     def add_to_env(self, *, shell_script):
         """
@@ -127,16 +181,19 @@ class SingularitySandbox:
         self._assert_within_sandbox_context()
 
         self._subprocess_runner(
-            args=[
-                "singularity",
-                "build",
-                "--force",
-                path,
-                self.sandbox_dir,
-            ]
+            args=self._add_verbosity_arg(
+                args=[
+                    "singularity",
+                    "--nocolor",
+                    "build",
+                    "--force",
+                    path,
+                    self.sandbox_dir,
+                ]
+            ),
         )
 
-    def run_command_in_container(self, *, cmd):
+    def run_command_in_container(self, *, cmd, custom_log_dispatcher=None):
         """
         Run a command in the container sandbox.
 
@@ -148,6 +205,10 @@ class SingularitySandbox:
         ----------
         cmd : str
             The command to run in the container sandbox.
+        custom_log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
+            The custom log dispatcher to use when running the command (the
+            default is None which implies that the `SingularitySandbox` log
+            dispatcher is used).
 
         Returns
         -------
@@ -178,15 +239,19 @@ class SingularitySandbox:
 
         try:
             process = self._subprocess_runner(
-                args=[
-                    "singularity",
-                    "exec",
-                    "--writable",
-                    "--no-home",
-                    "--no-umask",
-                    self.sandbox_dir,
-                    *shlex.split(cmd),
-                ]
+                custom_log_dispatcher=custom_log_dispatcher,
+                args=self._add_verbosity_arg(
+                    args=[
+                        "singularity",
+                        "--nocolor",
+                        "exec",
+                        "--writable",
+                        "--no-home",
+                        "--no-umask",
+                        self.sandbox_dir,
+                        *shlex.split(cmd),
+                    ]
+                ),
             )
         except subprocess.CalledProcessError as e:
             singularity_fatal_error = "\n".join(
@@ -199,39 +264,103 @@ class SingularitySandbox:
 
         return process
 
-    def add_metadata(self):
-        """
-        Add metadata to the container sandbox.
-
-        The following metadata is added to the container sandbox:
-          - "cotainr.command": The full command line used to build the container.
-          - "cotainr.version": The version of cotainr used to build the container.
-          - "cotainr.url": The cotainr project url.
-
-        The container metadata may be inspected by running `singularity inspect` on the
-        built container image file.
-
-        Notes
-        -----
-        The metadata entries are added to the `.singularity.d/labels.json
-        <https://apptainer.org/docs/user/main/environment_and_metadata.html#singularity-d-directory>`_
-        file.
-
-        """
-        labels_path = self.sandbox_dir / ".singularity.d/labels.json"
-        with open(labels_path, "r+") as f:
-            metadata = json.load(f)
-            metadata["cotainr.command"] = " ".join(sys.argv)
-            metadata["cotainr.version"] = _cotainr_version
-            metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
-            f.seek(0)
-            json.dump(metadata, f)
-
     def _assert_within_sandbox_context(self):
         """Raise a ValueError if we are not inside the sandbox context."""
         if self.sandbox_dir is None:
             raise ValueError("The operation is only valid inside a sandbox context.")
 
-    def _subprocess_runner(self, *, args, **kwargs):
-        """Wrap the choice of subprocess runner."""
-        return util.stream_subprocess(args=args, **kwargs)
+    def _add_verbosity_arg(self, *, args):
+        """
+        Add a verbosity level to Singularity commands.
+
+        A mapping of the internal cotainr verbosity level to `Singularity
+        verbosity flags
+        <https://apptainer.org/docs/user/main/cli/apptainer.html#options>`_.
+
+        Parameters
+        ----------
+        args : list
+            The list of command line arguments constituting the full
+            singularity command.
+
+        Returns
+        -------
+        args : list
+            The updated list of singularity command line arguments.
+        """
+        if self._verbosity < 0:
+            # --silent (-s)
+            args.insert(1, "-s")
+        elif self._verbosity == 0:
+            # --quiet (-q)
+            args.insert(1, "-q")
+        elif self._verbosity >= 3:
+            # Assume --verbose (-v) is a debug level
+            args.insert(1, "-v")
+
+        return args
+
+    def _subprocess_runner(self, *, custom_log_dispatcher=None, args, **kwargs):
+        """
+        Wrap the choice of subprocess runner.
+
+        Parameters
+        ----------
+        custom_log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
+            The custom log dispatcher to use when running the command (the
+            default is None which implies that the `SingularitySandbox` log
+            dispatcher is used).
+        args : list or str
+            Subprocess arguments.
+        kwargs : dict
+            Keyword arguments passed to the subprocess runner.
+
+        Returns
+        -------
+        process : :class:`subprocess.CompletedProcess`
+            Information about the process that ran in the container sandbox.
+        """
+        if custom_log_dispatcher is not None:
+            # When the command to be run in the container provides its own
+            # log_dispatcher
+            with custom_log_dispatcher.prefix_stderr_name(
+                prefix=self.__class__.__name__
+            ):
+                return util.stream_subprocess(
+                    log_dispatcher=custom_log_dispatcher, args=args, **kwargs
+                )
+        else:
+            # Use the SingularitySandbox log_dispatcher
+            return util.stream_subprocess(
+                log_dispatcher=self.log_dispatcher, args=args, **kwargs
+            )
+
+    @staticmethod
+    def _map_log_level(msg):
+        """
+        Attempt to infer log level for a message.
+
+        Parameters
+        ----------
+        msg : str
+            The message to infer log level for.
+
+        Returns
+        -------
+        log_level : int
+            One of the standard log levels (DEBUG, INFO, WARNING, ERROR, or
+            CRITICAL).
+        """
+        if msg.startswith("DEBUG") or msg.startswith("VERBOSE"):
+            return logging.DEBUG
+        elif msg.startswith("INFO") or msg.startswith("LOG"):
+            return logging.INFO
+        elif msg.startswith("WARNING"):
+            return logging.WARNING
+        elif msg.startswith("ERROR"):
+            return logging.ERROR
+        elif msg.startswith("ABRT") or msg.startswith("FATAL"):
+            return logging.CRITICAL
+        else:
+            # If no prefix on message, assume its INFO level
+            return logging.INFO

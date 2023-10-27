@@ -9,6 +9,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import argparse
 from pathlib import Path
+import re
 import shlex
 
 import pytest
@@ -24,6 +25,7 @@ from ..pack.patches import (
     patch_disable_conda_install_display_miniforge_license_for_acceptance,
     patch_disable_conda_install_download_miniforge_installer,
 )
+from ..tracing.patches import patch_disable_console_spinner
 from ..util.patches import patch_system_with_actual_file, patch_empty_system
 
 
@@ -59,6 +61,9 @@ class TestConstructor:
             assert build.base_image == base_image
         assert build.conda_env is None
         assert not build.accept_licenses
+        assert build.log_settings.verbosity == 0
+        assert build.log_settings.log_file_path is None
+        assert not build.log_settings.no_color
 
     @pytest.mark.parametrize(
         "base_image,system",
@@ -88,8 +93,10 @@ class TestConstructor:
             Build(image_path=image_path, system=system)
 
     @pytest.mark.parametrize("answer", ["n", "N", "", "some_answer_6021"])
-    def test_already_existing_file_but_no(self, answer, monkeypatch):
-        monkeypatch.setattr("builtins.input", lambda _: answer)
+    def test_already_existing_file_but_no(
+        self, answer, factory_mock_input, monkeypatch
+    ):
+        monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
         Path(image_path).touch()
@@ -97,8 +104,8 @@ class TestConstructor:
             Build(image_path=image_path, base_image=base_image)
 
     @pytest.mark.parametrize("answer", ["y", "Y"])
-    def test_already_existing_file(self, answer, monkeypatch):
-        monkeypatch.setattr("builtins.input", lambda _: answer)
+    def test_already_existing_file(self, answer, factory_mock_input, monkeypatch):
+        monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
         Path(image_path).touch()
@@ -113,6 +120,26 @@ class TestConstructor:
             image_path=image_path, base_image=base_image, accept_licenses=True
         )
         assert build.accept_licenses
+
+    def test_specifying_log_to_file(self):
+        # See also the matching TestAddArguments test below
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        build = Build(image_path=image_path, base_image=base_image, log_to_file=True)
+        print(
+            build.log_settings.log_file_path.name,
+        )
+        assert re.match(
+            r"^cotainr_build_\d{4}-\d{2}-\d{2}T\d{2}\.\d{2}\.\d{2}\.\d{6}$",
+            build.log_settings.log_file_path.name,
+        )
+
+    def test_specifying_no_color(self):
+        # See also the matching TestAddArguments test below
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        build = Build(image_path=image_path, base_image=base_image, no_color=True)
+        assert build.log_settings.no_color
 
 
 class TestAddArguments:
@@ -201,6 +228,85 @@ class TestAddArguments:
         )
         assert args.accept_licenses
 
+    @pytest.mark.parametrize(
+        ["verbose_arg", "verbosity"],
+        [
+            ("--verbose", 1),
+            ("--verbose --verbose", 2),
+            ("-v", 1),
+            ("-vv", 2),
+            ("-vvv", 3),
+            ("-vvvv", 4),
+        ],
+    )
+    def test_specifying_verbose(self, verbose_arg, verbosity):
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(f"{image_path} --base-image={base_image} {verbose_arg}")
+        )
+        assert args.verbosity == verbosity
+
+    @pytest.mark.parametrize(
+        ["verbose_arg", "verbosity"],
+        [
+            ("--quiet", -1),
+            ("--quiet --quiet", -1),
+            ("-q", -1),
+            ("-qq", -1),
+        ],
+    )
+    def test_specifying_quiet(self, verbose_arg, verbosity):
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(f"{image_path} --base-image={base_image} {verbose_arg}")
+        )
+        assert args.verbosity == verbosity
+
+    def test_specifying_both_verbose_and_quiet(self, capsys):
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+
+        with pytest.raises(SystemExit):
+            args = parser.parse_args(
+                args=shlex.split(
+                    f"{image_path} --base-image={base_image} --verbose --quiet"
+                )
+            )
+        stderr = capsys.readouterr().err
+        assert stderr.strip().endswith(
+            "argument --quiet/-q: not allowed with argument --verbose/-v"
+        )
+
+    def test_specifying_log_to_file(self):
+        # See also the matching TestConstructor test above
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(f"{image_path} --base-image={base_image} --log-to-file")
+        )
+        assert args.log_to_file
+
+    def test_specifying_no_color(self):
+        # See also the matching TestConstructor test above
+        parser = argparse.ArgumentParser()
+        Build.add_arguments(parser=parser)
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        args = parser.parse_args(
+            args=shlex.split(f"{image_path} --base-image={base_image} --no-color")
+        )
+        assert args.no_color
+
 
 class TestExecute:
     def test_default_container_build(
@@ -209,6 +315,7 @@ class TestExecute:
         # add_metadata fails as there is no sandbox_dir and labels.json since
         # we request patch_disable_singularity_sandbox_subprocess_runner.
         patch_disable_add_metadata,
+        patch_disable_console_spinner,
         capsys,
     ):
         image_path = "some_image_path_6021"
@@ -235,6 +342,8 @@ class TestExecute:
         patch_disable_conda_install_download_miniforge_installer,
         patch_save_singularity_sandbox_context,
         patch_disable_add_metadata,
+        patch_disable_console_spinner,
+        caplog,
         capsys,
     ):
         image_path = "some_image_path_6021"
@@ -263,7 +372,6 @@ class TestExecute:
         # Check sandbox interaction commands
         (
             sandbox_create_cmd,
-            miniforge_license_accept_cmd,
             conda_bootstrap_cmd,
             conda_bootstrap_clean_cmd,
             conda_env_create_cmd,
@@ -273,10 +381,6 @@ class TestExecute:
             capsys.readouterr().out.strip().split("\n")
         )
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
-        assert miniforge_license_accept_cmd == (
-            "You have accepted the Miniforge installer license via the command line option "
-            "'--accept-licenses'."
-        )
         assert all(
             s in sandbox_create_cmd
             for s in ["'singularity'", "'build'", "'--sandbox'", f"'{base_image}'"]
@@ -301,6 +405,15 @@ class TestExecute:
         assert all(
             s in sandbox_build_cmd
             for s in ["'singularity'", "'build'", f"{image_path}"]
+        )
+
+        # Check log calls
+        assert re.search(
+            r"^WARNING  CondaInstall\.err\:pack\.py\:(\d+) "
+            r"You have accepted the Miniforge installer license via the command line option "
+            r"'--accept-licenses'\.$",
+            caplog.text,
+            flags=re.MULTILINE,
         )
 
     def test_no_beforehand_license_acceptance(
@@ -332,6 +445,7 @@ class TestHelpMessage:
             # Capsys apparently assumes an 80 char terminal (?) - thus extra '\n'
             "usage: cotainr build [-h] (--base-image BASE_IMAGE | --system SYSTEM)\n"
             "                     [--conda-env CONDA_ENV] [--accept-licenses]\n"
+            "                     [--verbose | --quiet] [--log-to-file] [--no-color]\n"
             "                     image_path\n\n"
             "Build a container.\n\n"
             "positional arguments:\n"
@@ -353,4 +467,12 @@ class TestHelpMessage:
             "                        terms, as specified during the build process\n"
             "  --accept-licenses     accept all license terms (if any) needed for\n"
             "                        completing the container build process\n"
+            "  --verbose, -v         increase the verbosity of the output from cotainr. Can\n"
+            "                        be used multiple times: Once for subprocess output,\n"
+            "                        twice for subprocess INFO, three times for DEBUG, and\n"
+            "                        four times for TRACE\n"
+            "  --quiet, -q           do not show any non-CRITICAL output from cotainr\n"
+            "  --log-to-file         create files containing all logging information shown\n"
+            "                        on stdout/stderr\n"
+            "  --no-color            do not use colored console output\n"
         )
