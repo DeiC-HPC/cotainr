@@ -35,7 +35,10 @@ class TestExecute:
         # One line with singularity / apptainer version check
         assert (
             sum(
-                any(provider in line for provider in ["singularity", "apptainer"])
+                any(
+                    provider in line
+                    for provider in ["singularity", "singularity-ce", "apptainer"]
+                )
                 for line in stdout.split("\n")
             )
             == 1
@@ -125,6 +128,17 @@ class Test_check_singularity_dependency:
         assert (
             Info()._check_singularity_dependency()
             == "Found singularity 3.7.4-1 >= 3.7.4, \x1b[38;5;2mOK\x1b[0m"
+        )
+
+    def test_found_singularity_ce(self, monkeypatch):
+        monkeypatch.setattr(
+            subprocess,
+            "check_output",
+            lambda *args, **kwargs: "singularity-ce version 3.11.4-1",
+        )
+        assert (
+            Info()._check_singularity_dependency()
+            == "Found singularity-ce 3.11.4-1 >= 3.9.2, \x1b[38;5;2mOK\x1b[0m"
         )
 
     def test_found_unknown(self, monkeypatch):

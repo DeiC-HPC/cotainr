@@ -16,6 +16,7 @@ _minimum_dependency_version = {
     "python": (3, 8, 0),
     "apptainer": (1, 0, 0),
     "singularity": (3, 7, 4),
+    "singularity-ce": (3, 9, 2),
 }
 
 # Error early on too old Python version
