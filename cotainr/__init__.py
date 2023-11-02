@@ -23,12 +23,12 @@ _minimum_dependency_version = {
 if sys.version_info < _minimum_dependency_version["python"]:
     sys.exit(
         (
-            "\033[91m"  # start of red colored text
+            "\x1b[38;5;160m"  # start of red colored text
             "Cotainr requires Python>=%s\n"
             "You are running Python==%s\n"
             "from '%s'\n"
             "ABORTING!"
-            "\033[0m"  # end of red colored text
+            "\x1b[0m"  # end of red colored text
         )
         % (
             ".".join(map(str, _minimum_dependency_version["python"])),

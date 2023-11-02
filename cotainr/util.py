@@ -21,11 +21,14 @@ systems_file
 """
 
 from concurrent.futures import ThreadPoolExecutor
+import functools
+import logging
 import json
 from pathlib import Path
 import subprocess
 import sys
 
+logger = logging.getLogger(__name__)
 systems_file = (Path(__file__) / "../../systems.json").resolve()
 
 
@@ -55,19 +58,24 @@ def get_systems():
         return {}
 
 
-def stream_subprocess(*, args, **kwargs):
+def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     """
     Run a the command described by `args` while streaming stdout and stderr.
 
     The command described by `args` is run in a subprocess with that
-    subprocess' stdout and stderr streamed to the stdout. Extra `kwargs` are
-    passed to `Popen` when opening the subprocess.
+    subprocess' stdout and stderr streamed to the main process. Each line in
+    the subprocess' output is streamed separately to the main process. Extra
+    `kwargs` are passed to `Popen` when opening the subprocess.
 
     Parameters
     ----------
     args : list or str
         Program arguments. See the docstring for :class:`subprocess.Popen` for
         details.
+    log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
+        The log dispatcher which subprocess stdout/stderr messages are
+        forwarded to (the default is None which implies that subprocess
+        messages are forwarded directly to stdout/stderr).
 
     Returns
     -------
@@ -78,6 +86,14 @@ def stream_subprocess(*, args, **kwargs):
     ------
     :class:`subprocess.CalledProcessError`
         If the subprocess returned a non-zero status code.
+
+    Notes
+    -----
+    The way we handle stdout and stderr messages in separate threads introduces
+    a race condition in cases where subprocesses write to stdout and stderr at
+    the same time. All messages are always guaranteed to be streamed to the
+    console, but they might arrive in the wrong order. We accept this "feature"
+    as is.
     """
     with subprocess.Popen(
         args,
@@ -87,18 +103,25 @@ def stream_subprocess(*, args, **kwargs):
         bufsize=1,
         **kwargs,
     ) as process:
-        with ThreadPoolExecutor(max_workers=2) as executor:
+        with ThreadPoolExecutor(
+            max_workers=2,
+            thread_name_prefix=f"cotainr_stream_subprocess_thread_for_{args}",
+        ) as executor:
             # (Attempt to) pass the process stdout and stderr to the terminal in real
             # time while also storing it for later inspection.
             stdout_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stdout,
-                print_stream=sys.stdout,
+                print_dispatch=log_dispatcher.log_to_stdout
+                if log_dispatcher is not None
+                else functools.partial(print, end="", file=sys.stdout),
             )
             stderr_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stderr,
-                print_stream=sys.stderr,
+                print_dispatch=log_dispatcher.log_to_stderr
+                if log_dispatcher is not None
+                else functools.partial(print, end="", file=sys.stderr),
             )
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
@@ -115,20 +138,25 @@ def stream_subprocess(*, args, **kwargs):
     return completed_process
 
 
-def _print_and_capture_stream(*, stream_handle, print_stream):
+def _print_and_capture_stream(*, stream_handle, print_dispatch):
     """
     Print a text stream while also storing it.
 
     Parameters
     ----------
-    stream_handle : io.TextIOWrapper
+    stream_handle : :py:class:`io.TextIOWrapper`
         The text stream to print and capture.
-    print_stream : file object implementing write(string) method.
-        The file object to print the stream to.
+    print_dispatch : Callable
+        The callable to use for printing.
+
+    Returns
+    -------
+    captured_stream : list of str
+        The lines captured from the stream.
     """
     captured_stream = []
     for line in stream_handle:
-        print(line, end="", file=print_stream)
+        print_dispatch(line)
         captured_stream.append(line)
 
     return captured_stream

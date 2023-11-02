@@ -101,7 +101,7 @@ class Test_check_python_dependency:
         assert re.match(
             (
                 r"^Running python \d+\.\d+\.\d+ (>=)|(<) \d+\.\d+\.\d+, "
-                r"(\\033\[92mOK\\033\[0m)|(\\033\[91mERROR\\033\[0m)$"
+                r"(\\x1b\[38;5;1mOK\\x1b\[0m)|(\\x1b\[38;5;1mERROR\\x1b\[0m)$"
             ),
             Info()._check_python_dependency(),
         )
@@ -116,7 +116,7 @@ class Test_check_singularity_dependency:
         )
         assert (
             Info()._check_singularity_dependency()
-            == "Found apptainer 1.0.0 >= 1.0.0, \x1b[92mOK\x1b[0m"
+            == "Found apptainer 1.0.0 >= 1.0.0, \x1b[38;5;2mOK\x1b[0m"
         )
 
     def test_found_singularity(self, monkeypatch):
@@ -127,7 +127,7 @@ class Test_check_singularity_dependency:
         )
         assert (
             Info()._check_singularity_dependency()
-            == "Found singularity 3.7.4-1 >= 3.7.4, \x1b[92mOK\x1b[0m"
+            == "Found singularity 3.7.4-1 >= 3.7.4, \x1b[38;5;2mOK\x1b[0m"
         )
 
     def test_found_singularity_ce(self, monkeypatch):
@@ -163,7 +163,7 @@ class Test_check_singularity_dependency:
         )
         assert (
             Info()._check_singularity_dependency()
-            == "apptainer/singularity not found, \033[91mERROR\033[0m"
+            == "apptainer/singularity not found, \x1b[38;5;1mERROR\x1b[0m"
         )
 
 
@@ -171,10 +171,10 @@ class Test_check_version:
     @pytest.mark.parametrize(
         "version,min_version,cmp_result",
         [
-            ((3, 8, 0), (3, 8, 0), ">= 3.8.0, \x1b[92mOK\x1b[0m"),
-            ((0, 1, 12), (0, 0, 1), ">= 0.0.1, \x1b[92mOK\x1b[0m"),
-            ((3, 7, 14), (3, 8, 0), "< 3.8.0, \033[91mERROR\033[0m"),
-            ((1, 0, 0), (3, 8, 0), "< 3.8.0, \033[91mERROR\033[0m"),
+            ((3, 8, 0), (3, 8, 0), ">= 3.8.0, \x1b[38;5;2mOK\x1b[0m"),
+            ((0, 1, 12), (0, 0, 1), ">= 0.0.1, \x1b[38;5;2mOK\x1b[0m"),
+            ((3, 7, 14), (3, 8, 0), "< 3.8.0, \x1b[38;5;1mERROR\x1b[0m"),
+            ((1, 0, 0), (3, 8, 0), "< 3.8.0, \x1b[38;5;1mERROR\x1b[0m"),
         ],
     )
     def test_version_comparison(self, version, min_version, cmp_result):

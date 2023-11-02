@@ -76,6 +76,15 @@ html_theme_options = {
         "json_url": switcher_json,
         "version_match": switcher_version,
     },
+    # We only set "navigation_with_keys = False" to explicitly remove the
+    # warning introduced in pydata-sphinx-theme v0.14.2:
+    # "WARNING: The default value for `navigation_with_keys` will change to
+    # `False` in the next release. If you wish to preserve the old behavior for
+    # your site, set `navigation_with_keys=True` in the `html_theme_options`
+    # dict in your `conf.py` file.Be aware that `navigation_with_keys = True`
+    # has negative accessibility
+    # implications:https://github.com/pydata/pydata-sphinx-theme/issues/1492"
+    "navigation_with_keys": False,
 }
 
 # -- Autodoc configuration ----------------------------------------------------
