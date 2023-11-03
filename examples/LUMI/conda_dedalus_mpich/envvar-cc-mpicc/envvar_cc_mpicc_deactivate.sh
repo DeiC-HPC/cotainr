@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export CC=$ENVVAR_CC_MPICC_BACKUP
+unset ENVVAR_CC_MPICC_BACKUP

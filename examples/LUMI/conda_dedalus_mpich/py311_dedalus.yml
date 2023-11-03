@@ -1,0 +1,21 @@
+name: py311_dedalus
+channels:
+  - conda-forge
+  - file:///home/chrso/gits/DeiC/cotainr/examples/LUMI/conda_dedalus_mpich/local_conda_channel
+dependencies:
+  - dedalus
+  - c-compiler
+  - cython<3.0
+  - h5py=*=mpi*
+#  - h5py>=3.0.0=mpi*
+#  - mpi=1.0=mpich
+#  - numexpr
+  - pip
+  - python=3.11
+#  - xarray
+  - envvar-cc-mpicc
+  - pip:
+    - http://github.com/dedalusproject/dedalus/zipball/master/
+variables:
+  OMP_NUM_THREADS: 1
+  NUMEXPR_MAX_THREADS: 1

@@ -1,0 +1,10 @@
+package:
+  name: envvar-cc-mpicc
+  version: "0.1"
+build:
+  number: 0
+requirements:
+  build: []
+  run: []
+about:
+  summary: Set environtment variable CC=mpicc on environment activation.

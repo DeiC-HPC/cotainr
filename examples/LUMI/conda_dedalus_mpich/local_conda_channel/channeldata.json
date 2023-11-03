@@ -1,0 +1,1 @@
+{"channeldata_version":1,"packages":{"envvar-cc-mpicc":{"activate.d":true,"binary_prefix":false,"deactivate.d":true,"post_link":false,"pre_link":false,"pre_unlink":false,"run_exports":{},"subdirs":["linux-64"],"summary":"Set environtment variable CC=mpicc on environment activation.","text_prefix":false,"timestamp":1699007146,"version":"0.1"}},"subdirs":["linux-64","noarch"]}
