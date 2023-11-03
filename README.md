@@ -38,7 +38,7 @@ If you are using easybuild, then here is an easyconfig, you can use:
 easyblock = 'Tarball'
 
 name = 'cotainr'
-version = '2023.02.0'
+version = '2023.11.0'
 homepage = 'https://github.com/DeiC-HPC/container-builder'
 description = 'cotainr is a tool that helps making Singularity/Apptainer containers.'
 
