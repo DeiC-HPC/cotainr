@@ -52,7 +52,7 @@ toolchain = SYSTEM
 
 systems = """{
   "lumi-g": {
-    "base-image": "docker://rocm/rocm-terminal:5.3"
+    "base-image": "docker://rocm/dev-ubuntu-22.04:5.5.1-complete"
   },
   "lumi-c": {
     "base-image": "docker://ubuntu:22.04"
