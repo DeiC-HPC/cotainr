@@ -38,7 +38,7 @@ If you are using easybuild, then here is an easyconfig, you can use:
 easyblock = 'Tarball'
 
 name = 'cotainr'
-version = '2023.02.0'
+version = '2023.11.0'
 homepage = 'https://github.com/DeiC-HPC/container-builder'
 description = 'cotainr is a tool that helps making Singularity/Apptainer containers.'
 
@@ -52,7 +52,7 @@ toolchain = SYSTEM
 
 systems = """{
   "lumi-g": {
-    "base-image": "docker://rocm/rocm-terminal:5.3"
+    "base-image": "docker://rocm/dev-ubuntu-22.04:5.5.1-complete"
   },
   "lumi-c": {
     "base-image": "docker://ubuntu:22.04"

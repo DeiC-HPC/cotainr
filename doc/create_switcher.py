@@ -56,4 +56,6 @@ for tag in tags[0:3]:
     )
 
 
-(Path(__file__) / "../_static/switcher.json").resolve().write_text(json.dumps(switcher))
+(Path(__file__) / "../_static/switcher.json").resolve().write_text(
+    json.dumps(switcher, indent="  ")
+)
