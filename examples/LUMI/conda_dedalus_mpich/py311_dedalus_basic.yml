@@ -1,0 +1,15 @@
+name: py311_dedalus_basic
+channels:
+  - conda-forge
+dependencies:
+  - dedalus
+  - c-compiler
+  - cython
+  - h5py=*=mpi*
+  - pip
+  - python=3.11
+  - pip:
+    - http://github.com/dedalusproject/dedalus/zipball/master/
+variables:
+  OMP_NUM_THREADS: 1
+  NUMEXPR_MAX_THREADS: 1

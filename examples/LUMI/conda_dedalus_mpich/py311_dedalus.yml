@@ -1,4 +1,9 @@
 name: py311_dedalus
+# Based on:
+# - Basic spec from: https://dedalus-project.readthedocs.io/en/latest/pages/installation.html#full-stack-conda-installation-recommended
+# - Additional version pinning and packages from https://github.com/DedalusProject/dedalus/blob/acc37823dc0c5886ac027e5978bde76ac08d8376/setup.py#L188
+# - Explicitly adding mpi=*=mpich for MPICH mpi MPI flavor as used on LUMI
+# - Setting CC=mpicc during pip installation via the local envvar-cc-mpicc conda package (as a workaround, for now)
 channels:
   - conda-forge
   - file:///home/chrso/gits/DeiC/cotainr/examples/LUMI/conda_dedalus_mpich/local_conda_channel
@@ -6,13 +11,12 @@ dependencies:
   - dedalus
   - c-compiler
   - cython<3.0
-  - h5py=*=mpi*
-#  - h5py>=3.0.0=mpi*
-#  - mpi=1.0=mpich
-#  - numexpr
+  - h5py>=3.0.0=mpi*
+  - mpi=*=mpich
+  - numexpr
   - pip
   - python=3.11
-#  - xarray
+  - xarray
   - envvar-cc-mpicc
   - pip:
     - http://github.com/dedalusproject/dedalus/zipball/master/
