@@ -6,7 +6,7 @@ name: py311_dedalus
 # - Setting CC=mpicc during pip installation via the local envvar-cc-mpicc conda package (as a workaround, for now)
 channels:
   - conda-forge
-  - file:///home/chrso/gits/DeiC/cotainr/examples/LUMI/conda_dedalus_mpich/local_conda_channel
+  - file:///mnt
 dependencies:
   - dedalus
   - c-compiler

@@ -7,4 +7,4 @@ requirements:
   build: []
   run: []
 about:
-  summary: Set environtment variable CC=mpicc on environment activation.
+  summary: Set environment variable CC=mpicc on environment activation.
