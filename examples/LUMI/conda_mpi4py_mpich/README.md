@@ -24,6 +24,9 @@ Copy everything to LUMI, update the `--account=project_<your_project_id>` SBATCH
 
 TODO:
 - Ideally, update the conda numpy package to 1.26.1, though it may be a problem: https://github.com/conda-forge/numpy-feedstock/pull/302
+- Set a better shebang: #!/bin/bash -e
+- Set smaller time limit
+- Rename cray_python to cray-python in sbatch file names.
 
 
 wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.0.1.tar.gz
@@ -31,4 +34,4 @@ tar -xvf osu-micro-benchmarks-7.0.1.tar.gz osu-micro-benchmarks-7.0.1/python/
 
 
 http://nowlab.cse.ohio-state.edu/static/media/talks/slide/Alnaasan-OMB-Py-osu-booth.pdf
-https://pawseysc.github.io/containers-astro-python-workshop/3.hpc/index.html
+https://pawseysc.github.io/containers-astro-python-workshop/3.hpc/index.htmlp
