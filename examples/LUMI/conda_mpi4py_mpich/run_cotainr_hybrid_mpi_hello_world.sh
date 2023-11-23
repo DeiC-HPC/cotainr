@@ -11,11 +11,11 @@
 #SBATCH --output="output_%x_%j.txt"
 #SBATCH --partition=small
 #SBATCH --exclusive
-#SBATCH --time=00:30:00
+#SBATCH --time=00:05:00
 #SBATCH --account=project_<your_project_id>
 
 PROJECT_DIR=
-CONTAINER=$PROJECT_DIR/lumi_mpi4py_mpich_demo.sif
+CONTAINER=$PROJECT_DIR/lumi-mpi4py-mpich-demo.sif
 
 export MPIR_CVAR_DEBUG_SUMMARY=1
 export FI_LOG_LEVEL=Info

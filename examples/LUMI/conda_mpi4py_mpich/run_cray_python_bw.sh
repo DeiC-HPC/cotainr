@@ -11,7 +11,7 @@
 #SBATCH --output="output_%x_%j.txt"
 #SBATCH --partition=small
 #SBATCH --exclusive
-#SBATCH --time=00:30:00
+#SBATCH --time=00:10:00
 #SBATCH --account=project_<your_project_id>
 
 module load cray-python
@@ -21,7 +21,16 @@ OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python/
 
 for i in {1..5}
 do
-echo "====================== OSU BW test run $i ======================"
-srun python $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=nump
+echo "====================== OSU BW single node test run $i ======================"
+srun python $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=numpy
+sleep 1
+done
+
+echo "====================== single/multi node barrier ======================"
+
+for i in {1..5}
+do
+echo "====================== OSU BW multi node test run $i ======================"
+srun python $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=numpy
 sleep 1
 done

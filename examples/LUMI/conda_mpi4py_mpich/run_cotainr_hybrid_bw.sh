@@ -11,16 +11,25 @@
 #SBATCH --output="output_%x_%j.txt"
 #SBATCH --partition=small
 #SBATCH --exclusive
-#SBATCH --time=00:30:00
+#SBATCH --time=00:10:00
 #SBATCH --account=project_<your_project_id>
 
 PROJECT_DIR=
 OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python/
-CONTAINER=$PROJECT_DIR/lumi_mpi4py_mpich_demo.sif
+CONTAINER=$PROJECT_DIR/lumi-mpi4py-mpich-demo.sif
 
 for i in {1..5}
 do
-echo "====================== OSU BW test run $i ======================"
+echo "====================== OSU BW single node test run $i ======================"
+srun --mpi=pmi2 --nodes=1 --tasks-per-node=2 singularity exec --bind=$PROJECT_DIR $CONTAINER python $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=numpy
+sleep 1
+done
+
+echo "====================== single/multi node barrier ======================"
+
+for i in {1..5}
+do
+echo "====================== OSU BW multi node test run $i ======================"
 srun --mpi=pmi2 singularity exec --bind=$PROJECT_DIR $CONTAINER python $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=numpy
 sleep 1
 done

@@ -9,7 +9,7 @@ On LUMI, the container may be built using:
 ```bash
 module load LUMI
 module load cotainr
-cotainr build lumi_mpi4py_mpich_demo.sif --system=lumi-c --conda-env py310_mpi4py_mpich.yml
+cotainr build lumi-mpi4py-mpich-demo.sif --system=lumi-c --conda-env py310_mpi4py_mpich.yml
 ```
 
 ## Running the PyTorch examples on LUMI using the built container
@@ -24,8 +24,8 @@ Copy everything to LUMI, update the `--account=project_<your_project_id>` SBATCH
 
 TODO:
 - Ideally, update the conda numpy package to 1.26.1, though it may be a problem: https://github.com/conda-forge/numpy-feedstock/pull/302
+- mpi4py conda packages not compatible with mpich=3.4.3 conda packages (or is it?)
 - Set a better shebang: #!/bin/bash -e
-- Set smaller time limit
 - Rename cray_python to cray-python in sbatch file names.
 
 

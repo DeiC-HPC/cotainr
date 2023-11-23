@@ -11,7 +11,7 @@
 #SBATCH --output="output_%x_%j.txt"
 #SBATCH --partition=small
 #SBATCH --exclusive
-#SBATCH --time=00:30:00
+#SBATCH --time=00:05:00
 #SBATCH --account=project_<your_project_id>
 
 module load cray-python
