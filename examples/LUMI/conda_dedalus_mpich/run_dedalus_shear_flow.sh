@@ -8,7 +8,7 @@
 #SBATCH --tasks-per-node=128
 #SBATCH --output="output_%x_%j.txt"
 #SBATCH --partition=small
-#SBATCH --time=00:30:00
+#SBATCH --time=00:15:00
 #SBATCH --account=project_<your_project_id>
 
-srun singularity exec lumi_dedalus_demo.sif python3 shear_flow.py
+srun --mpi=pmi2 singularity exec lumi_dedalus_demo.sif python3 shear_flow.py
