@@ -99,7 +99,6 @@ class SingularitySandbox:
                     "build",
                     "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
                     "--sandbox",
-                    "--fix-perms",
                     self.sandbox_dir,
                     self.base_image,
                 ]
