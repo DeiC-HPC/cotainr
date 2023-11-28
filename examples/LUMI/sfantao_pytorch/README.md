@@ -23,3 +23,5 @@ Copy everything to LUMI, update the `--account=project_<your_project_id>` SBATCH
 
 
 --gpus-per-task not working - see #5 under https://lumi-supercomputer.github.io/LUMI-training-materials/1day-20230921/notes_20230921/#running-jobs
+
+- cotainr build lumi-sfantao-pytorch-lumi-base.sif --base-image=/appl/local/containers/sif-images/lumi-rocm-rocm-5.5.1.sif --conda-env=py311_rocm542_pytorch.yml --accept-licenses -vvv --log-to-file

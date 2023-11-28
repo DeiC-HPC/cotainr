@@ -2,9 +2,11 @@
 # This is a modified version of the 08-mnist-example.sh from the 10/2023 LUMI training
 # "Tools in Action - An example with Pytorch"
 # https://lumi-supercomputer.github.io/LUMI-training-materials/4day-20231003/extra_4_10_Best_Practices_GPU_Optimization/
-# It uses the official LUMI PyTorch container.
+# It uses a cotainr container including the py311_rocm542_pytorch.yml environment,
+# based on the official LUMI PyTorch container.
+# (this base image is the only one which includes aws-ofi-rccl)
 
-#SBATCH --job-name=lumisif_mnist_example
+#SBATCH --job-name=cotainr_lumisif_mnist_example
 #SBATCH --nodes=4
 #SBATCH --gpus-per-node=8
 #SBATCH --tasks-per-node=8
@@ -18,7 +20,7 @@
 set -x
 
 PROJECT_DIR=
-CONTAINER=$PROJECT_DIR/lumi-pytorch-rocm-5.5.1-python-3.10-pytorch-v2.0.1.sif
+CONTAINER=$PROJECT_DIR/lumi-sfantao-pytorch-lumi-pytorch-base.sif
 
 # Utility script to detect the master node
 rm -rf $PROJECT_DIR/get-master.py
@@ -69,9 +71,6 @@ sleep 2
   
 # Report affinity
 echo "Rank \$SLURM_PROCID --> \$(taskset -p \$\$)"
-
-# Start conda environment inside the container
-\$WITH_CONDA
 
 # Report conda info
 if [ \$SLURM_LOCALID -eq 0 ] ; then
