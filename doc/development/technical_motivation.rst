@@ -17,10 +17,10 @@ However, this comes at the cost of both a much more manual and tedious build pro
 
 Container sandbox design
 ------------------------
-When using :code:`cotainr build`, containers are built using a sandbox, for now a `Singularity`_/`Apptainer`_ sandbox, i.e. a temporary folder is created containing the base container content. The requested software and its configuration, e.g. a :ref:`conda environment <conda_environments>` is then packed into this sandbox using `Singularity`_/`Apptainer`_  as a chroot bootstrapper. Once everything is in place in the sandbox, it is converted to a SIF image file. Finally, everything is cleaned-up and the sandbox directory is removed.
+When using :code:`cotainr build`, containers are built using a sandbox, for now a `Singularity`_/`Apptainer`_ sandbox, i.e. a temporary folder is created containing the base container content. The sandbox is created using the `--fix-perms` option to ensure owner rwX permissions for all files in the container. The requested software and its configuration, e.g. a :ref:`conda environment <conda_environments>` is then packed into this sandbox using `Singularity`_/`Apptainer`_  as a chroot bootstrapper. Once everything is in place in the sandbox, it is converted to a SIF image file. Finally, everything is cleaned-up and the sandbox directory is removed.
 
 
-`cotainr` spefific implementation details
+`cotainr` specific implementation details
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The container sandbox is implemented in the :mod:`cotainr.container` module, specifically in the :class:`cotainr.container.SingularitySandbox` class which is used as a `context manager <https://docs.python.org/3/reference/datamodel.html#context-managers>`_. Running a command in the sandbox context is wrapped as a :mod:`subprocess` call to :code:`singularity exec`.
 
@@ -31,7 +31,7 @@ Limitations
 -----------
 Building containers in user space comes with the following limitations:
 
-- We are unable to correctly handle file permissions that should be set with root privileges.
+- We are unable to correctly handle file permissions that should be set with root privileges. We are forcing owner rwX permission on all files using the `--fix-perms` option to `singularity build`, `as is also implied in the most basic Apptainer fakeroot builds <https://apptainer.org/docs/user/latest/fakeroot.html#build>`_.
 - You can only install software in user space in the container, i.e. there is no :code:`sudo apt install` or the like.
 
 
