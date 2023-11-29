@@ -108,6 +108,12 @@ class TestBuildImage:
         assert "args=['singularity', '-q', " in stdout_lines[-1]
 
     def test_fix_perms_on_oci_docker_images(self, tmp_path):
+        # Tests correct permission handling in relation to the error:
+        #   FATAL:   While performing build: packer failed to pack: copy Failed:
+        #   symlink GlobalSign_Root_R46.pem
+        #   .../var/lib/ca-certificates/openssl/002c0b4f.0: permission denied
+        # which seems to be a problem with all SUSE based docker images.
+        # https://github.com/DeiC-HPC/cotainr/issues/48
         image_path = tmp_path / "image_6021"
         assert not image_path.exists()
         with SingularitySandbox(base_image="docker://opensuse/leap:15.4") as sandbox:
