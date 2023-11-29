@@ -1,9 +1,9 @@
-name: py310_mpi4py_mpich
+name: py310_mpich4_conda_mpi4py
 channels:
   - conda-forge
 dependencies:
   - mpi=*=mpich
-  - mpich=3.4.3
+  - mpich=4.1.2
   - mpi4py=3.1.1
-  - numpy=1.26.0
+  - numpy=1.26.2
   - python=3.10

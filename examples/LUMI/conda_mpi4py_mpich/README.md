@@ -27,6 +27,7 @@ TODO:
 - mpi4py conda packages not compatible with mpich=3.4.3 conda packages (or is it?)
 - Set a better shebang: #!/bin/bash -e
 - Rename cray_python to cray-python in sbatch file names.
+- TL;DR or somehow separate recommended example from tests/benchmarks
 
 
 wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.0.1.tar.gz

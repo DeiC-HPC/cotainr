@@ -15,7 +15,7 @@
 #SBATCH --account=project_<your_project_id>
 
 PROJECT_DIR=
-CONTAINER=$PROJECT_DIR/lumi-mpi4py-rocm-5.4.5-python-3.10-mpi4py-3.1.4.sif
+CONTAINER=$PROJECT_DIR/containers/lumi-mpi4py-rocm-5.4.5-python-3.10-mpi4py-3.1.4.sif
 
 rm -rf $PROJECT_DIR/run-script.sh 
 cat > $PROJECT_DIR/run-script.sh << EOF
@@ -33,4 +33,10 @@ chmod +x $PROJECT_DIR/run-script.sh
 export MPIR_CVAR_DEBUG_SUMMARY=1
 export FI_LOG_LEVEL=Info
 
-srun singularity exec --bind=$PROJECT_DIR --bind=/var/spool/slurmd --bind=/opt/cray --bind=/usr/lib64/libcxi.so.1 --bind=/usr/lib64/libjansson.so.4 $CONTAINER $PROJECT_DIR/run-script.sh
+srun singularity exec \
+    --bind=$PROJECT_DIR \
+    --bind=/var/spool/slurmd \
+    --bind=/opt/cray \
+    --bind=/usr/lib64/libcxi.so.1 \
+    --bind=/usr/lib64/libjansson.so.4 \
+    $CONTAINER $PROJECT_DIR/run-script.sh
