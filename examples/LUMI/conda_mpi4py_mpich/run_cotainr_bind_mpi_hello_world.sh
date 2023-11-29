@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash -e
 #
 # A LUMI SLURM batch script for the LUMI mpi4py MPICH example from
 # https://github.com/DeiC-HPC/cotainr
@@ -24,7 +24,7 @@ CONTAINERS=(\
 export MPIR_CVAR_DEBUG_SUMMARY=1
 export FI_LOG_LEVEL=Info
 
-source lumi-singularity-bindings.sh  # or use the LUMI singularity-bindings module
+source $PROJECT_DIR/lumi-singularity-bindings.sh  # or use the LUMI singularity-bindings module
 
 for container in ${CONTAINERS[@]}; do
     echo "=============== Run using $container ==============="

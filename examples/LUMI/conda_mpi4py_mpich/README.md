@@ -24,9 +24,6 @@ Copy everything to LUMI, update the `--account=project_<your_project_id>` SBATCH
 
 TODO:
 - Ideally, update the conda numpy package to 1.26.1, though it may be a problem: https://github.com/conda-forge/numpy-feedstock/pull/302
-- mpi4py conda packages not compatible with mpich=3.4.3 conda packages (or is it?)
-- Set a better shebang: #!/bin/bash -e
-- Rename cray_python to cray-python in sbatch file names.
 - TL;DR or somehow separate recommended example from tests/benchmarks
 
 

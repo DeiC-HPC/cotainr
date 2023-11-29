@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash -e
 #
 # A LUMI SLURM batch script for the LUMI mpi4py MPICH example from
 # https://github.com/DeiC-HPC/cotainr
@@ -25,7 +25,7 @@ cat > $PROJECT_DIR/run-script.sh << EOF
 \$WITH_CONDA
 
 # Run application
-python $PROJECT_DIR/mpi_hello_world.py
+python3 $PROJECT_DIR/mpi_hello_world.py
 
 EOF
 chmod +x $PROJECT_DIR/run-script.sh

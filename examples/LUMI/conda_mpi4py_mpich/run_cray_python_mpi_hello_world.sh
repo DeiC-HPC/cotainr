@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash -e
 #
 # A LUMI SLURM batch script for the LUMI mpi4py MPICH example from
 # https://github.com/DeiC-HPC/cotainr
@@ -21,4 +21,4 @@ PROJECT_DIR=
 export MPIR_CVAR_DEBUG_SUMMARY=1
 export FI_LOG_LEVEL=Info
 
-srun python $PROJECT_DIR/mpi_hello_world.py
+srun python3 $PROJECT_DIR/mpi_hello_world.py

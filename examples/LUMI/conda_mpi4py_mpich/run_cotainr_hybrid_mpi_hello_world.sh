@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash -e
 #
 # A LUMI SLURM batch script for the LUMI mpi4py MPICH example from
 # https://github.com/DeiC-HPC/cotainr
