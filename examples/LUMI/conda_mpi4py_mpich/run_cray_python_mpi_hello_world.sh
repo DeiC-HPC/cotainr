@@ -5,7 +5,7 @@
 # This script runs the MPI hello world script
 # using the LUMI cray-python module
 #
-#SBATCH --job-name=mpi4py_mpi_hello_world_cray-python
+#SBATCH --job-name=mpi4py-mpi-hello-world-cray-python
 #SBATCH --nodes=2
 #SBATCH --tasks-per-node=1
 #SBATCH --output="output_%x_%j.txt"

@@ -5,7 +5,7 @@
 # This script runs the MPI hello world script
 # using a cotainr container including a generic MPICH, bind mounting the host MPI.
 #
-#SBATCH --job-name=mpi4py_mpi_hello_world_cotainr_bind
+#SBATCH --job-name=mpi4py-mpi-hello-world-cotainr-bind
 #SBATCH --nodes=2
 #SBATCH --tasks-per-node=1
 #SBATCH --output="output_%x_%j.txt"

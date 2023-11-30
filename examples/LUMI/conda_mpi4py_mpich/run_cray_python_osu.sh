@@ -6,8 +6,7 @@
 # using the LUMI cray-python module
 #
 #SBATCH --job-name=mpi4py-cray-python-osu
-#SBATCH --nodes=2
-#SBATCH --tasks-per-node=1
+#SBATCH --nodes=3
 #SBATCH --output="output_%x_%j.txt"
 #SBATCH --partition=small
 #SBATCH --exclusive
@@ -17,30 +16,30 @@
 module load cray-python
 
 PROJECT_DIR=
-OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python/
-RESULTS_DIR=$PROJECT_DIR/test_results
+OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python
+RESULTS_DIR=$PROJECT_DIR/osu_results
 
 set -x
 mkdir -p $RESULTS_DIR
 
 # Single node runs
-srun --nodes=1 --tasks-per-node=2 \
+srun --nodes=1 --ntasks=2 \
     python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=numpy \
     > $RESULTS_DIR/$SLURM_JOB_NAME-bw-single.txt
-srun --nodes=1 --tasks-per-node=2 \
+srun --nodes=1 --ntasks=2 \
     python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=latency --buffer=numpy \
     > $RESULTS_DIR/$SLURM_JOB_NAME-latency-single.txt
-srun --nodes=1 --tasks-per-node=2 \
+srun --nodes=1 --ntasks=3 \
     python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=allgather --buffer=numpy \
     > $RESULTS_DIR/$SLURM_JOB_NAME-allgather-single.txt
 
 # Multi node runs
-srun \
+srun --nodes=2 --ntasks=2 --tasks-per-node=1 \
     python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=numpy \
     > $RESULTS_DIR/$SLURM_JOB_NAME-bw-multi.txt
-srun \
+srun --nodes=2 --ntasks=2 --tasks-per-node=1 \
     python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=latency --buffer=numpy \
     > $RESULTS_DIR/$SLURM_JOB_NAME-latency-multi.txt
-srun \
+srun --nodes=3 --ntasks=3 --tasks-per-node=1 \
     python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=allgather --buffer=numpy \
     > $RESULTS_DIR/$SLURM_JOB_NAME-allgather-multi.txt

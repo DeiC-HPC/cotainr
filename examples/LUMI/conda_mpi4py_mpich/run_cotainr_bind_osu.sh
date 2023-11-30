@@ -6,8 +6,7 @@
 # using a cotainr container including a generic MPICH, bind mounting the host MPI.
 #
 #SBATCH --job-name=mpi4py-cotainr-bind-osu
-#SBATCH --nodes=2
-#SBATCH --tasks-per-node=1
+#SBATCH --nodes=3
 #SBATCH --output="output_%x_%j.txt"
 #SBATCH --partition=small
 #SBATCH --exclusive
@@ -15,8 +14,8 @@
 #SBATCH --account=project_<your_project_id>
 
 PROJECT_DIR=
-OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python/
-RESULTS_DIR=$PROJECT_DIR/test_results
+OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python
+RESULTS_DIR=$PROJECT_DIR/osu_results
 CONTAINERS=(\
     "cotainr-mpich3-pip-mpi4py.sif" \
     "cotainr-mpich4-pip-mpi4py.sif")
@@ -28,19 +27,19 @@ source $PROJECT_DIR/lumi-singularity-bindings.sh  # or use the LUMI singularity-
 
 for container in ${CONTAINERS[@]}; do
     # Single node runs
-    srun --nodes=1 --tasks-per-node=2 \
+    srun --nodes=1 --ntasks=2 \
         singularity exec \
         --bind=$PROJECT_DIR \
         $PROJECT_DIR/containers/$container \
         python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=numpy \
         > $RESULTS_DIR/$SLURM_JOB_NAME-bw-single-$container.txt
-    srun --nodes=1 --tasks-per-node=2 \
+    srun --nodes=1 --ntasks=2 \
         singularity exec \
         --bind=$PROJECT_DIR \
         $PROJECT_DIR/containers/$container \
         python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=latency --buffer=numpy \
         > $RESULTS_DIR/$SLURM_JOB_NAME-latency-single-$container.txt
-    srun --nodes=1 --tasks-per-node=2 \
+    srun --nodes=1 --ntasks=2 \
         singularity exec \
         --bind=$PROJECT_DIR \
         $PROJECT_DIR/containers/$container \
@@ -48,19 +47,19 @@ for container in ${CONTAINERS[@]}; do
         > $RESULTS_DIR/$SLURM_JOB_NAME-allgather-single-$container.txt
 
     # Multi node runs
-    srun \
+    srun --nodes=2 --ntasks=2 --tasks-per-node=1 \
         singularity exec \
         --bind=$PROJECT_DIR \
         $PROJECT_DIR/containers/$container \
         python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=bw --buffer=numpy \
         > $RESULTS_DIR/$SLURM_JOB_NAME-bw-multi-$container.txt
-    srun \
+    srun --nodes=2 --ntasks=2 --tasks-per-node=1 \
         singularity exec \
         --bind=$PROJECT_DIR \
         $PROJECT_DIR/containers/$container \
         python3 $OSU_PY_BENCHMARK_DIR/run.py --benchmark=latency --buffer=numpy \
         > $RESULTS_DIR/$SLURM_JOB_NAME-latency-multi-$container.txt
-    srun \
+    srun --nodes=3 --ntasks=3 --tasks-per-node=1 \
         singularity exec \
         --bind=$PROJECT_DIR \
         $PROJECT_DIR/containers/$container \
