@@ -5,7 +5,7 @@
 # This script runs the OSU benchmarks with Numpy buffers
 # using the official LUMI mpi4py container
 #
-#SBATCH --job-name=mpi4py-lumisif-osu
+#SBATCH --job-name=mpi4py-lumi-sif-osu
 #SBATCH --nodes=3
 #SBATCH --output="output_%x_%j.txt"
 #SBATCH --partition=small
@@ -17,6 +17,9 @@ PROJECT_DIR=
 OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python
 RESULTS_DIR=$PROJECT_DIR/osu_results
 CONTAINER=lumi-mpi4py-rocm-5.4.5-python-3.10-mpi4py-3.1.4.sif
+
+set -x
+mkdir -p $RESULTS_DIR
 
 # Single node runs
 srun --nodes=1 --ntasks=2 \
