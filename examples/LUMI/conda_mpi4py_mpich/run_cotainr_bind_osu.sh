@@ -14,7 +14,7 @@
 #SBATCH --account=project_<your_project_id>
 
 PROJECT_DIR=
-OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python
+OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.3/python
 RESULTS_DIR=$PROJECT_DIR/osu_results
 CONTAINERS=(\
     "cotainr-mpich3-pip-mpi4py.sif" \

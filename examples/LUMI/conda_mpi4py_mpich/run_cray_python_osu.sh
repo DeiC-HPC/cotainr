@@ -13,10 +13,10 @@
 #SBATCH --time=00:10:00
 #SBATCH --account=project_<your_project_id>
 
-module load cray-python
+module load cray-python/3.10.10
 
 PROJECT_DIR=
-OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.0.1/python
+OSU_PY_BENCHMARK_DIR=$PROJECT_DIR/osu-micro-benchmarks-7.3/python
 RESULTS_DIR=$PROJECT_DIR/osu_results
 
 set -x

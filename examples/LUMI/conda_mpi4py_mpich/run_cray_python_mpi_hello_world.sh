@@ -14,7 +14,7 @@
 #SBATCH --time=00:05:00
 #SBATCH --account=project_<your_project_id>
 
-module load cray-python
+module load cray-python/3.10.10
 
 PROJECT_DIR=
 

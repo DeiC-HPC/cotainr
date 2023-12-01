@@ -16,6 +16,7 @@ cotainr build lumi-mpi4py-mpich-demo.sif --system=lumi-c --conda-env py310_mpi4p
 
 Copy everything to LUMI, update the `--account=project_<your_project_id>` SBATCH directive in the SLURM batch scripts, and submit one of the SLURM batch scripts:
 
+SET PROJECT_DIR as well
 - 
 
 **WARNING: These mpi4py examples have been created to showcase the use of the mpi4py container built using `cotainr`. They may or may not provide optimal performance on LUMI. Please consult official LUMI channels for guidance on performance optimizing code for LUMI.**
@@ -27,9 +28,10 @@ TODO:
 - TL;DR or somehow separate recommended example from tests/benchmarks
 
 
-wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.0.1.tar.gz
-tar -xvf osu-micro-benchmarks-7.0.1.tar.gz osu-micro-benchmarks-7.0.1/python/
+wget http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.3.tar.gz
+tar -xvf osu-micro-benchmarks-7.3.tar.gz osu-micro-benchmarks-7.3/python/
 
+https://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-7.3.tar.gz
 
 http://nowlab.cse.ohio-state.edu/static/media/talks/slide/Alnaasan-OMB-Py-osu-booth.pdf
 https://pawseysc.github.io/containers-astro-python-workshop/3.hpc/index.htmlp
