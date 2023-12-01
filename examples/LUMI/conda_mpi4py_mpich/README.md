@@ -16,7 +16,7 @@ cotainr build lumi-mpi4py-mpich-demo.sif --system=lumi-c --conda-env py310_mpich
 
 with `py310_mpich3_pip_mpi4py.yml` from the `./containers` folder updated to your needs.
 
-When running the container, remember to add the `--mpi=pmi2` option to `srun` when using the MPICH installed by conda, or, alternatively, bind mount the host Cray-MPICH in the container, **NOT** specifying `--mpi-pmi2` but using the default `cray_shasta` instead.
+When running the container, remember to add the `--mpi=pmi2` option to `srun` when using the MPICH installed by conda, or, alternatively, bind mount the host Cray-MPICH in the container, **NOT** specifying `--mpi=pmi2` but using the default `cray_shasta` instead.
 
 ## Test/benchmark examples using mpi4py
 
