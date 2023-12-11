@@ -79,8 +79,8 @@ if [ \$SLURM_LOCALID -eq 0 ] ; then
 fi
 
 # Set NCCL debug output to check correct use of aws-ofi-rccl (these are very verbose)
-#export NCCL_DEBUG=INFO
-#export NCCL_DEBUG_SUBSYS=INIT,COLL
+export NCCL_DEBUG=INFO
+export NCCL_DEBUG_SUBSYS=INIT,COLL
 
 # Set interfaces to be used by RCCL.
 export NCCL_SOCKET_IFNAME=hsn0,hsn1,hsn2,hsn3

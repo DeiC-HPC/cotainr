@@ -3,10 +3,9 @@
 # "Tools in Action - An example with Pytorch"
 # https://lumi-supercomputer.github.io/LUMI-training-materials/4day-20231003/extra_4_10_Best_Practices_GPU_Optimization/
 # It uses a cotainr container including the py311_rocm542_pytorch.yml environment,
-# based on the official LUMI PyTorch container.
-# (this base image is the only one which includes ROCm and aws-ofi-rccl)
+# based on the official ROCm docker image (docker://rocm/dev-ubuntu-22.04:5.6.1-complete).
 
-#SBATCH --job-name=cotainr_lumisif_mnist_example
+#SBATCH --job-name=cotainr_docker_mnist_example
 #SBATCH --nodes=4
 #SBATCH --gpus-per-node=8
 #SBATCH --tasks-per-node=8
@@ -20,7 +19,7 @@
 set -x
 
 PROJECT_DIR=
-CONTAINER=$PROJECT_DIR/lumi-sfantao-pytorch-lumi-pytorch-base.sif
+CONTAINER=$PROJECT_DIR/lumi-sfantao-pytorch-rocm-docker-base.sif
 
 # Utility script to detect the master node
 rm -rf $PROJECT_DIR/get-master.py
@@ -79,7 +78,7 @@ fi
 
 # Set NCCL debug output to check correct use of aws-ofi-rccl (these are very verbose)
 export NCCL_DEBUG=INFO
-export NCCL_DEBUG_SUBSYS=INIT,COLL
+export NCCL_DEBUG_SUBSYS=ALL #INIT,COLL
 
 # Set interfaces to be used by RCCL.
 export NCCL_SOCKET_IFNAME=hsn0,hsn1,hsn2,hsn3
