@@ -1,0 +1,12 @@
+name: py310_mpich4_pip_mpi4py
+channels:
+  - conda-forge
+dependencies:
+  - c-compiler
+  - mpi=*=mpich
+  - mpich=4.1.2
+  - numpy=1.26.2
+  - pip
+  - python=3.10
+  - pip:
+    - mpi4py==3.1.1
