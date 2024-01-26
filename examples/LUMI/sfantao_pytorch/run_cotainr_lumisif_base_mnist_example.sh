@@ -20,7 +20,7 @@
 set -x
 
 PROJECT_DIR=
-CONTAINER=$PROJECT_DIR/lumi-sfantao-pytorch-lumi-pytorch-base.sif
+CONTAINER=$PROJECT_DIR/lumi-sfantao-pytorch-lumi-base.sif
 
 # Utility script to detect the master node
 rm -rf $PROJECT_DIR/get-master.py

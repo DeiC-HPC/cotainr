@@ -9,7 +9,7 @@ On LUMI, the containers may be built using:
 ```bash
 module load LUMI
 module load cotainr
-cotainr build lumi-sfantao-pytorch-lumi-base.sif --base-image=/appl/local/containers/sif-images/lumi-pytorch-rocm-5.5.1-python-3.10-pytorch-v2.0.1.sif --conda-env=py311_rocm542_pytorch.yml
+cotainr build lumi-sfantao-pytorch-lumi-base.sif --base-image=/appl/local/containers/sif-images/lumi-rocm-rocm-5.5.3.sif --conda-env=py311_rocm542_pytorch.yml
 cotainr build lumi-sfantao-pytorch-rocm-docker-base.sif --system=lumi-g --conda-env=py311_rocm542_pytorch.yml
 ```
 
@@ -18,8 +18,8 @@ cotainr build lumi-sfantao-pytorch-rocm-docker-base.sif --system=lumi-g --conda-
 Copy everything to LUMI, update the `--account=project_<your_project_id>` SBATCH directive in the SLURM batch scripts as well as the PROJECT_DIR to the directory, you copied everything to on LUMI, and submit *one* of the SLURM batch scripts:
 
 - `run_cotainr_docker_base_mnist_example.sh`: Run the MNIST example using a cotainr container based on an official ROCm docker image (docker://rocm/dev-ubuntu-22.04:5.6.1-complete).
-- `run_cotainr_lumisif_base_mnist_example.sh`: Run the MNIST example using a cotainr container based on the official LUMI PyTorch container (/appl/local/containers/sif-images/lumi-pytorch-rocm-5.5.1-python-3.10-pytorch-v2.0.1.sif)
-- `run_lumisif_mnist_example.sh`: Run the NMIST example using the offical LUMI PyTorch container (/appl/local/containers/sif-images/lumi-pytorch-rocm-5.5.1-python-3.10-pytorch-v2.0.1.sif)
+- `run_cotainr_lumisif_base_mnist_example.sh`: Run the MNIST example using a cotainr container based on the official LUMI ROCm base image (/appl/local/containers/sif-images/lumi-rocm-rocm-5.5.3.sif)
+- `run_lumisif_mnist_example.sh`: Run the NMIST example using the official LUMI PyTorch container (/appl/local/containers/sif-images/lumi-pytorch-rocm-5.5.1-python-3.10-pytorch-v2.0.1.sif)
 
 **WARNING: These PyTorch examples have been created to showcase the use of the PyTorch container built using `cotainr`. They may or may not provide optimal performance on LUMI. Please consult official LUMI channels for guidance on performance optimizing code for LUMI.**
 
@@ -35,7 +35,7 @@ Running the above SLURM batch scripts and looking through the output files, you 
 
 ## Notes
 
-- The `lumi-sfantao-pytorch-rocm-docker-base.sif` container is based on the official LUMI PyTorch container since (as of writing) the PyTorch container is the only container that includes both a ROCm stack and the aws-ofi-rccl plugin. By using this container as a base image we end up with two Python/PyTorch environments in the container - both the one provided with the base image and the one added by cotainr.
+- As of writing (2024-01-26), the version of `cotainr` available in the central LUMI stack does not include the [fix needed for using the official LUMI base images with cotainr](https://github.com/DeiC-HPC/cotainr/pull/49). Thus, until a newer version is available on LUMI, you would need the to use the `cotainr` git main branch to build the container on LUMI.
 - Only submit one of the above SLURM batch scripts at a time since they overwrite the run-script.sh, etc.
 - The --gpus-per-task flag is not working correctly on LUMI - see #5 under https://lumi-supercomputer.github.io/LUMI-training-materials/1day-20230921/notes_20230921/#running-jobs
 - When relying on sockets for NCCL communication, it seems that it sometimes randomly crashes with an error like (this needs more debugging on its own):
