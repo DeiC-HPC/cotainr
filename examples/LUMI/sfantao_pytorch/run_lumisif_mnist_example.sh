@@ -18,7 +18,7 @@
 set -x
 
 PROJECT_DIR=
-CONTAINER=$PROJECT_DIR/lumi-pytorch-rocm-5.5.1-python-3.10-pytorch-v2.0.1.sif
+CONTAINER=$PROJECT_DIR/lumi-pytorch-rocm-5.6.1-python-3.10-pytorch-v2.2.0.sif
 
 # Utility script to detect the master node
 rm -rf $PROJECT_DIR/get-master.py

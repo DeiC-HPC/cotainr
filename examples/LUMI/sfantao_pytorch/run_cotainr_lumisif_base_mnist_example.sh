@@ -2,8 +2,8 @@
 # This is a modified version of the 08-mnist-example.sh from the 10/2023 LUMI training
 # "Tools in Action - An example with Pytorch"
 # https://lumi-supercomputer.github.io/LUMI-training-materials/4day-20231003/extra_4_10_Best_Practices_GPU_Optimization/
-# It uses a cotainr container including the py311_rocm542_pytorch.yml environment,
-# based on the official LUMI PyTorch container.
+# It uses a cotainr container including the py312_rocm56_pytorch.yml environment,
+# based on the official LUMI ROCm base image.
 # (this base image is the only one which includes ROCm and aws-ofi-rccl)
 
 #SBATCH --job-name=cotainr_lumisif_mnist_example
