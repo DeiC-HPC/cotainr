@@ -28,29 +28,11 @@ Running the above SLURM batch scripts and looking through the output files, you 
 
 | Approach | NCCL INFO NET/* | GPU training time |
 | -------- | ----------------- | ----------------- |
-| `run_cotainr_docker_base_mnist_example.sh` | Using network Socket | 0:00:16 |
-| `run_cotainr_lumisif_base_mnist_example.sh` | Using aws-ofi-rccl 1.4.0 / Selected Provider is cxi | 0:00:20 |
-| `run_lumisif_mnist_example.sh` | Using aws-ofi-rccl 1.4.0 / Selected Provider is cxi | 0:00:21 |
+| `run_cotainr_docker_base_mnist_example.sh` | Using network Socket | 0:00:17 |
+| `run_cotainr_lumisif_base_mnist_example.sh` | Using aws-ofi-rccl 1.4.0 / Selected Provider is cxi | 0:00:17 |
+| `run_lumisif_mnist_example.sh` | Using aws-ofi-rccl 1.4.0 / Selected Provider is cxi | 0:00:17 |
 
 ## Notes
 
 - Only submit one of the above SLURM batch scripts at a time since they overwrite the run-script.sh, etc.
 - The --gpus-per-task flag is not working correctly on LUMI - see #5 under https://lumi-supercomputer.github.io/LUMI-training-materials/1day-20230921/notes_20230921/#running-jobs
-- When relying on sockets for NCCL communication, it seems that it sometimes randomly crashes with an error like (this needs more debugging on its own):
-
-```python
-Traceback (most recent call last):
-  File "/workdir/mnist/mnist_DDP.py", line 261, in <module>
-    run(modelpath=args.modelpath, gpu=args.gpu)
-  File "/workdir/mnist/mnist_DDP.py", line 205, in run
-    average_gradients(model)
-  File "/workdir/mnist/mnist_DDP.py", line 170, in average_gradients
-    group = dist.new_group([0])
-            ^^^^^^^^^^^^^^^^^^^
-  File "/opt/conda/envs/conda_container_env/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 3544, in new_group
-    _store_based_barrier(global_rank, default_store, timeout)
-  File "/opt/conda/envs/conda_container_env/lib/python3.11/site-packages/torch/distributed/distributed_c10d.py", line 456, in _store_based_barrier
-    worker_count = store.add(store_key, 0)
-                   ^^^^^^^^^^^^^^^^^^^^^^^
-RuntimeError: Connection reset by peer
-```
