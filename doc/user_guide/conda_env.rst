@@ -63,3 +63,27 @@ Pip packages
         - scipy==1.9.3
 
 allows for installing SciPy via pip.
+
+Pip packages from private repositories
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A pip package from a private repository behind an ssh key may be installed by enabling `ssh-agent forwarding <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/using-ssh-agent-forwarding>`_ on the host machine using `cotainr`.
+
+With `my_conda_env.yml` as
+
+.. code-block:: yaml
+    :caption: my_conda_env.yml
+
+    channels:
+      - conda-forge
+    dependencies:
+      - python=3.11.0
+      - git
+      - openssh
+      - pip
+      - pip:
+        - "--editable=git+ssh://git@github.com/foo/bar.git@SOMEHASHCODE#egg=baz"
+
+where :code:`github.com:foo/bar.git` is a private repository.
+
+This is fundamentally `an apptainer limitation/feature <https://stackoverflow.com/questions/65252415/use-ssh-key-of-host-during-singularity-apptainer-build>`_ and not related to `cotainr` per se.
+For this to work, the directory pointed to on the host by the :code:`SSH_AUTH_SOCK` environment variable must be bound to the container. If :code:`echo $SSH_AUTH_SOCK` already points to one of the directories bound by default, e.g. :code:`/tmp`, everything should work. Otherwise, another solution must be found, as `cotainr` does not expose directory binding from `apptainer`.
