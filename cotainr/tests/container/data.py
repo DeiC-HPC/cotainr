@@ -45,3 +45,12 @@ def data_cached_ubuntu_sif(tmp_path_factory):
         "ubuntu:latest",
         tmp_path_factory.mktemp("singularity_images") / "ubuntu_latest.sif",
     )
+
+
+@pytest.fixture(scope="session")
+def data_cached_python312_sif(tmp_path_factory):
+    """A session scope cached SIF image of the latest Python 3.12 container."""
+    return _pull_image(
+        "python:3.12-slim",
+        tmp_path_factory.mktemp("singularity_images") / "python312_latest.sif",
+    )
