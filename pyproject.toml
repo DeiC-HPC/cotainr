@@ -145,5 +145,6 @@ junit_suite_name = [
 markers = [
     "conda_integration: marks tests of integration with conda/mamba",
     "endtoend: marks end-to-end test cases",
+    "pip_integration: marks tests of integration with pip",
     "singularity_integration: marks tests of integration with singularity",
 ]

@@ -98,7 +98,7 @@ class PackBase:
 
         Parameters
         ----------
-        cmd : str
+        cmd : str or list
             The command to run in the container sandbox.
 
         Returns

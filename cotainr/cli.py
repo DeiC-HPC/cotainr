@@ -26,6 +26,7 @@ main(\*args, \*\*kwargs)
     Main CLI entrypoint.
 """
 
+import os
 from abc import ABC, abstractmethod
 import argparse
 from datetime import datetime
@@ -40,6 +41,7 @@ import time
 
 from . import container
 from . import pack
+from . import pip
 from . import tracing
 from . import util
 from . import _minimum_dependency_version as _min_dep_ver
@@ -86,6 +88,8 @@ class Build(CotainrSubcommand):
         Path to a Conda environment.yml file to install and activate in the
         container. When installing a Conda environment, you must accept the
         Miniforge license terms, as specified during the build process.
+    requirements_txt : :class:`os.PathLike`, optional
+        Path to a requirements.txt file to install in the container.
     system : str
         Which system/partition you will be running the container on. This sets
         base image and other parameters for a simpler container creation.
@@ -110,6 +114,7 @@ class Build(CotainrSubcommand):
         image_path,
         base_image=None,
         conda_env=None,
+        requirements_txt=None,
         system=None,
         accept_licenses=False,
         verbosity=0,
@@ -145,6 +150,7 @@ class Build(CotainrSubcommand):
                 self.base_image = self.system["base-image"]
             else:
                 raise KeyError("System does not exist")
+
         if conda_env is not None:
             self.conda_env = Path(conda_env).resolve()
             if not self.conda_env.exists():
@@ -153,6 +159,15 @@ class Build(CotainrSubcommand):
                 )
         else:
             self.conda_env = None
+
+        if requirements_txt is not None:
+            self.requirements_txt = Path(requirements_txt).resolve()
+            if not self.requirements_txt.is_file():
+                raise FileNotFoundError(
+                    f"The provided requirements.txt file '{self.requirements_txt}' is not a file."
+                )
+        else:
+            self.requirements_txt = None
 
     @classmethod
     def add_arguments(cls, *, parser):
@@ -171,9 +186,17 @@ class Build(CotainrSubcommand):
             "--system",
             help=_extract_help_from_docstring(arg="system", docstring=cls.__doc__),
         )
-        parser.add_argument(
+        sources = parser.add_mutually_exclusive_group()
+        sources.add_argument(
             "--conda-env",
             help=_extract_help_from_docstring(arg="conda_env", docstring=cls.__doc__),
+            type=Path,
+        )
+        sources.add_argument(
+            "--requirements-txt",
+            help=_extract_help_from_docstring(
+                arg="requirements_txt", docstring=cls.__doc__
+            ),
             type=Path,
         )
         parser.add_argument(
@@ -246,6 +269,26 @@ class Build(CotainrSubcommand):
                     conda_install.cleanup_unused_files()
                     logger.info(
                         "Finished installing conda environment: %s", self.conda_env
+                    )
+                if self.requirements_txt is not None:
+                    logger.info(
+                        "Creating virtualenv with requirements: %s",
+                        self.requirements_txt,
+                    )
+                    requirements_txt_file = (
+                        sandbox.sandbox_dir / "cotainr_requirements.txt"
+                    )
+                    shutil.copyfile(self.requirements_txt, requirements_txt_file)
+                    pip_install = pip.PipInstall(
+                        sandbox=sandbox,
+                        log_settings=self.log_settings,
+                        use_uv=bool(os.environ.get("COTAINR_USE_UV")),
+                    )
+                    pip_install.configure(
+                        requirements_files=[requirements_txt_file], add_to_env=True
+                    )
+                    logger.info(
+                        "Finished installing virtualenv in %s", pip_install.prefix
                     )
 
                 logger.info("Adding metadata to container")

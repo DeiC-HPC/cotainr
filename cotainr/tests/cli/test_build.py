@@ -446,38 +446,49 @@ class TestHelpMessage:
         with pytest.raises(SystemExit):
             CotainrCLI(args=["build", "--help"])
         stdout = capsys.readouterr().out
-        assert stdout == (
-            # Capsys apparently assumes an 80 char terminal (?) - thus extra '\n'
-            "usage: cotainr build [-h] (--base-image BASE_IMAGE | --system SYSTEM)\n"
-            "                     [--conda-env CONDA_ENV] [--accept-licenses]\n"
-            "                     [--verbose | --quiet] [--log-to-file] [--no-color]\n"
-            "                     image_path\n\n"
-            "Build a container.\n\n"
-            "positional arguments:\n"
-            "  image_path            path to the built container image\n\n"
-            f"{argparse_options_line}"
-            "  -h, --help            show this help message and exit\n"
-            "  --base-image BASE_IMAGE\n"
-            "                        base image to use for the container which may be any\n"
-            "                        valid Apptainer/Singularity <BUILD SPEC>\n"
-            "  --system SYSTEM       which system/partition you will be running the\n"
-            "                        container on. This sets base image and other\n"
-            "                        parameters for a simpler container creation. Running\n"
-            "                        the info command will tell you more about the system\n"
-            "                        and what is available\n"
-            "  --conda-env CONDA_ENV\n"
-            "                        path to a Conda environment.yml file to install and\n"
-            "                        activate in the container. When installing a Conda\n"
-            "                        environment, you must accept the Miniforge license\n"
-            "                        terms, as specified during the build process\n"
-            "  --accept-licenses     accept all license terms (if any) needed for\n"
-            "                        completing the container build process\n"
-            "  --verbose, -v         increase the verbosity of the output from cotainr. Can\n"
-            "                        be used multiple times: Once for subprocess output,\n"
-            "                        twice for subprocess INFO, three times for DEBUG, and\n"
-            "                        four times for TRACE\n"
-            "  --quiet, -q           do not show any non-CRITICAL output from cotainr\n"
-            "  --log-to-file         create files containing all logging information shown\n"
-            "                        on stdout/stderr\n"
-            "  --no-color            do not use colored console output\n"
+        # You can use e.g. `cotainr build --help > a.txt` to generate the
+        # help output in the 80 columns that's defaulted to when
+        # stdout isn't a TTY.
+        assert stdout.strip() == (
+            """
+usage: cotainr build [-h] (--base-image BASE_IMAGE | --system SYSTEM)
+                     [--conda-env CONDA_ENV | --requirements-txt REQUIREMENTS_TXT]
+                     [--accept-licenses] [--verbose | --quiet] [--log-to-file]
+                     [--no-color]
+                     image_path
+
+Build a container.
+
+positional arguments:
+  image_path            path to the built container image
+
+options:
+  -h, --help            show this help message and exit
+  --base-image BASE_IMAGE
+                        base image to use for the container which may be any
+                        valid Apptainer/Singularity <BUILD SPEC>
+  --system SYSTEM       which system/partition you will be running the
+                        container on. This sets base image and other
+                        parameters for a simpler container creation. Running
+                        the info command will tell you more about the system
+                        and what is available
+  --conda-env CONDA_ENV
+                        path to a Conda environment.yml file to install and
+                        activate in the container. When installing a Conda
+                        environment, you must accept the Miniforge license
+                        terms, as specified during the build process
+  --requirements-txt REQUIREMENTS_TXT
+                        path to a requirements.txt file to install in the
+                        container
+  --accept-licenses     accept all license terms (if any) needed for
+                        completing the container build process
+  --verbose, -v         increase the verbosity of the output from cotainr. Can
+                        be used multiple times: Once for subprocess output,
+                        twice for subprocess INFO, three times for DEBUG, and
+                        four times for TRACE
+  --quiet, -q           do not show any non-CRITICAL output from cotainr
+  --log-to-file         create files containing all logging information shown
+                        on stdout/stderr
+  --no-color            do not use colored console output
+""".strip()
         )
