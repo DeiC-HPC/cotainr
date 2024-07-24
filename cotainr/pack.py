@@ -13,6 +13,8 @@ CondaInstall
     A Conda installation in a container sandbox.
 """
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
 import random
@@ -23,13 +25,133 @@ import time
 import urllib.error
 import urllib.request
 
+from . import container
 from . import tracing
 from . import util
+
 
 logger = logging.getLogger(__name__)
 
 
-class CondaInstall:
+class PackBase:
+    def __init__(
+        self,
+        *,
+        sandbox: container.SingularitySandbox,
+        log_settings: tracing.LogSettings | None = None,
+    ):
+        """
+        sandbox : :class:`~cotainr.container.SingularitySandbox`
+            The sandbox in which things are installed.
+
+        log_settings : :class:`~cotainr.tracing.LogSettings`, optional
+            The data used to setup the logging machinery (the default is None which
+            implies that the logging machinery is not used).
+        """
+        self.sandbox = sandbox
+        if log_settings is not None:
+            self._verbosity = log_settings.verbosity
+            self.log_dispatcher = tracing.LogDispatcher(
+                name=self.__class__.__name__,
+                filters=self._create_logging_filters(),
+                map_log_level_func=self._map_log_level,
+                log_settings=log_settings,
+            )
+        else:
+            self._verbosity = 0
+            self.log_dispatcher = None
+
+    def _display_message(self, *, msg, log_level=None):
+        """
+        Display a message to the user.
+
+        Displays the message using the `log_dispatcher` if `log_level` is not
+        `None` and a `log_dispatcher` is defined for the `CondaInstall`.
+        Otherwise prints the message on stdout. When the `log_dispatcher` is
+        used, messages with `log_levels` of WARNING or above are sent to stderr
+        whereas massages with with `log_level` below WARNING are sent to
+        stdout.
+
+        Parameters
+        ----------
+        msg : str
+            The message to display to the user.
+        log_level : int, optional
+            The logging level to use for the message, e.g. `logging.INFO` or
+            `logging.WARNING`.
+        """
+        if self.log_dispatcher is None or log_level is None:
+            print(msg)
+        else:
+            if log_level >= logging.WARNING:
+                self.log_dispatcher.logger_stderr.log(level=log_level, msg=msg)
+            else:
+                self.log_dispatcher.logger_stdout.log(level=log_level, msg=msg)
+
+    def _run_command_in_sandbox(self, *, cmd):
+        """
+        Wrap the sandbox command runner to use class specific log_dispatcher.
+
+        Wraps calls to `self.sandbox.run_command_in_container` to use
+        self.log_dispatcher for log handling instead of the sandbox's log
+        dispatcher.
+
+        Parameters
+        ----------
+        cmd : str
+            The command to run in the container sandbox.
+
+        Returns
+        -------
+        process : :class:`subprocess.CompletedProcess`
+            Information about the process that ran in the container sandbox.
+        """
+        return self.sandbox.run_command_in_container(
+            cmd=cmd, custom_log_dispatcher=self.log_dispatcher
+        )
+
+    def _create_logging_filters(self):
+        """
+        Return logging filters for this class.
+        """
+        return []
+
+    @staticmethod
+    def _map_log_level(msg):
+        """
+        Attempt to infer log level for a message.
+
+        Parameters
+        ----------
+        msg : str
+            The message to infer log level for.
+
+        Returns
+        -------
+        log_level : int
+            One of the standard log levels (DEBUG, INFO, WARNING, ERROR, or
+            CRITICAL).
+        """
+        if (
+            msg.startswith("DEBUG")
+            or msg.startswith("VERBOSE")
+            or msg.startswith("TRACE")
+        ):
+            return logging.DEBUG
+        elif msg.startswith("INFO"):
+            return logging.INFO
+        elif msg.startswith("WARNING"):
+            return logging.WARNING
+        elif msg.startswith("ERROR"):
+            return logging.ERROR
+        elif msg.startswith("CRITICAL"):
+            return logging.CRITICAL
+        else:
+            # If no prefix on message, assume its INFO level
+            return logging.INFO
+
+
+class CondaInstall(PackBase):
     """
     A Conda installation in a container sandbox.
 
@@ -82,20 +204,10 @@ class CondaInstall:
         log_settings=None,
     ):
         """Bootstrap a conda installation."""
+        super().__init__(sandbox=sandbox, log_settings=log_settings)
         self.sandbox = sandbox
         self.prefix = prefix
         self.license_accepted = license_accepted
-        if log_settings is not None:
-            self._verbosity = log_settings.verbosity
-            self.log_dispatcher = tracing.LogDispatcher(
-                name=__class__.__name__,
-                map_log_level_func=self._map_log_level,
-                filters=self._logging_filters,
-                log_settings=log_settings,
-            )
-        else:
-            self._verbosity = 0
-            self.log_dispatcher = None
 
         # Download Miniforge installer
         conda_installer_path = (
@@ -191,33 +303,6 @@ class CondaInstall:
                 "We risk destroying the Conda install in "
                 f"{source_check_process.stdout.strip()}. Aborting!"
             )
-
-    def _display_message(self, *, msg, log_level=None):
-        """
-        Display a message to the user.
-
-        Displays the message using the `log_dispatcher` if `log_level` is not
-        `None` and a `log_dispatcher` is defined for the `CondaInstall`.
-        Otherwise prints the message on stdout. When the `log_dispatcher` is
-        used, messages with `log_levels` of WARNING or above are sent to stderr
-        whereas massages with with `log_level` below WARNING are sent to
-        stdout.
-
-        Parameters
-        ----------
-        msg : str
-            The message to display to the user.
-        log_level : int, optional
-            The logging level to use for the message, e.g. `logging.INFO` or
-            `logging.WARNING`.
-        """
-        if self.log_dispatcher is None or log_level is None:
-            print(msg)
-        else:
-            if log_level >= logging.WARNING:
-                self.log_dispatcher.logger_stderr.log(level=log_level, msg=msg)
-            else:
-                self.log_dispatcher.logger_stdout.log(level=log_level, msg=msg)
 
     def _display_miniforge_license_for_acceptance(self, *, installer_path):
         """
@@ -361,28 +446,6 @@ class CondaInstall:
         else:
             raise url_error
 
-    def _run_command_in_sandbox(self, *, cmd):
-        """
-        Wrap the sandbox command runner to use class specific log_dispatcher.
-
-        Wraps calls to `self.sandbox.run_command_in_container` to use
-        self.log_dispatcher for log handling instead of the sandbox's log
-        dispatcher.
-
-        Parameters
-        ----------
-        cmd : str
-            The command to run in the container sandbox.
-
-        Returns
-        -------
-        process : :class:`subprocess.CompletedProcess`
-            Information about the process that ran in the container sandbox.
-        """
-        return self.sandbox.run_command_in_container(
-            cmd=cmd, custom_log_dispatcher=self.log_dispatcher
-        )
-
     @property
     def _conda_verbosity_arg(self):
         """
@@ -412,8 +475,7 @@ class CondaInstall:
         else:
             return ""
 
-    @property
-    def _logging_filters(self):
+    def _create_logging_filters(self):
         """
         Create logging filters for messages from conda commands.
 
@@ -470,37 +532,3 @@ class CondaInstall:
         ]
 
         return logging_filters
-
-    @staticmethod
-    def _map_log_level(msg):
-        """
-        Attempt to infer log level for a message.
-
-        Parameters
-        ----------
-        msg : str
-            The message to infer log level for.
-
-        Returns
-        -------
-        log_level : int
-            One of the standard log levels (DEBUG, INFO, WARNING, ERROR, or
-            CRITICAL).
-        """
-        if (
-            msg.startswith("DEBUG")
-            or msg.startswith("VERBOSE")
-            or msg.startswith("TRACE")
-        ):
-            return logging.DEBUG
-        elif msg.startswith("INFO"):
-            return logging.INFO
-        elif msg.startswith("WARNING"):
-            return logging.WARNING
-        elif msg.startswith("ERROR"):
-            return logging.ERROR
-        elif msg.startswith("CRITICAL"):
-            return logging.CRITICAL
-        else:
-            # If no prefix on message, assume its INFO level
-            return logging.INFO
