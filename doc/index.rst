@@ -13,7 +13,7 @@ cotainr documentation
    :maxdepth: 1
    :hidden:
    :includehidden:
-   
+
    Getting Started <getting_started>
    User Guide <user_guide/index>
    API reference <api_reference/index>

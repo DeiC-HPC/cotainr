@@ -24,7 +24,7 @@ The command line interface is implemented in the :mod:`cotainr.cli` module. It c
 The :class:`~cotainr.cli.CotainrCLI` class is intended to be used as:
 
 .. code-block:: python
-    
+
     cli = CotainrCLI()
     cli.subcommand.execute()
 
