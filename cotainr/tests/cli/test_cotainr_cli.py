@@ -6,6 +6,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 - see the LICENSE file for details.
 
 """
+
 import itertools
 import logging
 import re
@@ -138,13 +139,16 @@ class TestHelpMessage:
             argparse_options_line=argparse_options_line
         )
 
+
 class TestVersionMessage:
     def test_main_version(self, capsys):
         from cotainr import __version__ as _cotainr_version
+
         with pytest.raises(SystemExit):
             CotainrCLI(args=["--version"])
         stdout = capsys.readouterr().out
         assert stdout == f"cotainr {_cotainr_version}\n"
+
 
 class Test_SetupCotainrCLILogging:
     @pytest.mark.parametrize("verbosity", [-1, -2, -3, -5, -1000])

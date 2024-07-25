@@ -94,7 +94,6 @@ class TestConstructor:
 
         # Log test messages to log dispatcher loggers
         for logger in [log_dispatcher.logger_stdout, log_dispatcher.logger_stderr]:
-
             # Log messages
             for level, msg in log_level_msgs.items():
                 logger.log(level=level, msg=msg)
@@ -140,7 +139,6 @@ class TestConstructor:
 
         # Log test messages to log dispatcher loggers
         for logger in [log_dispatcher.logger_stdout, log_dispatcher.logger_stderr]:
-
             # Log messages
             for level, msg in log_level_msgs.items():
                 logger.log(level=level, msg=msg)
@@ -199,7 +197,6 @@ class TestConstructor:
 
         # Log test messages to log dispatcher loggers
         for logger in [log_dispatcher.logger_stdout, log_dispatcher.logger_stderr]:
-
             # Log messages
             for level, msg in log_level_msgs.items():
                 logger.log(level=level, msg=msg)
@@ -244,7 +241,6 @@ class TestConstructor:
 
         # Log test messages to log dispatcher loggers
         for logger in [log_dispatcher.logger_stdout, log_dispatcher.logger_stderr]:
-
             # Log messages
             for level, msg in log_level_msgs.items():
                 logger.log(level=level, msg=msg)
@@ -291,7 +287,6 @@ class TestConstructor:
 
         # Log test messages to log dispatcher loggers
         for logger in [log_dispatcher.logger_stdout, log_dispatcher.logger_stderr]:
-
             # Log messages
             for level, msg in log_level_msgs.items():
                 logger.log(level=level, msg=msg)
@@ -338,7 +333,6 @@ class TestConstructor:
 
         # Log test messages to log dispatcher loggers
         for logger in [log_dispatcher.logger_stdout, log_dispatcher.logger_stderr]:
-
             # Log messages
             for level, msg in log_level_msgs.items():
                 logger.log(level=level, msg=msg)

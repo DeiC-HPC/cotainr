@@ -6,6 +6,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 - see the LICENSE file for details.
 
 """
+
 import logging
 
 import pytest

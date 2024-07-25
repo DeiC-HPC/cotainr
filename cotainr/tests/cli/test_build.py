@@ -377,9 +377,7 @@ class TestExecute:
             conda_env_create_cmd,
             conda_clean_cmd,
             sandbox_build_cmd,
-        ) = (
-            capsys.readouterr().out.strip().split("\n")
-        )
+        ) = capsys.readouterr().out.strip().split("\n")
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
         assert all(
             s in sandbox_create_cmd
