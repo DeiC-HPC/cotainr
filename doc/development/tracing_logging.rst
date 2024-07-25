@@ -57,7 +57,7 @@ In order to take advantage of this machinery, CLI subcommands must:
 
 An example of a subcommand implementing this is :class:`cotainr.cli.Build`.
 
-Futhermore, `cotainr` functionality that spawn subprocesses, e.g. :class:`cotainr.container.SingularitySandbox` or :class:`cotainr.pack.CondaInstall` must:
+Furthermore, `cotainr` functionality that spawn subprocesses, e.g. :class:`cotainr.container.SingularitySandbox` or :class:`cotainr.pack.CondaInstall` must:
 
 - Implement a `map_log_level_func` function, that (attempts to) infers the correct logging level for a given message.
 - Instantiate their own :class:`~cotainr.tracing.LogDispatcher`, which should be passed to :func:`cotainr.util.stream_subprocess` when spawning subprocesses.

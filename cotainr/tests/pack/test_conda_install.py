@@ -408,7 +408,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
             "Miniforge installer code uses BSD-3-Clause license as stated below."
         ) in stdout
         assert (
-            "Miniforge installer comes with a boostrapping executable that is used\n"
+            "Miniforge installer comes with a bootstrapping executable that is used\n"
             "when installing miniforge and is deleted after miniforge is installed."
         ) in stdout
         assert "conda-forge" in stdout
