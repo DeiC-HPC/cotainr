@@ -30,7 +30,7 @@ tags = [
         ).stdout.splitlines()
     )
     # Checking if the tag matches the versioning scheme YYYY.MM.MINOR
-    if match("^20[0-9]{2}\.(0[1-9]|10|11|12)\.[0-9]+$", tag) is not None
+    if match(r"^20[0-9]{2}\.(0[1-9]|10|11|12)\.[0-9]+$", tag) is not None
 ]
 tags.reverse()
 

@@ -393,7 +393,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
     ):
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox)
+            CondaInstall(sandbox=sandbox)
 
         stdout = capsys.readouterr().out.strip()
 

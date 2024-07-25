@@ -190,7 +190,7 @@ class TestAddArguments:
         Build.add_arguments(parser=parser)
 
         with pytest.raises(SystemExit):
-            args = parser.parse_args(
+            parser.parse_args(
                 args=shlex.split(
                     f"{image_path} --system {system} --base-image {base_image}"
                 )
@@ -275,7 +275,7 @@ class TestAddArguments:
         base_image = "some_base_image_6021"
 
         with pytest.raises(SystemExit):
-            args = parser.parse_args(
+            parser.parse_args(
                 args=shlex.split(
                     f"{image_path} --base-image={base_image} --verbose --quiet"
                 )

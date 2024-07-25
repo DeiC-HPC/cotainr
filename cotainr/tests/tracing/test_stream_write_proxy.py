@@ -47,7 +47,7 @@ class TestGetAttr:
             AttributeError,
             match=r"StringIO' object has no attribute 'some_nonsense_attribute_6021'$",
         ):
-            stream_write_proxy.some_nonsense_attribute_6021
+            _ = stream_write_proxy.some_nonsense_attribute_6021
 
     def test_successful_attribute_lookup_delegation(self):
         stream = io.StringIO("some text 6021")
