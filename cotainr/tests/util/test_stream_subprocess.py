@@ -32,13 +32,21 @@ class TestStreamSubprocess:
         assert process.returncode == 0
         assert process.stdout.strip() == platform.python_version()
 
-    def test_check_returncode(self):
-        cmd_exit = [sys.executable, "-c", "import sys; sys.exit(1)"]
+    def test_check_returncode(self, capsys):
+        cmd_exit = [sys.executable, "-c", "asdf"]
         with pytest.raises(subprocess.CalledProcessError) as exc_info:
             stream_subprocess(args=cmd_exit)
+        stdout = capsys.readouterr().out
+        check_stderr = (
+            f'A subprocess command {cmd_exit} failed with returncode 1\n'
+            ' Traceback (most recent call last):\n'
+            '  File "<string>", line 1, in <module>\n'
+            'NameError: name \'asdf\' is not defined\n\n')
 
         assert exc_info.value.returncode == 1
         assert exc_info.value.cmd == cmd_exit
+        assert stdout == check_stderr
+
 
     def test_kwargs_passing(self):
         env = {"COTAINR_TEST_ENV_VAR": "6021"}
