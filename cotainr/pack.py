@@ -24,6 +24,7 @@ import urllib.error
 import urllib.request
 
 from . import tracing
+from . import util
 
 logger = logging.getLogger(__name__)
 
@@ -254,6 +255,7 @@ class CondaInstall:
             )
             process.kill()  # We only use this process to extract the license
 
+        util._flush_input()
         if license_text:
             license_text = license_text.replace(
                 # remove prompt for pressing enter (as we have already done this...)
