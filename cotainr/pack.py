@@ -256,7 +256,7 @@ class CondaInstall:
             )
             process.kill()  # We only use this process to extract the license
 
-        util._flush_input()
+        util._flush_stdin_buffer()
         if license_text:
             license_text = license_text.replace(
                 # remove prompt for pressing enter (as we have already done this...)
