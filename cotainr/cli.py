@@ -459,8 +459,9 @@ class CotainrCLI:
         parser = argparse.ArgumentParser(
             prog="cotainr", description=builder_cli_doc_summary
         )
-        parser.add_argument('--version', action='version',
-                            version=f"%(prog)s {_cotainr_version}")
+        parser.add_argument(
+            "--version", action="version", version=f"%(prog)s {_cotainr_version}"
+        )
 
         # Add subcommands parsers
         if self._subcommands:
