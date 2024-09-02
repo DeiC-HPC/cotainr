@@ -138,7 +138,8 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     except subprocess.CalledProcessError as err:
         print(f"A subprocess command {err.cmd} " +
               f"failed with returncode {err.returncode}\n",
-              err.stderr)
+              f"Returned error:\n {err.stderr}"
+              f"Returned output:\n {err.stdout}")
         raise
 
     return completed_process

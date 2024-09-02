@@ -39,9 +39,11 @@ class TestStreamSubprocess:
         stdout = capsys.readouterr().out
         check_stderr = (
             f'A subprocess command {cmd_exit} failed with returncode 1\n'
+            ' Returned error:\n'
             ' Traceback (most recent call last):\n'
             '  File "<string>", line 1, in <module>\n'
-            'NameError: name \'asdf\' is not defined\n\n')
+            'NameError: name \'asdf\' is not defined\n'
+            'Returned output:\n \n')
 
         assert exc_info.value.returncode == 1
         assert exc_info.value.cmd == cmd_exit
