@@ -43,7 +43,7 @@ from . import pack
 from . import tracing
 from . import util
 from . import _minimum_dependency_version as _min_dep_ver
-from . import __version__
+from . import __version__ as _cotainr_version
 
 logger = logging.getLogger(__name__)
 
@@ -460,7 +460,7 @@ class CotainrCLI:
             prog="cotainr", description=builder_cli_doc_summary
         )
         parser.add_argument('--version', action='version',
-                            version=f'cotainr-{__version__}')
+                            version=f"%(prog)s {_cotainr_version}")
 
         # Add subcommands parsers
         if self._subcommands:
