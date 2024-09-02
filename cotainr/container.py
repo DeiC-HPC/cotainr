@@ -238,30 +238,21 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        try:
-            process = self._subprocess_runner(
-                custom_log_dispatcher=custom_log_dispatcher,
-                args=self._add_verbosity_arg(
-                    args=[
-                        "singularity",
-                        "--nocolor",
-                        "exec",
-                        "--writable",
-                        "--no-home",
-                        "--no-umask",
-                        self.sandbox_dir,
-                        *shlex.split(cmd),
-                    ]
-                ),
-            )
-        except subprocess.CalledProcessError as e:
-            singularity_fatal_error = "\n".join(
-                [line for line in e.stderr.split("\n") if line.startswith("FATAL")]
-            )
-            raise ValueError(
-                f"Invalid command {cmd=} passed to Singularity "
-                f"resulted in the FATAL error: {singularity_fatal_error}"
-            ) from e
+        process = self._subprocess_runner(
+            custom_log_dispatcher=custom_log_dispatcher,
+            args=self._add_verbosity_arg(
+                args=[
+                    "singularity",
+                    "--nocolor",
+                    "exec",
+                    "--writable",
+                    "--no-home",
+                    "--no-umask",
+                    self.sandbox_dir,
+                    *shlex.split(cmd),
+                ]
+            ),
+        )
 
         return process
 
