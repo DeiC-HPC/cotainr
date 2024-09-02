@@ -161,18 +161,14 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
 
     return captured_stream
 
-def _flush_input():
-    """
-    Flush the keyboard buffer.
 
-    This reads characters from the keyboard input and discards them until there
-    are no more currently buffered, and then allows the program to continue.
+def _flush_stdin_buffer():
+    """
+    Discard queued data on stdin file descriptor.
+    TCIOFLUSH selects both the input queue and output queue to be discarded
+
     https://stackoverflow.com/questions/2520893/how-to-flush-the-input-stream
     """
-    try:  # Windows
-        from msvcrt import kbhit, getch
-        while kbhit():
-            getch()
-    except ImportError:  # Linux/Unix
-        from termios import tcflush, TCIOFLUSH
-        tcflush(sys.stdin, TCIOFLUSH)
+    # Python Standard library, Linux/Unix/OSX
+    from termios import tcflush, TCIOFLUSH
+    tcflush(sys.stdin, TCIOFLUSH)
