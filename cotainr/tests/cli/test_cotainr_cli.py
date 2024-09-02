@@ -140,10 +140,11 @@ class TestHelpMessage:
 
 class TestVersionMessage:
     def test_main_version(self, capsys):
+        from cotainr import __version__ as _cotainr_version
         with pytest.raises(SystemExit):
             CotainrCLI(args=["--version"])
         stdout = capsys.readouterr().out
-        assert stdout == f"cotainr {cotainr.__version__}"
+        assert stdout == f"cotainr {_cotainr_version}\n"
 
 class Test_SetupCotainrCLILogging:
     @pytest.mark.parametrize("verbosity", [-1, -2, -3, -5, -1000])
