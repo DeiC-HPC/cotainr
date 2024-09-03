@@ -60,7 +60,7 @@ class TestConstructor:
         with pytest.raises(SystemExit):
             CotainrCLI(args=[]).subcommand.execute()
         stdout = capsys.readouterr().out
-        assert stdout.startswith("usage: cotainr [-h]\n")
+        assert stdout.startswith("usage: cotainr [-h] [--version]\n")
         assert "subcommands:" not in stdout
 
     def test_setup_custom_cli_log_settings_logger(
@@ -111,10 +111,11 @@ class TestConstructor:
 class TestHelpMessage:
     cotainr_main_help_msg = (
         # Capsys apparently assumes an 80 char terminal (?) - thus extra '\n'
-        "usage: cotainr [-h] {{build,info}} ...\n\n"
+        "usage: cotainr [-h] [--version] {{build,info}} ...\n\n"
         "Build Apptainer/Singularity containers for HPC systems in user space.\n\n"
         "{argparse_options_line}"
-        "  -h, --help    show this help message and exit\n\n"
+        "  -h, --help    show this help message and exit\n"
+        "  --version     show program's version number and exit\n\n"
         "subcommands:\n  {{build,info}}\n"
         "    build       Build a container.\n"
         "    info        Obtain info about the state of all required dependencies for\n"
@@ -137,6 +138,13 @@ class TestHelpMessage:
             argparse_options_line=argparse_options_line
         )
 
+class TestVersionMessage:
+    def test_main_version(self, capsys):
+        from cotainr import __version__ as _cotainr_version
+        with pytest.raises(SystemExit):
+            CotainrCLI(args=["--version"])
+        stdout = capsys.readouterr().out
+        assert stdout == f"cotainr {_cotainr_version}\n"
 
 class Test_SetupCotainrCLILogging:
     @pytest.mark.parametrize("verbosity", [-1, -2, -3, -5, -1000])
