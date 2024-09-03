@@ -35,13 +35,13 @@ In order to get started using `cotainr`, you need to download and install the `c
 
                 .. tab-item:: LUMI
 
-                    `cotainr` may be loaded as a module from the LUMI software stack. It includes :ref:`system information <hpc_systems_information>`.
+                    `cotainr` may be loaded as a module from the `CrayEnv software stack <https://docs.lumi-supercomputer.eu/runjobs/lumi_env/softwarestacks/#crayenv>`_. It includes :ref:`system information <hpc_systems_information>`.
 
                     For instance, building a container for LUMI-G:
 
                     .. code-block:: console
 
-                        $ module load LUMI
+                        $ module load CrayEnv
                         $ module load cotainr
                         $ cotainr build my_container.sif --system=lumi-g <...>
 
