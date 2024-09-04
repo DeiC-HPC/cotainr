@@ -136,11 +136,8 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     try:
         completed_process.check_returncode()
     except subprocess.CalledProcessError as err:
-        print(f"A subprocess command {err.cmd} " +
-              f"failed with returncode {err.returncode}\n",
-              f"Returned error:\n {err.stderr}"
-              f"Returned output:\n {err.stdout}")
-        raise
+        log_dispatcher.log_exception(err) if log_dispatcher is not None else print(err.stderr)
+        sys.exit()
 
     return completed_process
 
