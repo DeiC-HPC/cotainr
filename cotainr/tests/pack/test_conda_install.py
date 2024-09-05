@@ -408,13 +408,13 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
             "Miniforge installer comes",
             "installing miniforge and is deleted",
             "bootstrapping executable uses",
-            "micromamba"]
+            "micromamba",
+            "conda-forge",
+            "All rights reserved."]
         for licensePart in miniforgeList:
             assert (
                 licensePart
             ) in stdout
-        assert "conda-forge" in stdout
-        assert "All rights reserved." in stdout
 
 
 class Test_DownloadMiniforgeInstaller:
