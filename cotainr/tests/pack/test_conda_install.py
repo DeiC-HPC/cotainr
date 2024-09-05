@@ -405,9 +405,9 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         # terms from the installer - just to have an idea that the license is
         # still being shown correctly to the user
         miniforgeList = [
-            "Miniforge installer comes"
-            "installing miniforge and is deleted"
-            "bootstrapping executable uses"
+            "Miniforge installer comes",
+            "installing miniforge and is deleted",
+            "bootstrapping executable uses",
             "micromamba"]
         for licensePart in miniforgeList:
             assert (
