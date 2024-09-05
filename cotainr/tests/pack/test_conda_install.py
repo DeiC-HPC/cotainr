@@ -404,13 +404,15 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         # shown to the user when extracting and showing the Miniforge license
         # terms from the installer - just to have an idea that the license is
         # still being shown correctly to the user
-        assert (
-            "Miniforge installer code uses BSD-3-Clause license as stated below."
-        ) in stdout
-        assert (
-            "Miniforge installer comes with a boostrapping executable that is used\n"
-            "when installing miniforge and is deleted after miniforge is installed."
-        ) in stdout
+        miniforgeList = [
+            "Miniforge installer comes"
+            "installing miniforge and is deleted"
+            "bootstrapping executable uses"
+            "micromamba"]
+        for licensePart in miniforgeList:
+            assert (
+                licensePart
+            ) in stdout
         assert "conda-forge" in stdout
         assert "All rights reserved." in stdout
 
