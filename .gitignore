@@ -141,3 +141,6 @@ dmypy.json
 _build/
 
 systems.json
+
+# OSX generated files
+.DS_store
