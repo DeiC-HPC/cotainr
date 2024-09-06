@@ -13,6 +13,8 @@ stream_subprocess(\*, args, \*\*kwargs)
     Run a the command described by `args` while streaming stdout and stderr.
 get_systems()
     Get a dictionary of predefined systems, defined in systems.json
+answer_yes
+    Pass text to the terminal and verify that the answer is yes
 
 Attributes
 ----------
@@ -167,5 +169,19 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
 
 
 def answer_yes(input_text):
+    """
+    Print text and compare the input given to "yes"
+
+    Parameters
+    ----------
+    input_text : str
+        a string to be printed for verification by the user
+
+    Returns
+    -------
+    answer_is_yes : boolean
+        A boolean indicating whether or not the answer is yes
+    """
     answer = input(input_text).lower()
-    return answer == "yes"
+    answer_is_yes = answer == "yes"
+    return answer_is_yes
