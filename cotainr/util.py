@@ -179,7 +179,7 @@ def answer_yes(input_text):
 
     Returns
     -------
-    answer_is_yes : boolean
+    answer_is_yes : bool
         A boolean indicating whether or not the answer is yes
     """
     answer = input(input_text).lower()
