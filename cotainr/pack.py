@@ -24,6 +24,7 @@ import urllib.error
 import urllib.request
 
 from . import tracing
+from . import util
 
 logger = logging.getLogger(__name__)
 
