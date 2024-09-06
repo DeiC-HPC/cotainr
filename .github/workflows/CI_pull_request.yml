@@ -6,13 +6,14 @@ on:
   schedule:
       - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
 jobs:
-  lint:
+  lint-and-format:
+    name: Lint and check formatting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.x"
       - uses: pre-commit/action@v3.0.1
   run-full-test-suite:
     name: Run full test suite
