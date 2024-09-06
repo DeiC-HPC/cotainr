@@ -112,16 +112,20 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
             stdout_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stdout,
-                print_dispatch=log_dispatcher.log_to_stdout
-                if log_dispatcher is not None
-                else functools.partial(print, end="", file=sys.stdout),
+                print_dispatch=(
+                    log_dispatcher.log_to_stdout
+                    if log_dispatcher is not None
+                    else functools.partial(print, end="", file=sys.stdout)
+                ),
             )
             stderr_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stderr,
-                print_dispatch=log_dispatcher.log_to_stderr
-                if log_dispatcher is not None
-                else functools.partial(print, end="", file=sys.stderr),
+                print_dispatch=(
+                    log_dispatcher.log_to_stderr
+                    if log_dispatcher is not None
+                    else functools.partial(print, end="", file=sys.stderr)
+                ),
             )
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
@@ -160,3 +164,8 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
         captured_stream.append(line)
 
     return captured_stream
+
+
+def answer_yes(input_text):
+    answer = input(input_text).lower()
+    return answer == "yes"

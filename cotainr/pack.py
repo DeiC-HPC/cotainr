@@ -261,8 +261,10 @@ class CondaInstall:
                 "\n",
             )
             logger.debug(f"The Miniforge displayed license is: {license_text}")
-            val = input(license_text)  # prompt user for acceptance of license terms
-            if val != "yes":
+            answer = util.answer_yes(
+                license_text
+            )  # prompt user for acceptance of license terms
+            if not answer:
                 self._display_message(
                     msg="You have not accepted the Miniforge installer license. Aborting!",
                     log_level=logging.CRITICAL,

@@ -302,8 +302,10 @@ class Test_DisplayMessage:
 
 
 class Test_DisplayMiniforgeLicenseForAcceptance:
+    @pytest.mark.parametrize("answer", ["yes", "Yes", "YES", "YeS"])
     def test_accepting_license(
         self,
+        answer,
         factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
@@ -312,7 +314,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         monkeypatch,
     ):
         monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
-        monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
+        monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
 
@@ -410,11 +412,10 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
             "bootstrapping executable uses",
             "micromamba",
             "conda-forge",
-            "All rights reserved."]
+            "All rights reserved.",
+        ]
         for licensePart in miniforgeList:
-            assert (
-                licensePart
-            ) in stdout
+            assert (licensePart) in stdout
 
 
 class Test_DownloadMiniforgeInstaller:
