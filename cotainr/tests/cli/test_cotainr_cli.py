@@ -184,7 +184,8 @@ class Test_SetupCotainrCLILogging:
             assert isinstance(handler, logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        # readouterr clears its content when returning
+        stdout, stderr = capsys.readouterr()
         assert stdout.rstrip("\n").split("\n") == stdout_msgs
         assert stderr.rstrip("\n").split("\n") == stderr_msgs
 
@@ -225,7 +226,8 @@ class Test_SetupCotainrCLILogging:
             assert isinstance(handler, logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        # readouterr clears its content when returning
+        stdout, stderr = capsys.readouterr()
         actual_stdout_msgs = stdout.rstrip("\n").split("\n")
         actual_stderr_msgs = stderr.rstrip("\n").split("\n")
         assert len(actual_stdout_msgs) == len(expected_stdout_msgs)
@@ -275,7 +277,8 @@ class Test_SetupCotainrCLILogging:
             assert isinstance(handler, logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        # readouterr clears its content when returning
+        stdout, stderr = capsys.readouterr()
         assert stdout.rstrip("\n").split("\n") == stdout_msgs
         assert stderr.rstrip("\n").split("\n") == stderr_msgs
 
@@ -361,6 +364,7 @@ class Test_SetupCotainrCLILogging:
             assert isinstance(handler, logging.StreamHandler)
 
         # Check correct logging, incl. message format, coloring, log level, and output stream
-        stdout, stderr = capsys.readouterr()  # readouterr clears its content when returning
+        # readouterr clears its content when returning
+        stdout, stderr = capsys.readouterr()
         assert stdout.rstrip("\n").split("\n") == stdout_msgs
         assert stderr.rstrip("\n").split("\n") == stderr_msgs
