@@ -21,7 +21,7 @@ from .data import (
     data_cotainr_info_no_color_log_messages,
 )
 from .patches import (
-    patch_disable_cotainercli_init,
+    patch_disable_cotainrcli_init,
     patch_disables_cotainrcli_setup_cotainr_cli_logging,
 )
 from .stubs import StubValidSubcommand, StubInvalidSubcommand, StubLogSettingsSubcommand
@@ -153,7 +153,7 @@ class Test_SetupCotainrCLILogging:
         verbosity,
         capsys,
         data_cotainr_critical_color_log_messages,
-        patch_disable_cotainercli_init,
+        patch_disable_cotainrcli_init,
     ):
         (
             log_level_msgs,
@@ -161,7 +161,7 @@ class Test_SetupCotainrCLILogging:
             stderr_msgs,
         ) = data_cotainr_critical_color_log_messages
 
-        # Setup the CotainerCLI logger
+        # Setup the CotainrCLI logger
         CotainrCLI()._setup_cotainr_cli_logging(
             log_settings=LogSettings(
                 verbosity=verbosity, log_file_path=None, no_color=False
@@ -194,7 +194,7 @@ class Test_SetupCotainrCLILogging:
         verbosity,
         capsys,
         data_cotainr_debug_color_log_messages,
-        patch_disable_cotainercli_init,
+        patch_disable_cotainrcli_init,
     ):
         (
             log_level_msgs,
@@ -202,7 +202,7 @@ class Test_SetupCotainrCLILogging:
             expected_stderr_msgs,
         ) = data_cotainr_debug_color_log_messages
 
-        # Setup the CotainerCLI logger
+        # Setup the CotainrCLI logger
         CotainrCLI()._setup_cotainr_cli_logging(
             log_settings=LogSettings(
                 verbosity=verbosity, log_file_path=None, no_color=False
@@ -248,11 +248,11 @@ class Test_SetupCotainrCLILogging:
         verbosity,
         capsys,
         data_cotainr_info_color_log_messages,
-        patch_disable_cotainercli_init,
+        patch_disable_cotainrcli_init,
     ):
         log_level_msgs, stdout_msgs, stderr_msgs = data_cotainr_info_color_log_messages
 
-        # Setup the CotainerCLI logger
+        # Setup the CotainrCLI logger
         CotainrCLI()._setup_cotainr_cli_logging(
             log_settings=LogSettings(
                 verbosity=verbosity, log_file_path=None, no_color=False
@@ -285,7 +285,7 @@ class Test_SetupCotainrCLILogging:
         no_color,
         tmp_path,
         data_cotainr_info_no_color_log_messages,
-        patch_disable_cotainercli_init,
+        patch_disable_cotainrcli_init,
     ):
         (
             log_level_msgs,
@@ -293,7 +293,7 @@ class Test_SetupCotainrCLILogging:
             stderr_msgs,
         ) = data_cotainr_info_no_color_log_messages
 
-        # Setup the CotainerCLI logger
+        # Setup the CotainrCLI logger
         log_file_path = tmp_path / "cotainr_log"
         CotainrCLI()._setup_cotainr_cli_logging(
             log_settings=LogSettings(
@@ -332,7 +332,7 @@ class Test_SetupCotainrCLILogging:
         self,
         capsys,
         data_cotainr_info_no_color_log_messages,
-        patch_disable_cotainercli_init,
+        patch_disable_cotainrcli_init,
     ):
         (
             log_level_msgs,
@@ -340,7 +340,7 @@ class Test_SetupCotainrCLILogging:
             stderr_msgs,
         ) = data_cotainr_info_no_color_log_messages
 
-        # Setup the CotainerCLI logger
+        # Setup the CotainrCLI logger
         CotainrCLI()._setup_cotainr_cli_logging(
             log_settings=LogSettings(verbosity=0, log_file_path=None, no_color=True)
         )
