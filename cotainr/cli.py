@@ -131,7 +131,7 @@ class Build(CotainrSubcommand):
         if self.image_path.exists():
             answer = util.answer_is_yes(
                 f"{self.image_path} already exists. "
-                "Would you like to overwrite it? ([y]es/[N]o) "
+                "Would you like to overwrite it? (yes/[N]o) "
             )
             if not answer:
                 sys.exit(0)
