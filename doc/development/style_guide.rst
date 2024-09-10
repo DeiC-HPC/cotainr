@@ -20,3 +20,20 @@ Specifically, we use the following conventions:
 
 - Force keyword only arguments to functions and methods.
 - Use relative imports within the `cotainr` package when importing functionality from other modules. The imports must be done such that all objects imported are still references (not copies) which allows for monkey patching objects in their definition module in tests.
+
+pre-commit
+----------
+
+If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automatically check and
+format your code as a git pre-commit hook. A simple way to install pre-commit and set up the
+hooks is to run something like
+
+.. code-block:: bash
+
+    pip install pre-commit
+    pre-commit install
+
+but this varies depending on your system and setup.
+
+The pre-commit configuration is stored in ``.pre-commit-config.yaml`` in the root of the repository.
+The `CI/CD workflow <test_suite_ci_cd>`_ uses the same pre-commit configuration for linting and formatting.

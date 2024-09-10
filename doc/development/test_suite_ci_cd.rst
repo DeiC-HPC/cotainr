@@ -76,8 +76,13 @@ CI workflows
 ~~~~~~~~~~~~
 The following CI `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ are implemented:
 
-- `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_: Runs the unit tests, integration tests, and end-to-end tests on pull requests to the *main* branch. *All* Python versions and *stable* Singularity as well as *stable* Apptainer versions are tested.
-- `CI_push.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml>`_: Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions.
+- `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_:
+  Runs the unit tests, integration tests, and end-to-end tests on pull requests to the *main* branch.
+  *All* Python versions and *stable* Singularity as well as *stable* Apptainer versions are tested.
+  Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
+- `CI_push.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml>`_:
+  Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions.
+  Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
 
 
 .. _continuous_delivery:
