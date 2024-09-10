@@ -262,7 +262,7 @@ class CondaInstall:
                 "\n",
             )
             logger.debug(f"The Miniforge displayed license is: {license_text}")
-            answer = util.answer_yes(
+            answer = util.answer_is_yes(
                 license_text
             )  # prompt user for acceptance of license terms
             if not answer:

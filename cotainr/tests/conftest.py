@@ -102,8 +102,13 @@ def factory_mock_input():
     """
 
     def create_mock_input(fixed_user_input=None):
+        if isinstance(fixed_user_input, list):
+            inputs = iter(fixed_user_input)
+
         def mock_input(prompt):
             print(prompt, end="")
+            if isinstance(fixed_user_input, list):
+                return next(inputs)
             return fixed_user_input
 
         return mock_input

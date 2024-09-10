@@ -168,7 +168,7 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
     return captured_stream
 
 
-def answer_yes(input_text):
+def answer_is_yes(input_text):
     """
     Print text and compare the input given to "yes"
 
@@ -182,6 +182,13 @@ def answer_yes(input_text):
     answer_is_yes : boolean
         A boolean indicating whether or not the answer is yes
     """
-    answer = input(input_text).lower()
-    answer_is_yes = answer == "yes"
-    return answer_is_yes
+    answer_prompt = input_text
+    while True:
+        answer = input(answer_prompt).lower()
+        answer_yes = answer == "yes"
+        answer_no = answer.startswith("n") or answer == ""
+        if answer_yes:
+            return True
+        if answer_no:
+            return False
+        answer_prompt = "Did not understand your input. Please answer yes/[N]o\n"
