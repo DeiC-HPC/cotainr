@@ -116,15 +116,12 @@ html_theme_options = {
 
 
 def add_api_headline_to_module_docs(app, what, name, obj, options, lines):
-    """
-    Event for adding a 'API reference' headline before showing API content in
-    auto modules.
-    """
+    """Add an 'API reference' headline before showing API content in auto modules."""
     if what == "module":
         lines.append("\n")
         lines.append("API reference")
         lines.append("-------------")
 
 
-def setup(app):
+def setup(app):  # noqa: D103
     app.connect("autodoc-process-docstring", add_api_headline_to_module_docs)

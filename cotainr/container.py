@@ -312,6 +312,7 @@ class SingularitySandbox:
     def _create_file(self, *, f):
         """
         Create any file `f` in an existing folder in the Singularity container.
+
         The file permissions will ignore the system umask.
 
         Parameters

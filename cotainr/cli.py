@@ -502,7 +502,7 @@ class CotainrCLI:
 
     def _setup_cotainr_cli_logging(self, *, log_settings):
         """
-        Setup logging for the cotainr main CLI.
+        Set up logging for the cotainr main CLI.
 
         Setting up the logging for the cotainr main CLI includes:
         - Defining log levels based on CLI verbosity arguments.

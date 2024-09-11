@@ -81,6 +81,7 @@ line-length = 88
 
 lint.extend-select = [
     "B", # flake8-bugbear
+    "D", # docstrings
     "E", # pycodestyle errors
     "F", # Pyflakes
     "I", # import ordering
@@ -106,8 +107,15 @@ lint.exclude = [
     "F401",
     "F811",
 ]
+"examples/**.py" = [
+    "D",  # docstring formatting doesn't matter that much
+]
 "cotainr/tests/**.py" = [
+    "D",  # docstring formatting doesn't matter that much
     "S101", # assertions are OK in tests
+]
+"bin/cotainr" = [
+    "D",  # docstring formatting doesn't matter that much
 ]
 
 [tool.ruff.lint.isort]
