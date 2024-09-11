@@ -27,6 +27,7 @@ Attributes
 console_lock
     The lock to acquire for manipulating the console messages.
 """
+
 import builtins
 import copy
 import contextlib
@@ -505,8 +506,7 @@ class MessageSpinner:
         self._print_width = (
             # account for leading spinner + whitespace (2 chars)
             # and trailing dots (3 chars)
-            shutil.get_terminal_size()[0]
-            - 5
+            shutil.get_terminal_size()[0] - 5
         )
         self._ansi_escape_re = re.compile(
             # Based on r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])" from
@@ -525,7 +525,7 @@ class MessageSpinner:
         # \033[2K erases the old line to avoid the extra two characters at the
         # end of the line stemming from the shift of the line due to the
         # leading spinner character and a whitespace
-        self._clear_line_code = "\r" + "\x1B[2K"
+        self._clear_line_code = "\r" + "\x1b[2K"
         self._reset_SGR = "\x1b[0m"
 
     def start(self):

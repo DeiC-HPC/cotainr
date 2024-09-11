@@ -11,6 +11,7 @@ See https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-drop
 The switcher will contain the latest 4 releases. This should be run before making a tag for the latest version.
 More information about releasing can be found here: https://cotainr.readthedocs.io/en/latest/development/releasing.html
 """
+
 import json
 from pathlib import Path
 from re import match
@@ -29,7 +30,7 @@ tags = [
         ).stdout.splitlines()
     )
     # Checking if the tag matches the versioning scheme YYYY.MM.MINOR
-    if match("^20[0-9]{2}\.(0[1-9]|10|11|12)\.[0-9]+$", tag) is not None
+    if match(r"^20[0-9]{2}\.(0[1-9]|10|11|12)\.[0-9]+$", tag) is not None
 ]
 tags.reverse()
 
