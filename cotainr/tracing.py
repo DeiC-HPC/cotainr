@@ -146,7 +146,7 @@ class ConsoleSpinner:
 
     def __enter__(self):
         """
-        Setup the console spinner context.
+        Set up the console spinner context.
 
         Returns
         -------
@@ -226,7 +226,7 @@ class ConsoleSpinner:
 
     def _thread_safe_input(self, input_func):
         """
-        A decorator to make input stop spinning messages.
+        Decorate a function to make input stop spinning messages.
 
         Stops the spinning message prior to calling the :py:func:`input` such
         that the spinning message doesn't interfere with the user input.
@@ -299,7 +299,7 @@ class LogDispatcher:
         log_settings,
         filters=None,
     ):
-        """Setup the log dispatcher."""
+        """Set up the log dispatcher."""
         self.map_log_level = map_log_level_func
         self.verbosity = log_settings.verbosity
         self.log_file_path = log_settings.log_file_path
@@ -389,7 +389,7 @@ class LogDispatcher:
     @contextlib.contextmanager
     def prefix_stderr_name(self, *, prefix):
         """
-        A context manager for prefixing the `stderr` logger name.
+        Manage a context to prefix the `stderr` logger name.
 
         When inside the context, the name of the `stderr` logger is changed to
         be prefixed by "`prefix`/".
@@ -534,7 +534,7 @@ class MessageSpinner:
         self._running = True
 
     def stop(self):
-        """Stop the message spinner thread"""
+        """Stop the message spinner thread."""
         if self._running:
             self._stop_signal.set()
             self._spinner_thread.join()
@@ -610,13 +610,17 @@ class StreamWriteProxy:
 
     def write(self, s, /):
         """
-        Write a string to the stream using the true `stream.write` method and
-        return the number of characters written.
+        Write a string to the stream using the true `stream.write` method.
 
         Parameters
         ----------
         s : str
             The string to write.
+
+        Returns
+        -------
+        int
+            The number of characters written.
         """
         return self.true_stream_write(s)
 
