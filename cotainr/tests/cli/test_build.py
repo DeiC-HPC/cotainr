@@ -8,17 +8,18 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import argparse
-from pathlib import Path
 import re
 import shlex
+from pathlib import Path
 
 import pytest
 
 from cotainr.cli import Build, CotainrCLI
+
 from ..container.patches import (
-    patch_save_singularity_sandbox_context,
-    patch_disable_singularity_sandbox_subprocess_runner,
     patch_disable_add_metadata,
+    patch_disable_singularity_sandbox_subprocess_runner,
+    patch_save_singularity_sandbox_context,
 )
 from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -26,7 +27,7 @@ from ..pack.patches import (
     patch_disable_conda_install_download_miniforge_installer,
 )
 from ..tracing.patches import patch_disable_console_spinner
-from ..util.patches import patch_system_with_actual_file, patch_empty_system
+from ..util.patches import patch_empty_system, patch_system_with_actual_file
 
 
 class TestConstructor:
