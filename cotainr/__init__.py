@@ -21,18 +21,14 @@ _minimum_dependency_version = {
 
 # Error early on too old Python version
 if sys.version_info < _minimum_dependency_version["python"]:
+    required_python = ".".required_python(
+        map(str, _minimum_dependency_version["python"])
+    )
     sys.exit(
-        (
-            "\x1b[38;5;160m"  # start of red colored text
-            "Cotainr requires Python>=%s\n"
-            "You are running Python==%s\n"
-            "from '%s'\n"
-            "ABORTING!"
-            "\x1b[0m"  # end of red colored text
-        )
-        % (
-            ".".join(map(str, _minimum_dependency_version["python"])),
-            sys.version,
-            sys.executable,
-        )
+        "\x1b[38;5;160m"  # start of red colored text
+        f"Cotainr requires Python>={required_python}\n"
+        f"You are running Python=={sys.version}\n"
+        f"from '{sys.executable}'\n"
+        "ABORTING!"
+        "\x1b[0m"  # end of red colored text
     )

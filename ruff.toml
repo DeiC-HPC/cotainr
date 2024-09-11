@@ -8,6 +8,7 @@ select = [
     "E", # pycodestyle errors
     "F", # Pyflakes
     "I", # isort
+    "UP", # pyupgrade
     "W", # pycodestyle warnings
 ]
 ignore = [
