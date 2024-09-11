@@ -392,9 +392,7 @@ class CondaInstall:
                 return True
 
         class NoEmptyLinesFilter(logging.Filter):
-            """
-            Remove any empty lines.
-            """
+            """Remove any empty lines."""
 
             def filter(self, record):
                 return record.msg.strip() != ""
