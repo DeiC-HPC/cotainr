@@ -15,6 +15,7 @@ import pytest
 
 from cotainr.cli import CotainrCLI
 from cotainr.tracing import LogSettings
+
 from .data import (
     data_cotainr_critical_color_log_messages,
     data_cotainr_debug_color_log_messages,
@@ -25,7 +26,7 @@ from .patches import (
     patch_disable_cotainrcli_init,
     patch_disables_cotainrcli_setup_cotainr_cli_logging,
 )
-from .stubs import StubValidSubcommand, StubInvalidSubcommand, StubLogSettingsSubcommand
+from .stubs import StubInvalidSubcommand, StubLogSettingsSubcommand, StubValidSubcommand
 
 
 class TestConstructor:

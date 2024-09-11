@@ -17,13 +17,14 @@ import pytest
 from cotainr.container import SingularitySandbox
 from cotainr.pack import CondaInstall
 from cotainr.tracing import LogSettings
+
+from ..container.data import data_cached_ubuntu_sif
+from ..container.patches import patch_disable_singularity_sandbox_subprocess_runner
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_miniforge_installer,
 )
 from .stubs import StubEmptyLicensePopen, StubShowLicensePopen
-from ..container.data import data_cached_ubuntu_sif
-from ..container.patches import patch_disable_singularity_sandbox_subprocess_runner
 
 
 class TestConstructor:

@@ -6,6 +6,7 @@ select = [
     "B", # flake8-bugbear
     "E", # pycodestyle errors
     "F", # Pyflakes
+    "I", # isort
     "W", # pycodestyle warnings
 ]
 ignore = [

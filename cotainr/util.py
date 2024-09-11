@@ -20,13 +20,13 @@ systems_file
     The path to the systems.json file (if present).
 """
 
-from concurrent.futures import ThreadPoolExecutor
 import functools
-import logging
 import json
-from pathlib import Path
+import logging
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 systems_file = (Path(__file__) / "../../systems.json").resolve()
@@ -178,6 +178,6 @@ def _flush_stdin_buffer():
         return
 
     # Python Standard library, Linux/Unix/OSX
-    from termios import tcflush, TCIOFLUSH
+    from termios import TCIOFLUSH, tcflush
 
     tcflush(sys.stdin, TCIOFLUSH)

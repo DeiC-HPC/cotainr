@@ -14,7 +14,6 @@ CondaInstall
 """
 
 import logging
-from pathlib import Path
 import random
 import re
 import subprocess
@@ -22,9 +21,9 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
-from . import tracing
-from . import util
+from . import tracing, util
 
 logger = logging.getLogger(__name__)
 

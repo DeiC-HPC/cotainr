@@ -26,24 +26,21 @@ main(\*args, \*\*kwargs)
     Main CLI entrypoint.
 """
 
-from abc import ABC, abstractmethod
 import argparse
-from datetime import datetime
 import logging
-from pathlib import Path
 import platform
 import re
 import shutil
 import subprocess
 import sys
 import time
+from abc import ABC, abstractmethod
+from datetime import datetime
+from pathlib import Path
 
-from . import container
-from . import pack
-from . import tracing
-from . import util
-from . import _minimum_dependency_version as _min_dep_ver
 from . import __version__ as _cotainr_version
+from . import _minimum_dependency_version as _min_dep_ver
+from . import container, pack, tracing, util
 
 logger = logging.getLogger(__name__)
 

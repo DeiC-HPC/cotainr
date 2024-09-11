@@ -8,6 +8,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import cotainr.cli
+
 from .stubs import StubDummyCLI
 
 
