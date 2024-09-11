@@ -83,6 +83,7 @@ lint.extend-select = [
     "B", # flake8-bugbear
     "E", # pycodestyle errors
     "F", # Pyflakes
+    "I", # import ordering
     "W", # pycodestyle warnings
 ]
 # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
@@ -108,6 +109,9 @@ lint.exclude = [
 "cotainr/tests/**.py" = [
     "S101", # assertions are OK in tests
 ]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

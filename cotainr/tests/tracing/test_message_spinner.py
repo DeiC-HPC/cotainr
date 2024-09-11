@@ -14,6 +14,7 @@ import time
 import pytest
 
 from cotainr.tracing import MessageSpinner
+
 from .stubs import FixedNumberOfSpinsEvent
 
 

@@ -29,8 +29,8 @@ console_lock
 """
 
 import builtins
-import copy
 import contextlib
+import copy
 import dataclasses
 import functools
 import itertools

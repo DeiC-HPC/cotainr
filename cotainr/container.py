@@ -23,8 +23,7 @@ import sys
 from tempfile import TemporaryDirectory
 
 from . import __version__ as _cotainr_version
-from . import tracing
-from . import util
+from . import tracing, util
 
 logger = logging.getLogger(__name__)
 

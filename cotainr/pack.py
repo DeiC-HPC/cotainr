@@ -23,8 +23,7 @@ import time
 import urllib.error
 import urllib.request
 
-from . import tracing
-from . import util
+from . import tracing, util
 
 logger = logging.getLogger(__name__)
 

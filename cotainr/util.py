@@ -22,8 +22,8 @@ systems_file
 
 from concurrent.futures import ThreadPoolExecutor
 import functools
-import logging
 import json
+import logging
 from pathlib import Path
 import subprocess
 import sys
@@ -178,6 +178,6 @@ def _flush_stdin_buffer():
         return
 
     # Python Standard library, Linux/Unix/OSX
-    from termios import tcflush, TCIOFLUSH
+    from termios import TCIOFLUSH, tcflush
 
     tcflush(sys.stdin, TCIOFLUSH)

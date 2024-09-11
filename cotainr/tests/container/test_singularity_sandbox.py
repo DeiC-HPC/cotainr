@@ -14,9 +14,10 @@ import pytest
 
 from cotainr.container import SingularitySandbox
 from cotainr.tracing import LogDispatcher, LogSettings
+
+from ..util.patches import patch_disable_stream_subprocess
 from .data import data_cached_alpine_sif
 from .patches import patch_fake_singularity_sandbox_env_folder
-from ..util.patches import patch_disable_stream_subprocess
 
 
 class TestConstructor:
