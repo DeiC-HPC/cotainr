@@ -85,6 +85,7 @@ lint.extend-select = [
     "E", # pycodestyle errors
     "F", # Pyflakes
     "I", # import ordering
+    "UP", # pyupgrade
     "W", # pycodestyle warnings
 ]
 # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
