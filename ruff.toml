@@ -7,6 +7,7 @@ select = [
     "D", # docstrings
     "E", # pycodestyle errors
     "F", # Pyflakes
+    "FLY", # Flynt (f-strings)
     "I", # isort
     "UP", # pyupgrade
     "W", # pycodestyle warnings
