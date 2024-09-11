@@ -84,6 +84,7 @@ lint.extend-select = [
     "D", # docstrings
     "E", # pycodestyle errors
     "F", # Pyflakes
+    "FLY", # F-strings
     "I", # import ordering
     "UP", # pyupgrade
     "W", # pycodestyle warnings

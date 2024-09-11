@@ -168,14 +168,12 @@ class TestCleanupUnusedFiles:
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
             CondaInstall(sandbox=sandbox, license_accepted=True)
             process = sandbox.run_command_in_container(cmd="conda clean -d -a")
-            clean_msg = "\n".join(
-                [
-                    "There are no unused tarball(s) to remove.",
-                    "There are no index cache(s) to remove.",
-                    "There are no unused package(s) to remove.",
-                    "There are no tempfile(s) to remove.",
-                    "There are no logfile(s) to remove.",
-                ]
+            clean_msg = (
+                "There are no unused tarball(s) to remove.\n"
+                "There are no index cache(s) to remove.\n"
+                "There are no unused package(s) to remove.\n"
+                "There are no tempfile(s) to remove.\n"
+                "There are no logfile(s) to remove."
             )
             assert process.stdout.strip() == clean_msg
 
