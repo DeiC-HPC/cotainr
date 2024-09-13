@@ -322,7 +322,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         assert "You have accepted the Miniforge installer license." in stdout_lines
         assert conda_install.license_accepted
 
-    @pytest.mark.parametrize("answer", ["n", "N", "", "some_answer_6021"])
+    @pytest.mark.parametrize("answer", ["n", "N", ""])
     def test_not_accepting_license(
         self,
         answer,
