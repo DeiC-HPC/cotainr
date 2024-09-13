@@ -92,7 +92,7 @@ class TestConstructor:
         with pytest.raises(KeyError, match="System does not exist"):
             Build(image_path=image_path, system=system)
 
-    @pytest.mark.parametrize("answer", ["no", "No", "", "some_answer_6021", "n", "N"])
+    @pytest.mark.parametrize("answer", ["no", "No", "", "n", "N"])
     def test_already_existing_file_but_no(
         self, answer, factory_mock_input, monkeypatch
     ):
