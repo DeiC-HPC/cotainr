@@ -13,7 +13,7 @@ stream_subprocess(\*, args, \*\*kwargs)
     Run a the command described by `args` while streaming stdout and stderr.
 get_systems()
     Get a dictionary of predefined systems, defined in systems.json
-answer_yes
+answer_is_yes()
     Pass text to the terminal and verify that the answer is yes
 
 Attributes
@@ -182,7 +182,7 @@ def answer_is_yes(input_text):
     answer_is_yes : boolean
         A boolean indicating whether or not the answer is yes
     """
-    answer_prompt = input_text
+    answer_prompt = input_text + " yes/[N]o\n"
     while True:
         answer = input(answer_prompt).lower()
         answer_yes = answer == "yes"

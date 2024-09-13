@@ -406,7 +406,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         # shown to the user when extracting and showing the Miniforge license
         # terms from the installer - just to have an idea that the license is
         # still being shown correctly to the user
-        miniforgeList = [
+        license_parts = [
             "Miniforge installer comes",
             "installing miniforge and is deleted",
             "bootstrapping executable uses",
@@ -414,8 +414,8 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
             "conda-forge",
             "All rights reserved.",
         ]
-        for licensePart in miniforgeList:
-            assert (licensePart) in stdout
+        for license_part in license_parts:
+            assert license_part in stdout
 
 
 class Test_DownloadMiniforgeInstaller:

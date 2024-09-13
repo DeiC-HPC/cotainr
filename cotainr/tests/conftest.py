@@ -92,18 +92,20 @@ def data_log_level_names_mapping():
 @pytest.fixture
 def factory_mock_input():
     """
-    Create mock of the builtins `input` function that returns a fixed "input".
+    Create mock of the builtins `input` function that returns an "input".
 
     Returns a factory for creating mocked versions of the builtin `input`
     function to be used with the `monkeypatch` fixture to replace
     `builtins.input` with a function that prints the prompt (its argument, if
-    provided) and returns a "fixed user input", provided as argument to the
+    provided) and returns the next "user input", provided as argument to the
     factory.
     """
 
-    def create_mock_input(fixed_user_input=None):
+    def create_mock_input(fixed_user_input=""):
         if isinstance(fixed_user_input, list):
             inputs = iter(fixed_user_input)
+        else:
+            inputs = iter([fixed_user_input])
 
         def mock_input(prompt):
             print(prompt, end="")
