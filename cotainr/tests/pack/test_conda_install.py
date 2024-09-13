@@ -36,7 +36,7 @@ class TestConstructor:
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
         assert conda_install.sandbox == sandbox
-        assert conda_install.prefix == "/opt/conda"
+        assert conda_install.prefix == "/opt/cotainr/conda"
         assert conda_install.license_accepted
         assert conda_install.log_dispatcher is None
         assert conda_install._verbosity == 0
@@ -58,7 +58,9 @@ class TestConstructor:
             miniforge_license_accept_cmd,
             _conda_bootstrap_cmd,
             _conda_bootstrap_clean_cmd,
-        ) = capsys.readouterr().out.strip().split("\n")
+        ) = (
+            capsys.readouterr().out.strip().split("\n")
+        )
         assert miniforge_license_accept_cmd == (
             "You have accepted the Miniforge installer license via the command line option "
             "'--accept-licenses'."
