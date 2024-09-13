@@ -11,7 +11,7 @@ Why would I want to use `cotainr`?
 ----------------------------------
 The two main reasons to use `cotainr` are:
 
-1. It runs entirely in :ref:`user space <cotainr_technical_motivation>`, i.e. you don't need root/sudo priviledges (or `fake them <https://apptainer.org/docs/user/1.0/fakeroot.html>`_) to use `cotainr`.
+1. It runs entirely in :ref:`user space <cotainr_technical_motivation>`, i.e. you don't need root/sudo privileges (or `fake them <https://apptainer.org/docs/user/1.0/fakeroot.html>`_) to use `cotainr`.
 2. It makes it a lot easier to build `Singularity`_/`Apptainer`_ containers for certain :ref:`HPC use cases <use_cases>`.
 
 In order to achieve this, the scope of `cotainr` is deliberately limited - focus is on making it easy to build reasonably performant containers for :ref:`common HPC use cases <use_cases>`. If you need a general purpose solution for building containers that achieve the absolute maximum performance, you should stick with `Apptainer`_/`Singularity`_ instead of `cotainr`.
@@ -71,7 +71,7 @@ Also, take a look at the :ref:`list of use cases <use_cases>` for further inspir
 
 System information
 ~~~~~~~~~~~~~~~~~~
-To make sure that everything is in your enviroment, you can run the :code:`cotainr info` subcommand.
+To make sure that everything is in your environment, you can run the :code:`cotainr info` subcommand.
 This will provide you information about the system and also providing you with names of predefined systems.
 
 .. code-block:: console

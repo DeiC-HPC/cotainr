@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 class CotainrSubcommand(ABC):
     """Abstract base class for `CotainrCLI` subcommands."""
 
-    @classmethod
+    @classmethod  # noqa: B027
     def add_arguments(cls, *, parser):
         """
         Add command line arguments to arguments `parser`.

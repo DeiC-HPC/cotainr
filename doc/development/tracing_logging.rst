@@ -46,7 +46,7 @@ This setup is primarily implemented by two classes :class:`cotainr.tracing.LogDi
 - Apply any filters to modify and/or remove log messages.
 - Add colored console output based on log level, as implemented in :class:`cotainr.tracing.ColoredOutputFormatter`, if requested.
 
-The :class:`~cotainr.tracing.LogDispatcher` then defines methods :meth:`~cotainr.tracing.LogDispatcher.log_to_stdout` and :meth:`~cotainr.tracing.LogDispatcher.log_to_stderr` which may be used with subprocesses to log to `stdout` / `stderr`, respectively, at a message log level determined by the provided `map_log_level_func` function. 
+The :class:`~cotainr.tracing.LogDispatcher` then defines methods :meth:`~cotainr.tracing.LogDispatcher.log_to_stdout` and :meth:`~cotainr.tracing.LogDispatcher.log_to_stderr` which may be used with subprocesses to log to `stdout` / `stderr`, respectively, at a message log level determined by the provided `map_log_level_func` function.
 
 In order to take advantage of this machinery, CLI subcommands must:
 
@@ -57,7 +57,7 @@ In order to take advantage of this machinery, CLI subcommands must:
 
 An example of a subcommand implementing this is :class:`cotainr.cli.Build`.
 
-Futhermore, `cotainr` functionality that spawn subprocesses, e.g. :class:`cotainr.container.SingularitySandbox` or :class:`cotainr.pack.CondaInstall` must:
+Furthermore, `cotainr` functionality that spawn subprocesses, e.g. :class:`cotainr.container.SingularitySandbox` or :class:`cotainr.pack.CondaInstall` must:
 
 - Implement a `map_log_level_func` function, that (attempts to) infers the correct logging level for a given message.
 - Instantiate their own :class:`~cotainr.tracing.LogDispatcher`, which should be passed to :func:`cotainr.util.stream_subprocess` when spawning subprocesses.

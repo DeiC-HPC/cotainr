@@ -11,13 +11,15 @@ from abc import ABC
 
 
 class StubLicensePopen(ABC):
-    def __init__(self, args, stdin=None, stdout=None, text=None):
+    license_text: str
+
+    def __init__(self, args, stdin=None, stdout=None, text=None):  # noqa: B027
         pass
 
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):  # noqa: B027
         pass
 
     def communicate(self, input=None):

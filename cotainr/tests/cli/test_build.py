@@ -190,7 +190,7 @@ class TestAddArguments:
         Build.add_arguments(parser=parser)
 
         with pytest.raises(SystemExit):
-            args = parser.parse_args(
+            parser.parse_args(
                 args=shlex.split(
                     f"{image_path} --system {system} --base-image {base_image}"
                 )
@@ -275,7 +275,7 @@ class TestAddArguments:
         base_image = "some_base_image_6021"
 
         with pytest.raises(SystemExit):
-            args = parser.parse_args(
+            parser.parse_args(
                 args=shlex.split(
                     f"{image_path} --base-image={base_image} --verbose --quiet"
                 )
@@ -377,9 +377,7 @@ class TestExecute:
             conda_env_create_cmd,
             conda_clean_cmd,
             sandbox_build_cmd,
-        ) = (
-            capsys.readouterr().out.strip().split("\n")
-        )
+        ) = capsys.readouterr().out.strip().split("\n")
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
         assert all(
             s in sandbox_create_cmd

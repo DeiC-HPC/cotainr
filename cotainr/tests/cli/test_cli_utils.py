@@ -57,8 +57,11 @@ class TestExtractHelpFromDocstring:
         Parameters
         ----------
         some_arg : str
-            Much leading and trailing space             
+            Much leading and trailing space
         """
+        # Doctor the docstring a little here, so editors etc. which eagerly
+        # strip whitespace don't mess up the test.
+        docstring = docstring.replace("space", "space" + " " * 10)
         help_msg = _extract_help_from_docstring(arg="some_arg", docstring=docstring)
         assert help_msg == "much leading and trailing space"
 

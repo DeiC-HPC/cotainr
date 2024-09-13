@@ -18,7 +18,7 @@ As an example, consider the following `conda environment file <https://conda.io/
 
 .. code-block:: yaml
     :caption: my_conda_env.yml
-    
+
     channels:
       - conda-forge
     dependencies:
@@ -52,7 +52,7 @@ Pip packages
 
 .. code-block:: yaml
     :caption: my_conda_env.yml
-    
+
     channels:
       - conda-forge
     dependencies:

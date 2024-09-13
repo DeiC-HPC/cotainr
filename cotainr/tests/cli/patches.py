@@ -30,7 +30,7 @@ def patch_disable_main(monkeypatch):
 
 
 @pytest.fixture
-def patch_disable_cotainercli_init(monkeypatch):
+def patch_disable_cotainrcli_init(monkeypatch):
     """
     Make the construction of the CotainrCLI a no-op.
     """
