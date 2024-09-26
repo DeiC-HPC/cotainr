@@ -12,6 +12,7 @@ import contextlib
 import pytest
 
 import cotainr.tracing
+
 from .stubs import FixedNumberOfSpinsEvent
 
 

@@ -17,7 +17,7 @@ import sys
 import pytest
 
 from cotainr.tracing import LogDispatcher, LogSettings
-from cotainr.util import stream_subprocess, _print_and_capture_stream
+from cotainr.util import _print_and_capture_stream, stream_subprocess
 
 
 class TestStreamSubprocess:

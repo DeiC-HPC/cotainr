@@ -14,7 +14,6 @@ CondaInstall
 """
 
 import logging
-from pathlib import Path
 import random
 import re
 import subprocess
@@ -22,6 +21,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 from . import tracing
 
@@ -392,9 +392,7 @@ class CondaInstall:
                 return True
 
         class NoEmptyLinesFilter(logging.Filter):
-            """
-            Remove any empty lines.
-            """
+            """Remove any empty lines."""
 
             def filter(self, record):
                 return record.msg.strip() != ""
