@@ -297,12 +297,12 @@ class CondaInstall:
             return "Miniforge3-Linux-ppc64le.sh"
         elif architecture == "x86_64":
             operating_system = platform.system()
-            if operaing_system == "Darwin":
+            if operating_system == "Darwin":
                 # OSX
                 return "Miniforge3-MacOSX-x86_64.sh"
-            elif operaing_system == "Windows":
+            elif operating_system == "Windows":
                 return "Miniforge3-Windows-x86_64.exe"
-            elif operaing_system == "Linux":
+            elif operating_system == "Linux":
                 return "Miniforge3-Linux-x86_64.sh"
             else:
                 # Default to linux
