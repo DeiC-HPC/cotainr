@@ -15,6 +15,7 @@ CondaInstall
 
 import logging
 from pathlib import Path
+import platform
 import random
 import re
 import subprocess
@@ -279,6 +280,37 @@ class CondaInstall:
                 "No license seems to be displayed by the Miniforge installer."
             )
 
+    def _get_install_script(self):
+        """
+        Determine the Miniforge installer to be downloaded based on system information.
+        """
+        architecture = platform.machine()
+        # ARM64
+        if architecture == "arm64":
+            # MAC
+            return "Miniforge3-MacOSX-arm64.sh"
+        elif architecture == "aarch64":
+            # LINUX
+            return "Miniforge3-Linux-aarch64.sh"
+        elif architecture == "ppc64le":
+            # LINUX
+            return "Miniforge3-Linux-ppc64le.sh"
+        elif architecture == "x86_64":
+            return platform.system()
+            if operaing_system == "Darwin":
+                # OSX
+                return "Miniforge3-MacOSX-x86_64.sh"
+            elif operaing_system == "Windows":
+                return "Miniforge3-Windows-x86_64.exe"
+            elif operaing_system == "Linux":
+                return "Miniforge3-Linux-x86_64.sh"
+            else:
+                # Default to linux
+                return "Miniforge3-Linux-x86_64.sh"
+        else:
+            # Default to linux x86
+            return "Miniforge3-Linux-x86_64.sh"
+
     def _download_miniforge_installer(self, *, installer_path):
         """
         Download the Miniforge installer to `installer_path`.
@@ -293,15 +325,18 @@ class CondaInstall:
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
+        install_script = self._get_install_script()
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
-            "Miniforge3-Linux-x86_64.sh"
+            + install_script
         )
 
         # Make up to 3 attempts at downloading the installer
         for retry in range(3):
             try:
-                with urllib.request.urlopen(miniforge_installer_url) as url:  # nosec B310
+                with urllib.request.urlopen(
+                    miniforge_installer_url
+                ) as url:  # nosec B310
                     installer_path.write_bytes(url.read())
 
                 break
