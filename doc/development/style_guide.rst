@@ -36,4 +36,4 @@ hooks is to run something like
 but this varies depending on your system and setup.
 
 The pre-commit configuration is stored in ``.pre-commit-config.yaml`` in the root of the repository.
-The `CI/CD workflow <test_suite_ci_cd>`_ uses the same pre-commit configuration for linting and formatting.
+The `CI/CD workflow <test_suite_ci_cd.html>`_ uses the same pre-commit configuration for linting and formatting.
