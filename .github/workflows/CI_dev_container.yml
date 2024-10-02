@@ -6,8 +6,8 @@ on:
   schedule:
       - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
 jobs:
-  run-docker-test:
-    name: Run full test suite
+  run-dev-container:
+    name: Run test suite in container
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -15,6 +15,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Build Docker image
-        run: docker build -t cotainr-image .
+        run: make build
       - name: Run test suite via pytest
         run: make tests

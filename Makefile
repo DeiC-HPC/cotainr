@@ -1,11 +1,11 @@
 build:
-	docker build -t test .
+	docker build -t cotainr-dev .
 
 shell:
-	docker run --name container-main --rm -i -t test bash
+	docker run --name cotainr-dev --rm -i -t cotainr-dev bash
 
 tests:
-	docker run --privileged -t test python3 -m pytest -vv
+	docker run --privileged -t cotainr-dev python3 -m pytest -vv
 
 unittests:
-	docker run -t test python3 -m pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+	docker run -t cotainr-dev python3 -m pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
