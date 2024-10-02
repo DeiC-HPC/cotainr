@@ -8,10 +8,9 @@ on:
 jobs:
   run-docker-test:
     name: Run full test suite
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Build Docker image
         run: docker build -t cotainr-image .
       - name: Run test suite via pytest
         run: docker run -t cotainr-image python3 -m pytest -vv
-
