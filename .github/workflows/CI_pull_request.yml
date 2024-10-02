@@ -65,7 +65,7 @@ jobs:
           python3 -m pip install -r test-requirements.txt
       - name: Build Docker image
         run: |
-          docker build -t cotainr-image . 
+          docker build -t cotainr-image .
       - name: Run test suite via pytest
         run: |
           pytest -vv --junitxml=pytest_junit_out.xml
