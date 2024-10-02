@@ -1,8 +1,10 @@
 name: CI on Development Container
 on:
-  pull_request:
-    branches:
-      - main
+  push:
+    paths:
+      - 'Dockerfile'
+      - 'Makefile'
+      - '.github/workflows/CI_dev_container.yml'
   schedule:
       - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
 jobs:

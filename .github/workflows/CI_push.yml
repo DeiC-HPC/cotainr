@@ -36,5 +36,4 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install -r test-requirements.txt
       - name: Run unittests via pytest
-        run: |
-          pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+        run: pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
