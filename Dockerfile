@@ -16,27 +16,21 @@ ENV PYTHONBREAKPOINT=ipdb.set_trace
 # Update ubuntu
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install --no-install-recommends -y tzdata build-essential gettext
+RUN apt-get install --no-install-recommends -y tzdata
 RUN apt-get install adduser
 RUN passwd --delete root
 RUN adduser cotainr --disabled-password --gecos ""  #  gecos ==> non-interactive
 
-# Most Linux systems these days have a UID and GID of 1000 for the primary
-# user, so it's usually fine to live with the defualt here, but if you've got a
-# different value (run `id -u` and `id -g` in your shell respectively) you can
-# set this value to make sure that the project will operate with the same UID,
-# creating files in *your* name rather than root.
-#ARG UID=1000
-#ARG GID=1000
-#RUN adduser --system --uid=${UID} --ingroup=cotainr --shell=/bin/bash --home=/home/cotainr cotainr
-
 # Stage 2: Python environment
 FROM linux-base AS python-base
 
+RUN apt-get install --no-install-recommends -y build-essential gettext
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml ./
 COPY uv.lock ./
+COPY requirements-dev.txt ./
 RUN uv sync --frozen --no-dev --no-install-project
+RUN uv pip install -r requirements-dev.txt
 
 # Stage 3: Building environment
 FROM python-base AS builder-base
