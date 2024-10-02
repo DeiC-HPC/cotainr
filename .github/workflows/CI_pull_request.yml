@@ -69,7 +69,7 @@ jobs:
       - name: Run test suite via pytest
         run: |
           pytest -vv --junitxml=pytest_junit_out.xml
-          docker run -t cotainr-image python3 -m pytest cotainr/tests/cli
+          docker run -t cotainr-image python3 -m pytest -vv
       - name: Archive the test results and coverage
         uses: actions/upload-artifact@v3
         with:
