@@ -1,0 +1,17 @@
+name: CI on Development Container
+on:
+  pull_request:
+    branches:
+      - main
+  schedule:
+      - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
+jobs:
+  run-docker-test:
+    name: Run full test suite
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Build Docker image
+        run: docker build -t cotainr-image .
+      - name: Run test suite via pytest
+        run: docker run -t cotainr-image python3 -m pytest -vv
+
