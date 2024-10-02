@@ -9,7 +9,11 @@ jobs:
   run-docker-test:
     name: Run full test suite
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: Build Docker image
         run: docker build -t cotainr-image .
       - name: Run test suite via pytest
