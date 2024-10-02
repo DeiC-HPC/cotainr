@@ -29,7 +29,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml ./
 COPY uv.lock ./
 COPY requirements-dev.txt ./
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --only-dev --no-install-project
 RUN uv pip install -r requirements-dev.txt
 
 # Stage 3: Building environment
