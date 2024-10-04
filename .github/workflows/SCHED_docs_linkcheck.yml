@@ -1,5 +1,8 @@
 name: Scheduled documentation link check
 on:
+  pull_request:
+    branches:
+      - main
   schedule:
     - cron: '15 2 * * TUE'  # every Tuesday night
   workflow_dispatch:  # allow for manually trigging the workflow
