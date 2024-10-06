@@ -300,8 +300,10 @@ class Test_DisplayMessage:
 
 
 class Test_DisplayMiniforgeLicenseForAcceptance:
+    @pytest.mark.parametrize("answer", ["yes", "Yes", "YES", "YeS"])
     def test_accepting_license(
         self,
+        answer,
         factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
@@ -310,7 +312,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         monkeypatch,
     ):
         monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
-        monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
+        monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
 
@@ -318,7 +320,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         assert "You have accepted the Miniforge installer license." in stdout_lines
         assert conda_install.license_accepted
 
-    @pytest.mark.parametrize("answer", ["n", "N", "", "some_answer_6021"])
+    @pytest.mark.parametrize("answer", ["n", "N", ""])
     def test_not_accepting_license(
         self,
         answer,
@@ -402,15 +404,16 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         # shown to the user when extracting and showing the Miniforge license
         # terms from the installer - just to have an idea that the license is
         # still being shown correctly to the user
-        assert (
-            "Miniforge installer code uses BSD-3-Clause license as stated below."
-        ) in stdout
-        assert (
-            "Miniforge installer comes with a bootstrapping executable that is used\n"
-            "when installing miniforge and is deleted after miniforge is installed."
-        ) in stdout
-        assert "conda-forge" in stdout
-        assert "All rights reserved." in stdout
+        license_parts = [
+            "Miniforge installer comes",
+            "installing miniforge and is deleted",
+            "bootstrapping executable uses",
+            "micromamba",
+            "conda-forge",
+            "All rights reserved.",
+        ]
+        for license_part in license_parts:
+            assert license_part in stdout
 
 
 class Test_DownloadMiniforgeInstaller:
