@@ -22,18 +22,24 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         singularity-provider: ["singularity", "apptainer", "singularity-ce"]
         include:
           - singularity-provider: "singularity"
             singularity-version: "3.8.7"
           - singularity-provider: "apptainer"
             singularity-version: "1.1.3"
+          - singularity-provider: "apptainer"
+            singularity-version: "1.3.4"
           - singularity-provider: "singularity-ce"
             singularity-version: "3.9.2"
+          - singularity-provider: "singularity-ce"
+            singularity-version: "4.1.3"
+          - singularity-provider: "singularity-ce"
+            singularity-version: "4.2.1"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Attempt to restore Singularity/Apptainer installer from cache
         uses: actions/cache@v3
         id: cache-singularity-installer
@@ -54,7 +60,7 @@ jobs:
           sudo apt install ./singularity_installer.deb
           singularity --version
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
