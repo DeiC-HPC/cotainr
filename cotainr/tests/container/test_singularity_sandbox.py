@@ -107,6 +107,27 @@ class TestBuildImage:
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[-1]
 
+    def test_environment_not_overwritten(
+        self, data_cached_alpine_sif, singularity_exec, tmp_path
+    ):
+        # Test that the environment file is not overwritten when building the image
+        build_container_path = tmp_path / "container_6021.sif"
+        with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
+            sandbox.add_to_env(shell_script="some shell script")
+            assert (sandbox.sandbox_dir / "environment").exists()
+            assert (
+                (sandbox.sandbox_dir / "environment")
+                .read_text()
+                .endswith("some shell script\n")
+            )
+            sandbox.build_image(path=build_container_path)
+
+        container_cat_env_process = singularity_exec(
+            f"{build_container_path} cat /environment"
+        )
+        env_file_contents = container_cat_env_process.stdout
+        assert env_file_contents.endswith("some shell script\n")
+
     def test_fix_perms_on_oci_docker_images(self, tmp_path):
         # Tests correct permission handling in relation to the error:
         #   FATAL:   While performing build: packer failed to pack: copy Failed:
