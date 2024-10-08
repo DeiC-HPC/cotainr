@@ -73,7 +73,12 @@ class CondaInstall:
     """
 
     def __init__(
-        self, *, sandbox, prefix="/opt/conda", license_accepted=False, log_settings=None
+        self,
+        *,
+        sandbox,
+        prefix="/opt/cotainr/conda",
+        license_accepted=False,
+        log_settings=None,
     ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
@@ -301,7 +306,9 @@ class CondaInstall:
         # Make up to 3 attempts at downloading the installer
         for retry in range(3):
             try:
-                with urllib.request.urlopen(miniforge_installer_url) as url:  # nosec B310
+                with urllib.request.urlopen(
+                    miniforge_installer_url
+                ) as url:  # nosec B310
                     installer_path.write_bytes(url.read())
 
                 break
