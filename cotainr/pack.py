@@ -283,30 +283,22 @@ class CondaInstall:
     def _get_install_script(self):
         """
         Determine the Miniforge installer to be downloaded based on system information.
+
+        ALways downloads a linux version as we expect the container to always be linux
         """
         architecture = platform.machine()
-        # ARM64
         if architecture == "arm64":
-            # MAC
-            return "Miniforge3-MacOSX-arm64.sh"
+            #MAC ARM64
+            return "Miniforge3-Linux-aarch64.sh"
         elif architecture == "aarch64":
-            # LINUX
+            # LINUX ARM64
             return "Miniforge3-Linux-aarch64.sh"
         elif architecture == "ppc64le":
-            # LINUX
+            # LINUX PowerPC
             return "Miniforge3-Linux-ppc64le.sh"
         elif architecture == "x86_64":
-            operating_system = platform.system()
-            if operating_system == "Darwin":
-                # OSX
-                return "Miniforge3-MacOSX-x86_64.sh"
-            elif operating_system == "Windows":
-                return "Miniforge3-Windows-x86_64.exe"
-            elif operating_system == "Linux":
-                return "Miniforge3-Linux-x86_64.sh"
-            else:
-                # Default to linux
-                return "Miniforge3-Linux-x86_64.sh"
+            # LINUX x86
+            return "Miniforge3-Linux-x86_64.sh"
         else:
             # Default to linux x86
             return "Miniforge3-Linux-x86_64.sh"
