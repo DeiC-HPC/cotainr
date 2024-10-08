@@ -288,7 +288,7 @@ class CondaInstall:
         """
         architecture = platform.machine()
         if architecture == "arm64":
-            #MAC ARM64
+            #MAC ARM64 - dowmload for a linux container
             return "Miniforge3-Linux-aarch64.sh"
         elif architecture == "aarch64":
             # LINUX ARM64
