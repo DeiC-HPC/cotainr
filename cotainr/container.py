@@ -151,9 +151,9 @@ class SingularitySandbox:
         """
         Add `shell_script` to the sourced environment in the container.
 
-        The content of `shell_script` is written as-is to the /environment file
-        in the Singularity container which is sourced on execution of the
-        container.
+        The content of `shell_script` is written as-is to the file
+        /.singularity.d/env/92-cotainr-env.sh in the Singularity container
+        which is sourced on execution of the container.
 
         Parameters
         ----------
@@ -163,7 +163,7 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        env_file = self.sandbox_dir / "environment"
+        env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
         with env_file.open(mode="a") as f:
             f.write(shell_script + "\n")
 

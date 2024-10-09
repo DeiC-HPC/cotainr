@@ -15,6 +15,7 @@ import pytest
 from cotainr.container import SingularitySandbox
 from cotainr.tracing import LogDispatcher, LogSettings
 from .data import data_cached_alpine_sif
+from .patches import patch_fake_singularity_sandbox_env_folder
 from ..util.patches import patch_disable_stream_subprocess
 
 
@@ -72,24 +73,30 @@ class TestContext:
 
 
 class TestAddToEnv:
-    def test_add_twice(self, patch_disable_stream_subprocess):
+    def test_add_twice(
+        self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
+    ):
         lines = ["first script line", "second script line"]
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            env_file = sandbox.sandbox_dir / "environment"
+            env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
             for line in lines:
                 sandbox.add_to_env(shell_script=line)
             assert env_file.read_text() == lines[0] + "\n" + lines[1] + "\n"
 
-    def test_newline_encapsulation(self, patch_disable_stream_subprocess):
+    def test_newline_encapsulation(
+        self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
+    ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            env_file = sandbox.sandbox_dir / "environment"
+            env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
             shell_script = "fancy shell_script\nas a double line string"
             sandbox.add_to_env(shell_script=shell_script)
             assert env_file.read_text() == shell_script + "\n"
 
-    def test_shell_script_append(self, patch_disable_stream_subprocess):
+    def test_shell_script_append(
+        self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
+    ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            env_file = sandbox.sandbox_dir / "environment"
+            env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
             existing_shell_script = "some existing\nshell script"
             env_file.write_text(existing_shell_script)
             new_shell_script = "fancy_shell_script\nas_a_string"
@@ -106,6 +113,49 @@ class TestBuildImage:
             sandbox.build_image(path="some_path_6021")
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[-1]
+
+    def test_environment_not_overwritten(
+        self, data_cached_alpine_sif, singularity_exec, tmp_path
+    ):
+        # Test that any custom environment variables set via
+        # SingularitySandbox.add_to_env(...) are not overwritten when the SIF
+        # image file is built.
+        # We used to write our custom environment variables to /environment
+        # which is a symlink to /.singularity.d/env/90-environment.sh However,
+        # as of some newer version of Apptainer, the content of /environment is
+        # set to its default value when building the SIF image from the
+        # sandbox, erasing our modifications. It is unclear if this is
+        # intentional. Looking at both the Apptainer documentation
+        # (https://apptainer.org/docs/user/main/environment_and_metadata.html#singularity-d-directory)
+        # as well as the Singularity documentation
+        # (https://docs.sylabs.io/guides/latest/user-guide/environment_and_metadata.html#singularity-d-directory)
+        # it is sketchy to edit this /environment file as they both state that
+        # "You should not manually modify files under /.singularity.d" and "In
+        # the longer term, metadata will be moved outside of the container, and
+        # stored only in the SIF file metadata descriptor."
+        # As a workaround, we now write our custom environment variables to a
+        # custom /.singularity.d/env/92-cotainr-env.sh file which is probably
+        # not the right solution. However, at this point, though, it is unclear
+        # how to set custom environment variables in any other way when using a
+        # Singularity sandbox.
+        build_container_path = tmp_path / "container_6021.sif"
+        with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
+            sandbox.add_to_env(shell_script="some shell script")
+            assert (
+                sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+            ).exists()
+            assert (
+                (sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh")
+                .read_text()
+                .endswith("some shell script\n")
+            )
+            sandbox.build_image(path=build_container_path)
+
+        container_cat_env_process = singularity_exec(
+            f"{build_container_path} cat /.singularity.d/env/92-cotainr-env.sh"
+        )
+        env_file_contents = container_cat_env_process.stdout
+        assert env_file_contents.endswith("some shell script\n")
 
     def test_fix_perms_on_oci_docker_images(self, tmp_path):
         # Tests correct permission handling in relation to the error:

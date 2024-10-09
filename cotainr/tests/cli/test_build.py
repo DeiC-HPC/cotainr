@@ -17,6 +17,7 @@ import pytest
 from cotainr.cli import Build, CotainrCLI
 from ..container.patches import (
     patch_save_singularity_sandbox_context,
+    patch_fake_singularity_sandbox_env_folder,
     patch_disable_singularity_sandbox_subprocess_runner,
     patch_disable_add_metadata,
 )
@@ -340,6 +341,7 @@ class TestExecute:
         patch_disable_singularity_sandbox_subprocess_runner,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
+        patch_fake_singularity_sandbox_env_folder,
         patch_save_singularity_sandbox_context,
         patch_disable_add_metadata,
         patch_disable_console_spinner,
@@ -350,6 +352,7 @@ class TestExecute:
         base_image = "some_base_image_6021"
         conda_env = "some_conda_env_6021"
         conda_env_content = "Some conda env content 6021"
+        saved_sandbox_dir = Path(f"./{patch_save_singularity_sandbox_context}")
         Path(conda_env).write_text(conda_env_content)
         Build(
             image_path=image_path,
@@ -359,11 +362,11 @@ class TestExecute:
         ).execute()
 
         # Check that conda_env file has been copied to container
-        assert Path(f"./saved_sandbox_dir/{conda_env}").read_text() == conda_env_content
+        assert (saved_sandbox_dir / f"{conda_env}").read_text() == conda_env_content
 
         # Check that the singularity environment has been updated activate conda env
         assert (
-            Path("./saved_sandbox_dir/environment")
+            (saved_sandbox_dir / ".singularity.d/env/92-cotainr-env.sh")
             .read_text()
             .strip()
             .endswith("conda activate conda_container_env")
