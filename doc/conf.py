@@ -57,7 +57,7 @@ if "GITHUB_TOKEN" in os.environ:
     # Authenticate with GitHub token in GitHub Actions to avoid rate limits
     # It is not entirely clear if this has any effect, though...
     linkcheck_request_headers = {
-        "https://github.com": {"Authorization:" f"token {os.environ['GITHUB_TOKEN']}"}
+        "https://github.com": {"Authorization": f"token {os.environ['GITHUB_TOKEN']}"}
     }
 
 # -- Options for HTML output -------------------------------------------------
