@@ -48,14 +48,15 @@ numpydoc_class_members_toctree = False
 # -- Options for linkcheck ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-the-linkcheck-builder
 linkcheck_retries = 3  # Retry 3 times before considering a link broken
+linkcheck_workers = 1  # Limit the number of workers to avoid hitting rate limits
 linkcheck_ignore = [
     # It is easy to hit the rate limit of stackoverflow
     # Let's assume that stackoverflows does not move its supposedly permanent links
     "https://stackoverflow.com",
 ]
 if "GITHUB_TOKEN" in os.environ:
-    # Authenticate with GitHub token in GitHub Actions to avoid rate limits
-    # It is not entirely clear if this has any effect, though...
+    # Authenticate with GitHub token in GitHub Actions to avoid hitting rate limits
+    # It is not entirely clear if this has any effect outside of api.github.com, though...
     linkcheck_request_headers = {
         "https://github.com": {"Authorization": f"token {os.environ['GITHUB_TOKEN']}"}
     }
