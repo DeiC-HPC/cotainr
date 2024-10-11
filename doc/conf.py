@@ -45,6 +45,26 @@ templates_path = ["_templates"]
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 numpydoc_class_members_toctree = False
 
+# -- Options for linkcheck ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-the-linkcheck-builder
+linkcheck_retries = 3  # Retry 3 times before considering a link broken
+linkcheck_workers = 1  # Limit the number of workers to avoid hitting rate limits
+linkcheck_ignore = [
+    # It is easy to hit the rate limit of stackoverflow
+    # Let's assume that stackoverflows does not move its supposedly permanent links
+    "https://stackoverflow.com",
+    # Its also easy to hit the rate limit of github
+    # We do have quite a lot of links to our own github repo
+    # For now, let's avoid checking these
+    "https://github.com/DeiC-HPC/cotainr",
+]
+if "GITHUB_TOKEN" in os.environ:
+    # Authenticate with GitHub token in GitHub Actions to avoid hitting rate limits
+    # It is not entirely clear if this has any effect outside of api.github.com, though...
+    linkcheck_request_headers = {
+        "https://github.com": {"Authorization": f"token {os.environ['GITHUB_TOKEN']}"}
+    }
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
