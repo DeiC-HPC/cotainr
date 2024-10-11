@@ -53,6 +53,10 @@ linkcheck_ignore = [
     # It is easy to hit the rate limit of stackoverflow
     # Let's assume that stackoverflows does not move its supposedly permanent links
     "https://stackoverflow.com",
+    # Its also easy to hit the rate limit of github
+    # We do have quite a lot of links to our own github repo
+    # For now, let's avoid checking these
+    "https://github.com/DeiC-HPC/cotainr",
 ]
 if "GITHUB_TOKEN" in os.environ:
     # Authenticate with GitHub token in GitHub Actions to avoid hitting rate limits
