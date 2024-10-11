@@ -9,7 +9,7 @@ On LUMI, the container may be built using:
 ```bash
 module load LUMI
 module load cotainr
-cotainr build lumi_pytorch_rocm_demo.sif --system=lumi-g --conda-env py311_rocm542_pytorch.yml
+cotainr build lumi_pytorch_rocm_demo.sif --system=lumi-g --conda-env minimal_pytorch.yml
 ```
 
 ## Running the PyTorch examples on LUMI using the built container
