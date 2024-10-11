@@ -29,4 +29,6 @@ jobs:
           make -C doc relnotes
           make -C doc html
       - name: Run Sphinx linkcheck on documentation
-        run: make -C doc linkcheck || make -C doc linkcheck || make -C doc linkcheck  # simple "retry 3 times" - for flaky links
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make -C doc linkcheck
