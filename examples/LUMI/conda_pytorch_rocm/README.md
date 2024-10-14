@@ -7,7 +7,7 @@ This is an example of a container that includes a ROCm compatible PyTorch Conda 
 On LUMI, the container may be built using:
 
 ```bash
-module load LUMI
+module load CrayEnv
 module load cotainr
 cotainr build lumi_pytorch_rocm_demo.sif --system=lumi-g --conda-env minimal_pytorch.yml
 ```
