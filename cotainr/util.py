@@ -170,6 +170,7 @@ def _flush_stdin_buffer():
     https://stackoverflow.com/questions/2520893/how-to-flush-the-input-stream
     """
     from io import UnsupportedOperation
+
     try:
         sys.stdin.fileno()
     except UnsupportedOperation:
@@ -178,4 +179,5 @@ def _flush_stdin_buffer():
 
     # Python Standard library, Linux/Unix/OSX
     from termios import tcflush, TCIOFLUSH
+
     tcflush(sys.stdin, TCIOFLUSH)
