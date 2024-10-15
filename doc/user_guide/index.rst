@@ -101,6 +101,7 @@ Use cases
 Typical use cases, that `cotainr` makes very easy to handle, include:
 
 - :ref:`Creating a container based on a Conda environment <conda_environments>`
+- :ref:`Creating a container based on Pip requirements <pip_environments>`
 
 ..
     Toc for the use case pages
@@ -109,6 +110,7 @@ Typical use cases, that `cotainr` makes very easy to handle, include:
     :hidden:
 
     conda_env
+    pip_env
 
 
 Examples
