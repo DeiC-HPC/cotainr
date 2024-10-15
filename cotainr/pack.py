@@ -24,6 +24,7 @@ import urllib.error
 import urllib.request
 
 from . import tracing
+from . import util
 
 logger = logging.getLogger(__name__)
 
@@ -260,9 +261,11 @@ class CondaInstall:
                 "Please, press ENTER to continue\n>>> ",
                 "\n",
             )
+            # Remove [yes|no] from license text as answer_is_yes adds this itself
+            license_text = license_text.replace(" [yes|no]", "")
             logger.debug(f"The Miniforge displayed license is: {license_text}")
-            val = input(license_text)  # prompt user for acceptance of license terms
-            if val != "yes":
+            # prompt user for acceptance of license terms
+            if not util.answer_is_yes(license_text):
                 self._display_message(
                     msg="You have not accepted the Miniforge installer license. Aborting!",
                     log_level=logging.CRITICAL,
