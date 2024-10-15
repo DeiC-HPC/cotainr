@@ -1,0 +1,22 @@
+name: CI on Development Container
+on:
+  push:
+    paths:
+      - 'Dockerfile'
+      - 'Makefile'
+      - '.github/workflows/CI_dev_container.yml'
+  schedule:
+      - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
+jobs:
+  run-dev-container:
+    name: Run test suite in container
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Build Docker image
+        run: make build
+      - name: Run test suite via pytest
+        run: make tests
