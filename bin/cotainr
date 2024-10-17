@@ -8,6 +8,9 @@ import sys
 from pathlib import Path
 
 if __name__ == "__main__":
+    # Preferably use the `cotainr` entrypoint defined in pyproject.toml, but this
+    # works for a "source install".
+
     sys.path.insert(0, (Path(__file__) / "../..").resolve().as_posix())
     from cotainr.cli import main
 

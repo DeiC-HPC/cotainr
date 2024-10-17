@@ -7,12 +7,12 @@ The `cotainr` command line interface is designed around a subcommand for each ma
 
 The CLI is build using :mod:`argparse`.
 
-The main way to invoke the CLI (sub)commands is via the `bin/cotainr` script, e.g.
+The main way to invoke the CLI (sub)commands is via the `cotainr` entrypoint that is installed when installing the package, e.g.
 
 .. code-block:: console
 
-    $ ./bin/cotainr build <positional_arg> <non-positional args>
-    $ ./bin/cotainr info
+    $ cotainr build <positional_arg> <non-positional args>
+    $ cotainr info
 
 Implementation of command line interface
 ----------------------------------------
