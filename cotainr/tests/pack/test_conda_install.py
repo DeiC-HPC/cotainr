@@ -476,7 +476,8 @@ class Test_LoggingFilters:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
 
         filter_names = [
-            filter_.__class__.__name__ for filter_ in conda_install._logging_filters
+            filter_.__class__.__name__
+            for filter_ in conda_install._create_logging_filters()
         ]
         assert filter_names == [
             "StripANSIEscapeCodes",
@@ -492,7 +493,7 @@ class Test_LoggingFilters:
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
-            filter_ = conda_install._logging_filters[0]
+            filter_ = conda_install._create_logging_filters()[0]
             assert filter_.__class__.__name__ == "StripANSIEscapeCodes"
 
         rec = logging.LogRecord(
@@ -521,7 +522,7 @@ class Test_LoggingFilters:
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
-            filter_ = conda_install._logging_filters[2]
+            filter_ = conda_install._create_logging_filters()[2]
             assert filter_.__class__.__name__ == "NoEmptyLinesFilter"
 
         rec = logging.LogRecord(
@@ -570,7 +571,7 @@ class Test_LoggingFilters:
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
-            filter_ = conda_install._logging_filters[1]
+            filter_ = conda_install._create_logging_filters()[1]
             assert filter_.__class__.__name__ == "OnlyFinalProgressbarFilter"
 
         rec = logging.LogRecord(
