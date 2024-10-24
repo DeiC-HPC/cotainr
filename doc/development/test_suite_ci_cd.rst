@@ -100,7 +100,7 @@ The :ref:`HTML documentation <building_the_html_docs>` served at http://cotainr.
 
 This fully automates the process of building `*latest* and *stable* versions <https://docs.readthedocs.io/en/stable/versions.html>`_ of the HTML documentation served at http://cotainr.readthedocs.io. Additionally, the `"build pull requests" <https://docs.readthedocs.io/en/stable/pull-requests.html>`_ feature is enabled. A pull request documentation build is linked in the list of checks for the GitHub pull request.
 
-The automated release process is enabled by CalVer and `the rules can be inspected here <https://readthedocs.org/dashboard/cotainr/rules/>`_. Essentially any git-tag matching the described :ref:`versioning-scheme <releasing>` will create a new version in the documentation.
+The automated release process `can be inspected here <https://readthedocs.org/dashboard/cotainr/rules/>`_. Essentially any git-tag matching the described :ref:`versioning-scheme <releasing>` will be picked up by Read the Docs and should be available among the versions as well as activated as `stable <https://cotainr.readthedocs.io/en/stable>`_ and `latest <https://cotainr.readthedocs.io/en/latest>`_
 
 
 Scheduled tests
