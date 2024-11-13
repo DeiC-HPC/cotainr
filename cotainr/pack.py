@@ -74,7 +74,13 @@ class CondaInstall:
     """
 
     def __init__(
-        self, *, sandbox, prefix="/opt/conda", license_accepted=False, log_settings=None
+        self,
+        *,
+        sandbox,
+        prefix="/opt/conda",
+        license_accepted=False,
+        sourced_env,
+        log_settings=None,
     ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
@@ -113,7 +119,9 @@ class CondaInstall:
             )
 
         # Bootstrap Conda environment in container
-        self._bootstrap_conda(installer_path=conda_installer_path)
+        self._bootstrap_conda(
+            sourced_env=sourced_env, installer_path=conda_installer_path
+        )
 
         # Remove unneeded files
         conda_installer_path.unlink()
@@ -147,7 +155,7 @@ class CondaInstall:
             cmd="conda clean -y -a" + self._conda_verbosity_arg
         )
 
-    def _bootstrap_conda(self, *, installer_path):
+    def _bootstrap_conda(self, *, sourced_env, installer_path):
         """
         Install Conda and at its source script to the sandbox env.
 
@@ -163,7 +171,8 @@ class CondaInstall:
 
         # Add Conda to container sandbox env
         self.sandbox.add_to_env(
-            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}"
+            sourced_env,
+            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}",
         )
 
         # Check that we correctly use the newly installed Conda from now on

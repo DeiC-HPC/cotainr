@@ -147,23 +147,35 @@ class SingularitySandbox:
             f.seek(0)
             json.dump(metadata, f)
 
-    def add_to_env(self, *, shell_script):
+    def create_sourced_env(self, *, env_file):
         """
-        Add `shell_script` to the sourced environment in the container.
-
-        The content of `shell_script` is written as-is to the file
-        /.singularity.d/env/92-cotainr-env.sh in the Singularity container
-        which is sourced on execution of the container.
+        Create the file `env_file` in the Singularity container.
+        It is a bash file sourced on execution of the container.
 
         Parameters
         ----------
-        shell_script : str
-            The shell script to add to the sourced environment in the
-            container.
+        env_file :
+            Path file with suffix .sh. For example,
+            'sandbox_dir/.singularity.d/env/92-cotainr-env.sh'
         """
         self._assert_within_sandbox_context()
+        assert (
+            env_file.suffix == ".sh"
+        ), f"Expected file suffix is .sh, {env_file.suffix} was found."
+        assert not env_file.exists(), "File already exists!"
+        self.run_command_in_container(cmd=f"touch {env_file}")
 
-        env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+    def add_to_env(self, *, env_file, shell_script):
+        """
+        Append `shell_script` to the sourced environment `env_file` in the container.
+
+        Parameters
+        ----------
+        env_file : str
+        shell_script : str
+        """
+        self._assert_within_sandbox_context()
+        assert env_file.exists()
         with env_file.open(mode="a") as f:
             f.write(shell_script + "\n")
 

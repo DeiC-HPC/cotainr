@@ -224,6 +224,10 @@ class Build(CotainrSubcommand):
             with container.SingularitySandbox(
                 base_image=self.base_image, log_settings=self.log_settings
             ) as sandbox:
+                sourced_env = (
+                    sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+                )
+                sandbox.create_sourced_env(sourced_env)
                 if self.conda_env is not None:
                     # Install supplied conda env
                     logger.info("Installing Conda environment: %s", self.conda_env)
@@ -234,11 +238,14 @@ class Build(CotainrSubcommand):
                         sandbox=sandbox,
                         license_accepted=self.accept_licenses,
                         log_settings=self.log_settings,
+                        sourced_env=sourced_env,
                     )
                     conda_install.add_environment(
                         path=conda_env_file, name=conda_env_name
                     )
-                    sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
+                    sandbox.add_to_env(
+                        env=sourced_env, shell_script=f"conda activate {conda_env_name}"
+                    )
 
                     # Clean-up unused files
                     logger.info("Cleaning up unused Conda files")
