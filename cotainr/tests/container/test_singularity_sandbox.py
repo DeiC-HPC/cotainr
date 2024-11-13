@@ -72,6 +72,16 @@ class TestContext:
         assert not sandbox_dir.exists()
 
 
+class TestCreateSourcedEnv:
+    def test_open_correctly(
+        self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+            sandbox.create_sourced_env(env_file=env_file)
+            assert env_file.exists()
+
+
 class TestAddToEnv:
     def test_add_twice(
         self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
@@ -79,8 +89,9 @@ class TestAddToEnv:
         lines = ["first script line", "second script line"]
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+            env_file.touch()
             for line in lines:
-                sandbox.add_to_env(shell_script=line)
+                sandbox.add_to_env(env_file=env_file, shell_script=line)
             assert env_file.read_text() == lines[0] + "\n" + lines[1] + "\n"
 
     def test_newline_encapsulation(
@@ -88,8 +99,9 @@ class TestAddToEnv:
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+            env_file.touch()
             shell_script = "fancy shell_script\nas a double line string"
-            sandbox.add_to_env(shell_script=shell_script)
+            sandbox.add_to_env(env_file=env_file, shell_script=shell_script)
             assert env_file.read_text() == shell_script + "\n"
 
     def test_shell_script_append(
@@ -97,13 +109,29 @@ class TestAddToEnv:
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+            env_file.touch()
             existing_shell_script = "some existing\nshell script"
             env_file.write_text(existing_shell_script)
             new_shell_script = "fancy_shell_script\nas_a_string"
-            sandbox.add_to_env(shell_script=new_shell_script)
+            sandbox.add_to_env(env_file=env_file, shell_script=new_shell_script)
             assert (
                 env_file.read_text().strip() == existing_shell_script + new_shell_script
             )
+
+
+@pytest.mark.singularity_integration
+class TestCreateSourcedEnv:
+    def test_file_permissions(self, data_cached_alpine_sif, context_set_umask):
+        test_file = Path("test_file_6021.sh")
+        with context_set_umask(0o007):  # default umask on LUMI
+            with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
+                sandbox.create_sourced_env(env_file=test_file)
+                test_file_path = sandbox.sandbox_dir / test_file
+                assert test_file_path.exists()
+                test_file_mode = test_file_path.stat().st_mode
+                # file permissions extracted from the last 3 octal digits of st_mode
+                test_file_permissions = test_file_mode & 0o777
+                assert oct(test_file_permissions) == "0o644"
 
 
 @pytest.mark.singularity_integration
@@ -140,15 +168,11 @@ class TestBuildImage:
         # Singularity sandbox.
         build_container_path = tmp_path / "container_6021.sif"
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
-            sandbox.add_to_env(shell_script="some shell script")
-            assert (
-                sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
-            ).exists()
-            assert (
-                (sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh")
-                .read_text()
-                .endswith("some shell script\n")
-            )
+            env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+            sandbox.create_sourced_env(env_file)
+            assert env_file.exists()
+            sandbox.add_to_env(env_file, shell_script="some shell script")
+            assert env_file.read_text().endswith("some shell script\n")
             sandbox.build_image(path=build_container_path)
 
         container_cat_env_process = singularity_exec(
@@ -208,18 +232,6 @@ class TestRunCommandInContainer:
             sandbox.run_command_in_container(cmd="ls")
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[-1]
-
-    def test_correct_umask(self, data_cached_alpine_sif, context_set_umask):
-        test_file = "test_file_6021"
-        with context_set_umask(0o007):  # default umask on LUMI
-            with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
-                sandbox.run_command_in_container(cmd=f"touch /{test_file}")
-                test_file_path = sandbox.sandbox_dir / test_file
-                assert test_file_path.exists()
-                test_file_mode = test_file_path.stat().st_mode
-                # file permissions extracted from the last 3 octal digits of st_mode
-                test_file_permissions = test_file_mode & 0o777
-                assert oct(test_file_permissions) == "0o644"
 
     def test_error_handling(self, data_cached_alpine_sif):
         cmd = "some6021 non-meaningful command"
