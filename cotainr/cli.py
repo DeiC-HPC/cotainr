@@ -227,7 +227,7 @@ class Build(CotainrSubcommand):
                 sourced_env = (
                     sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
                 )
-                sandbox.create_sourced_env(sourced_env)
+                sandbox.create_sourced_env(sourced_env=sourced_env)
                 if self.conda_env is not None:
                     # Install supplied conda env
                     logger.info("Installing Conda environment: %s", self.conda_env)
