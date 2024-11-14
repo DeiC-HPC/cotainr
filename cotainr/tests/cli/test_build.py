@@ -378,6 +378,7 @@ class TestExecute:
             conda_bootstrap_cmd,
             conda_bootstrap_clean_cmd,
             conda_env_create_cmd,
+            touch_sourced_env_cmd,
             conda_clean_cmd,
             sandbox_build_cmd,
         ) = capsys.readouterr().out.strip().split("\n")

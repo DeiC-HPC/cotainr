@@ -147,13 +147,29 @@ class SingularitySandbox:
             f.seek(0)
             json.dump(metadata, f)
 
+    def _create_env_path(self, *, env_path):
+        """
+        Create the file `env_path` in the Singularity container.
+        It is a bash file sourced on execution of the container.
+
+        Parameters
+        ----------
+        env_path :
+            Path file with suffix .sh. For example,
+            'sandbox_dir/.singularity.d/env/92-cotainr-env.sh'
+        """
+        self._assert_within_sandbox_context()
+        self.run_command_in_container(cmd=f"touch {env_path}")
+
+        # If subprocess runner is disabled in tests: Create file outside the container
+        if not env_path.exists():
+            env_path.touch()  # This file might not have execution permissions due to umask
+
+        assert env_path.exists(), f"Creating file {env_path} failed."
+
     def add_to_env(self, *, shell_script):
         """
-        Add `shell_script` to the sourced environment in the container.
-
-        The content of `shell_script` is written as-is to the file
-        /.singularity.d/env/92-cotainr-env.sh in the Singularity container
-        which is sourced on execution of the container.
+        Append `shell_script` to the sourced environment `env_path` in the container.
 
         Parameters
         ----------
@@ -163,8 +179,11 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
-        with env_file.open(mode="a") as f:
+        env_path = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        if not env_path.exists():
+            self._create_env_path(env_path=env_path)
+
+        with env_path.open(mode="a") as f:
             f.write(shell_script + "\n")
 
     def build_image(self, *, path):
