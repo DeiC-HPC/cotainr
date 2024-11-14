@@ -378,6 +378,7 @@ class TestExecute:
             conda_bootstrap_cmd,
             conda_bootstrap_clean_cmd,
             conda_env_create_cmd,
+            sandbox_add_to_env_cmd,
             conda_clean_cmd,
             sandbox_build_cmd,
         ) = capsys.readouterr().out.strip().split("\n")
@@ -398,6 +399,14 @@ class TestExecute:
                 "'create'",
                 f"{conda_env}",
                 "'conda_container_env'",
+            ]
+        )
+        assert sandbox_add_to_env_cmd.startswith("PATCH: Ran command in sandbox:")
+        assert all(
+            s in sandbox_add_to_env_cmd
+            for s in [
+                "'touch'",
+                ".singularity.d/env/92-cotainr-env.sh'",
             ]
         )
         assert conda_clean_cmd.startswith("PATCH: Ran command in sandbox:")
