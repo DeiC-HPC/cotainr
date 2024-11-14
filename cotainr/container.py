@@ -147,29 +147,31 @@ class SingularitySandbox:
             f.seek(0)
             json.dump(metadata, f)
 
-    def _create_env_path(self, *, env_path):
+    def _create_env_file(self, *, env_file):
         """
-        Create the file `env_path` in the Singularity container.
+        Create the file `env_file` in the Singularity container.
         It is a bash file sourced on execution of the container.
 
         Parameters
         ----------
-        env_path :
+        env_file :
             Path file with suffix .sh. For example,
             'sandbox_dir/.singularity.d/env/92-cotainr-env.sh'
         """
         self._assert_within_sandbox_context()
-        self.run_command_in_container(cmd=f"touch {env_path}")
+
+        # ensure that the file is created *within* the container to get correct permissions, etc.
+        self.run_command_in_container(cmd=f"touch {env_file}")
 
         # If subprocess runner is disabled in tests: Create file outside the container
-        if not env_path.exists():
-            env_path.touch()  # This file might not have execution permissions due to umask
+        if not env_file.exists():
+            env_file.touch()  # This file might not have execution permissions due to umask
 
-        assert env_path.exists(), f"Creating file {env_path} failed."
+        assert env_file.exists(), f"Creating file {env_file} failed."
 
     def add_to_env(self, *, shell_script):
         """
-        Append `shell_script` to the sourced environment `env_path` in the container.
+        Add `shell_script` to the sourced environment in the container.
 
         Parameters
         ----------
@@ -179,11 +181,11 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        env_path = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
-        if not env_path.exists():
-            self._create_env_path(env_path=env_path)
+        env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        if not env_file.exists():
+            self._create_env_file(env_file=env_file)
 
-        with env_path.open(mode="a") as f:
+        with env_file.open(mode="a") as f:
             f.write(shell_script + "\n")
 
     def build_image(self, *, path):

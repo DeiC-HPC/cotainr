@@ -83,6 +83,51 @@ class TestAddToEnv:
                 sandbox.add_to_env(shell_script=line)
             assert env_file.read_text() == lines[0] + "\n" + lines[1] + "\n"
 
+    @pytest.mark.singularity_integration
+    @pytest.mark.parametrize(
+        "umask",
+        [
+            # umask  file permissions  directory permissions
+            0o000,  # 666 (rw-rw-rw-)   777 (rwxrwxrwx)
+            0o002,  # 664 (rw-rw-r--)   775 (rwxrwxr-x)
+            0o007,  # 660 (rw-rw----)   770 (rwxrwx---)  # umask used on LUMI
+            0o022,  # 644 (rw-r--r--)   755 (rwxr-xr-x)  # default umask in most cases
+            0o027,  # 640 (rw-r-----)   750 (rwxr-x---)
+            0o077,  # 600 (rw-------)   700 (rwx------)
+        ],
+    )
+    def test_correct_umask(
+        self,
+        umask,
+        context_set_umask,
+        data_cached_alpine_sif,
+        singularity_exec,
+        tmp_path,
+    ):
+        with context_set_umask(umask):  # default umask on LUMI
+            tmp_path.chmod(
+                # apply effective umask permissions to tmp_path as well
+                # it is created without the custom umask
+                0o777 - umask
+            )
+            built_image_path = tmp_path / "built_image_6021"
+            with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
+                sandbox.add_to_env(
+                    shell_script="echo 'we can read the env file, 6021!'"
+                )
+                sandbox.build_image(path=built_image_path)
+
+                env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+                assert env_file.exists()
+                test_file_mode = env_file.stat().st_mode
+                # file permissions extracted from the last 3 octal digits of st_mode
+                test_file_permissions = test_file_mode & 0o777
+                assert oct(test_file_permissions) == "0o644"
+
+            assert singularity_exec(
+                f"{built_image_path} echo 'more text...'"
+            ).stdout == ("we can read the env file, 6021!\nmore text...\n")
+
     def test_newline_encapsulation(
         self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
     ):
