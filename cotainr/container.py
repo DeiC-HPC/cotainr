@@ -164,6 +164,10 @@ class SingularitySandbox:
         self._assert_within_sandbox_context()
 
         env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        self.run_command_in_container(
+            # ensure that the file is created *within* the container to get correct permissions, etc.
+            cmd=f"touch {env_file}"
+        )
         with env_file.open(mode="a") as f:
             f.write(shell_script + "\n")
 
