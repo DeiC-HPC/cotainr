@@ -20,6 +20,7 @@ from ..container.patches import (
     patch_fake_singularity_sandbox_env_folder,
     patch_disable_singularity_sandbox_subprocess_runner,
     patch_disable_add_metadata,
+    patch_file_creation_outside_container,
 )
 from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -342,6 +343,7 @@ class TestExecute:
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
         patch_fake_singularity_sandbox_env_folder,
+        patch_file_creation_outside_container,
         patch_save_singularity_sandbox_context,
         patch_disable_add_metadata,
         patch_disable_console_spinner,
@@ -378,7 +380,6 @@ class TestExecute:
             conda_bootstrap_cmd,
             conda_bootstrap_clean_cmd,
             conda_env_create_cmd,
-            sandbox_add_to_env_cmd,
             conda_clean_cmd,
             sandbox_build_cmd,
         ) = capsys.readouterr().out.strip().split("\n")
@@ -399,14 +400,6 @@ class TestExecute:
                 "'create'",
                 f"{conda_env}",
                 "'conda_container_env'",
-            ]
-        )
-        assert sandbox_add_to_env_cmd.startswith("PATCH: Ran command in sandbox:")
-        assert all(
-            s in sandbox_add_to_env_cmd
-            for s in [
-                "'touch'",
-                ".singularity.d/env/92-cotainr-env.sh'",
             ]
         )
         assert conda_clean_cmd.startswith("PATCH: Ran command in sandbox:")

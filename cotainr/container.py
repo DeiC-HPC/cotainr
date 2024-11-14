@@ -162,11 +162,6 @@ class SingularitySandbox:
 
         # ensure that the file is created *within* the container to get correct permissions, etc.
         self.run_command_in_container(cmd=f"touch {env_file}")
-
-        # If subprocess runner is disabled in tests: Create file outside the container
-        if not env_file.exists():
-            env_file.touch()  # This file might not have execution permissions due to umask
-
         assert env_file.exists(), f"Creating file {env_file} failed."
 
     def add_to_env(self, *, shell_script):

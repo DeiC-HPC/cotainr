@@ -17,6 +17,7 @@ from cotainr.tracing import LogDispatcher, LogSettings
 from .data import data_cached_alpine_sif
 from .patches import patch_fake_singularity_sandbox_env_folder
 from ..util.patches import patch_disable_stream_subprocess
+from ..container.patches import patch_file_creation_outside_container
 
 
 class TestConstructor:
@@ -74,7 +75,10 @@ class TestContext:
 
 class TestAddToEnv:
     def test_add_twice(
-        self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
+        self,
+        patch_disable_stream_subprocess,
+        patch_fake_singularity_sandbox_env_folder,
+        patch_file_creation_outside_container,
     ):
         lines = ["first script line", "second script line"]
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
@@ -132,7 +136,10 @@ class TestAddToEnv:
             ).stdout == ("we can read the env file, 6021!\nmore text...\n")
 
     def test_newline_encapsulation(
-        self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
+        self,
+        patch_disable_stream_subprocess,
+        patch_fake_singularity_sandbox_env_folder,
+        patch_file_creation_outside_container,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
