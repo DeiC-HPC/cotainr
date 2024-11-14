@@ -5,6 +5,7 @@ on:
       - main
   schedule:
       - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
+  workflow_dispatch:  # allow for manually trigging the workflow
 jobs:
   lint-and-format:
     name: Lint and check formatting
