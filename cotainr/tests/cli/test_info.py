@@ -14,6 +14,7 @@ import subprocess
 import pytest
 
 from cotainr.cli import CotainrCLI, Info
+
 from ..util.patches import patch_empty_system, patch_system_with_actual_file
 
 

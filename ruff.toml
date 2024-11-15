@@ -4,8 +4,12 @@ line-length = 88
 [lint]
 select = [
     "B", # flake8-bugbear
+    "D", # docstrings
     "E", # pycodestyle errors
     "F", # Pyflakes
+    "FLY", # Flynt (f-strings)
+    "I", # isort
+    "UP", # pyupgrade
     "W", # pycodestyle warnings
 ]
 ignore = [
@@ -24,7 +28,14 @@ exclude = [
     "F811",
 ]
 "cotainr/tests/**.py" = [
+    "D", # docstrings not required in tests
     "S101", # assertions are OK in tests
+]
+"examples/**" = [
+    "D", # docstrings not required in examples
+]
+"bin/*" = [
+    "D", # docstrings not required in stubs
 ]
 
 [lint.pydocstyle]
