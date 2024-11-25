@@ -15,7 +15,7 @@ import urllib.error
 import pytest
 
 from cotainr.container import SingularitySandbox
-from cotainr.pack import CondaInstall
+from cotainr.pack import CondaInstall, to_conda_verbosity_arg
 from cotainr.tracing import LogSettings
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -455,14 +455,8 @@ class Test_CondaVerbosityArg:
         self,
         verbosity,
         verbosity_arg,
-        patch_disable_conda_install_bootstrap_conda,
-        patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
     ):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
-            conda_install._verbosity = verbosity
-            assert conda_install._conda_verbosity_arg == verbosity_arg
+        assert to_conda_verbosity_arg(verbosity) == verbosity_arg
 
 
 class Test_LoggingFilters:

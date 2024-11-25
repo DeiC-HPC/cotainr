@@ -138,6 +138,40 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     return completed_process
 
 
+def to_singularity_verbosity(verbosity: int) -> str:
+    """
+    Add a verbosity level to Singularity commands.
+
+    A mapping of the internal cotainr verbosity level to `Singularity
+    verbosity flags
+    <https://apptainer.org/docs/user/main/cli/apptainer.html#options>`_.
+
+    Parameters
+    ----------
+    args : list
+        The list of command line arguments constituting the full
+        singularity command.
+
+    Returns
+    -------
+    args : list
+        The updated list of singularity command line arguments.
+    """
+    if verbosity < 0:
+        # --silent (-s)
+        return "-s"
+    elif verbosity == 0:
+        # --quiet (-q)
+        return "-q"
+    elif verbosity >= 3:
+        # Assume --verbose (-v) is a debug level
+        return "-v"
+    else:
+        raise ValueError(
+            f"The value {verbosity} is cannot be converted to singularity level"
+        )
+
+
 def _print_and_capture_stream(*, stream_handle, print_dispatch):
     """
     Print a text stream while also storing it.

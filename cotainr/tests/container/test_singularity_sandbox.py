@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from cotainr.container import SingularitySandbox
+from cotainr.container import SingularitySandbox, to_singularity_verbosity
 from cotainr.tracing import LogDispatcher, LogSettings
 from .data import data_cached_alpine_sif
 from .patches import patch_fake_singularity_sandbox_env_folder
@@ -310,6 +310,7 @@ class Test_SubprocessRunner:
     ):
         log_dispatcher = LogDispatcher(
             name="test_dispatcher_6021",
+            prefix="SingularitySandbox/",
             map_log_level_func=lambda msg: logging.WARNING,
             log_settings=LogSettings(),
         )
@@ -331,23 +332,11 @@ class Test_SubprocessRunner:
 
 class Test_AddVerbosityArg:
     @pytest.mark.parametrize(
-        ["verbosity", "verbosity_arg"],
-        [(-1, "-s"), (0, "-q"), (1, None), (2, None), (3, "-v"), (4, "-v")],
+        ["verbosity", "result"],
+        [(-1, "-s"), (0, "-q"), (1, ""), (2, ""), (3, "-v"), (4, "-v")],
     )
-    def test_correct_mapping_of_verbosity(self, verbosity, verbosity_arg):
-        sandbox = SingularitySandbox(base_image="my_base_image_6021")
-        sandbox._verbosity = verbosity
-        args = ["first_arg", "last_arg"]
-        sandbox._add_verbosity_arg(args=args)
-        if verbosity_arg is not None:
-            assert len(args) == 3
-            assert args[0] == "first_arg"
-            assert args[1] == verbosity_arg
-            assert args[2] == "last_arg"
-        else:
-            assert len(args) == 2
-            assert args[0] == "first_arg"
-            assert args[1] == "last_arg"
+    def test_correct_mapping_of_verbosity(self, verbosity, result):
+        assert result == to_singularity_verbosity(verbosity)
 
     def test_return_args(self):
         sandbox = SingularitySandbox(base_image="my_base_image_6021")

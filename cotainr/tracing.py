@@ -298,6 +298,7 @@ class LogDispatcher:
         map_log_level_func,
         log_settings,
         filters=None,
+        prefix="",
     ):
         """Setup the log dispatcher."""
         self.map_log_level = map_log_level_func
@@ -345,7 +346,7 @@ class LogDispatcher:
         for handler in stdout_handlers:
             self.logger_stdout.addHandler(handler)
 
-        self.logger_stderr = logging.getLogger(f"{name}.err")
+        self.logger_stderr = logging.getLogger(f"{prefix}{name}.err")
         self.logger_stderr.setLevel(log_level)
         for handler in stderr_handlers:
             self.logger_stderr.addHandler(handler)

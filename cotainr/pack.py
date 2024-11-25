@@ -81,7 +81,7 @@ class CondaInstall:
         self.prefix = prefix
         self.license_accepted = license_accepted
         if log_settings is not None:
-            self._verbosity = log_settings.verbosity
+            _verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
                 name=__class__.__name__,
                 map_log_level_func=self._map_log_level,
@@ -89,8 +89,10 @@ class CondaInstall:
                 log_settings=log_settings,
             )
         else:
-            self._verbosity = 0
+            _verbosity = 0
             self.log_dispatcher = None
+
+        _conda_verbosity_arg = to_conda_verbosity_arg(_verbosity)
 
         # Download Miniforge installer
         conda_installer_path = (
@@ -340,35 +342,6 @@ class CondaInstall:
         )
 
     @property
-    def _conda_verbosity_arg(self):
-        """
-        Get a verbosity level for Conda commands.
-
-        A mapping of the internal cotainr verbosity level to `Conda verbosity
-        flags
-        <https://docs.conda.io/projects/conda/en/latest/commands/create.html#Output,%20Prompt,%20and%20Flow%20Control%20Options>`_.
-
-        Returns
-        -------
-        verbosity_arg : str
-            The verbosity arg ("-q", "-v", "-vv", etc.) to add to the Conda
-            command.
-        """
-        if self._verbosity <= 0:
-            return " -q"
-        elif self._verbosity == 2:
-            # Conda INFO
-            return " -v"
-        elif self._verbosity == 3:
-            # Conda DEBUG
-            return " -vv"
-        elif self._verbosity >= 4:
-            # Conda TRACE
-            return " -vvv"
-        else:
-            return ""
-
-    @property
     def _logging_filters(self):
         """
         Create logging filters for messages from conda commands.
@@ -460,3 +433,32 @@ class CondaInstall:
         else:
             # If no prefix on message, assume its INFO level
             return logging.INFO
+
+
+def to_conda_verbosity_arg(verbosity):
+    """
+    Get a verbosity level for Conda commands.
+
+    A mapping of the internal cotainr verbosity level to `Conda verbosity
+    flags
+    <https://docs.conda.io/projects/conda/en/latest/commands/create.html#Output,%20Prompt,%20and%20Flow%20Control%20Options>`_.
+
+    Returns
+    -------
+    verbosity_arg : str
+        The verbosity arg ("-q", "-v", "-vv", etc.) to add to the Conda
+        command.
+    """
+    if verbosity <= 0:
+        return " -q"
+    elif verbosity == 2:
+        # Conda INFO
+        return " -v"
+    elif verbosity == 3:
+        # Conda DEBUG
+        return " -vv"
+    elif verbosity >= 4:
+        # Conda TRACE
+        return " -vvv"
+    else:
+        return ""

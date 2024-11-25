@@ -19,10 +19,9 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
-import sys
+import weakref
 from tempfile import TemporaryDirectory
 
-from . import __version__ as _cotainr_version
 from . import tracing
 from . import util
 
@@ -62,62 +61,71 @@ class SingularitySandbox:
 
     def __init__(self, *, base_image, log_settings=None):
         """Construct the SingularitySandbox context manager."""
-        self.base_image = base_image
-        self.sandbox_dir = None
+
         if log_settings is not None:
-            self._verbosity = log_settings.verbosity
+            _verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
                 name=__class__.__name__,
                 map_log_level_func=self._map_log_level,
                 log_settings=log_settings,
             )
         else:
-            self._verbosity = 0
+            _verbosity = 0
             self.log_dispatcher = None
+        self._singularity_verbosity = to_singularity_verbosity(_verbosity)
 
-    def __enter__(self):
-        """
-        Build and enter sandbox context.
-
-        Returns
-        -------
-        self : :class:`SingularitySandbox`
-            The sandbox context.
-        """
         # Store current directory
         self._origin = Path().resolve()
 
         # Create sandbox
-        self._tmp_dir = TemporaryDirectory()
-        self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
+        _tmp_dir = TemporaryDirectory()
+        self.sandbox_dir = Path(_tmp_dir.name) / "singularity_sandbox"
         self.sandbox_dir.mkdir(exist_ok=False)
-        self._subprocess_runner(
-            args=self._add_verbosity_arg(
-                args=[
-                    "singularity",
-                    "--nocolor",
-                    "build",
-                    "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
-                    "--sandbox",
-                    "--fix-perms",
-                    self.sandbox_dir,
-                    self.base_image,
-                ]
-            ),
+
+        # Build sandbox.
+        util.stream_subprocess(
+            args=[
+                "singularity",
+                self._singularity_verbosity,
+                "--nocolor",
+                "build",
+                "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
+                "--sandbox",
+                "--fix-perms",
+                self.sandbox_dir,
+                base_image,
+            ],
+            log_dispatcher=self.log_dispatcher,
+        )
+
+        self.finalizer = weakref.finalize(
+            self, self._cleanup, Path().resolve(), _tmp_dir
         )
 
         # Change directory to the sandbox
         os.chdir(self.sandbox_dir)
 
+        self.env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        if not self.env_file.exists():
+            self._create_file(fil=self.env_file)
+
+        self.labels_file = self.sandbox_dir / ".singularity.d/labels.json"
+        if not self.labels_file.exists():
+            self._create_file(fil=self.labels_file)
+
+    @staticmethod
+    def _cleanup(_origin, _tmp_dir):
+        os.chdir(_origin)
+        _tmp_dir.cleanup()
+
+    def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit and destroy sandbox context."""
-        os.chdir(self._origin)
-        self._tmp_dir.cleanup()
-        self.sandbox_dir = None
+        self.finalizer()
 
-    def add_metadata(self):
+    def add_metadata(self, metadata):
         """
         Add metadata to the container sandbox.
 
@@ -136,33 +144,27 @@ class SingularitySandbox:
         file.
 
         """
-        self._assert_within_sandbox_context()
 
-        labels_path = self.sandbox_dir / ".singularity.d/labels.json"
-        with open(labels_path, "r+") as f:
+        with open(self.labels_path, "r+") as f:
             metadata = json.load(f)
-            metadata["cotainr.command"] = " ".join(sys.argv)
-            metadata["cotainr.version"] = _cotainr_version
-            metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
             f.seek(0)
             json.dump(metadata, f)
 
-    def _create_file(self, *, env_file):
+    def _create_file(self, *, fil):
         """
-        Create the Path/file `env_file` in the Singularity container.
+        Create the Path/file `fil` in the Singularity container.
 
         Parameters
         ----------
-        env_file : :class:`pathlib.PosixPath`
+        fil : :class:`pathlib.PosixPath`
             For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
         """
-        self._assert_within_sandbox_context()
 
         # ensure that the file is created *within* the container to get correct permissions, etc.
-        self.run_command_in_container(cmd=f"touch {env_file}")
+        self.run_command_in_container(cmd=f"touch {fil}")
 
-        if not env_file.exists():
-            raise FileNotFoundError(f"Creating file {env_file} failed.")
+        if not fil.exists():
+            raise FileNotFoundError(f"Creating file {fil} failed.")
 
     def add_to_env(self, *, shell_script):
         """
@@ -174,13 +176,7 @@ class SingularitySandbox:
             The shell script to add to the sourced environment in the
             container.
         """
-        self._assert_within_sandbox_context()
-
-        env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
-        if not env_file.exists():
-            self._create_file(env_file=env_file)
-
-        with env_file.open(mode="a") as f:
+        with self.env_file.open(mode="a") as f:
             f.write(shell_script + "\n")
 
     def build_image(self, *, path):
@@ -195,19 +191,17 @@ class SingularitySandbox:
         path : :class:`os.PathLike`
             Path to the built container image.
         """
-        self._assert_within_sandbox_context()
-
-        self._subprocess_runner(
-            args=self._add_verbosity_arg(
-                args=[
-                    "singularity",
-                    "--nocolor",
-                    "build",
-                    "--force",
-                    path,
-                    self.sandbox_dir,
-                ]
-            ),
+        util.stream_subprocess(
+            args=[
+                "singularity",
+                self._singularity_verbosity,
+                "--nocolor",
+                "build",
+                "--force",
+                path,
+                self.sandbox_dir,
+            ],
+            log_dispatcher=self.log_dispatcher,
         )
 
     def run_command_in_container(self, *, cmd, custom_log_dispatcher=None):
@@ -252,23 +246,21 @@ class SingularitySandbox:
           umask to 0022). If you need other file permissions, you must manually
           change them.
         """
-        self._assert_within_sandbox_context()
 
         try:
-            process = self._subprocess_runner(
-                custom_log_dispatcher=custom_log_dispatcher,
-                args=self._add_verbosity_arg(
-                    args=[
-                        "singularity",
-                        "--nocolor",
-                        "exec",
-                        "--writable",
-                        "--no-home",
-                        "--no-umask",
-                        self.sandbox_dir,
-                        *shlex.split(cmd),
-                    ]
-                ),
+            process = util.stream_subprocess(
+                args=[
+                    "singularity",
+                    self._singularity_verbosity,
+                    "--nocolor",
+                    "exec",
+                    "--writable",
+                    "--no-home",
+                    "--no-umask",
+                    self.sandbox_dir,
+                    *shlex.split(cmd),
+                ],
+                log_dispatcher=custom_log_dispatcher,
             )
         except subprocess.CalledProcessError as e:
             singularity_fatal_error = "\n".join(
@@ -280,77 +272,6 @@ class SingularitySandbox:
             ) from e
 
         return process
-
-    def _assert_within_sandbox_context(self):
-        """Raise a ValueError if we are not inside the sandbox context."""
-        if self.sandbox_dir is None:
-            raise ValueError("The operation is only valid inside a sandbox context.")
-
-    def _add_verbosity_arg(self, *, args):
-        """
-        Add a verbosity level to Singularity commands.
-
-        A mapping of the internal cotainr verbosity level to `Singularity
-        verbosity flags
-        <https://apptainer.org/docs/user/main/cli/apptainer.html#options>`_.
-
-        Parameters
-        ----------
-        args : list
-            The list of command line arguments constituting the full
-            singularity command.
-
-        Returns
-        -------
-        args : list
-            The updated list of singularity command line arguments.
-        """
-        if self._verbosity < 0:
-            # --silent (-s)
-            args.insert(1, "-s")
-        elif self._verbosity == 0:
-            # --quiet (-q)
-            args.insert(1, "-q")
-        elif self._verbosity >= 3:
-            # Assume --verbose (-v) is a debug level
-            args.insert(1, "-v")
-
-        return args
-
-    def _subprocess_runner(self, *, custom_log_dispatcher=None, args, **kwargs):
-        """
-        Wrap the choice of subprocess runner.
-
-        Parameters
-        ----------
-        custom_log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
-            The custom log dispatcher to use when running the command (the
-            default is None which implies that the `SingularitySandbox` log
-            dispatcher is used).
-        args : list or str
-            Subprocess arguments.
-        kwargs : dict
-            Keyword arguments passed to the subprocess runner.
-
-        Returns
-        -------
-        process : :class:`subprocess.CompletedProcess`
-            Information about the process that ran in the container sandbox.
-        """
-        if custom_log_dispatcher is not None:
-            # When the command to be run in the container provides its own
-            # log_dispatcher
-            with custom_log_dispatcher.prefix_stderr_name(
-                prefix=self.__class__.__name__
-            ):
-                return util.stream_subprocess(
-                    log_dispatcher=custom_log_dispatcher, args=args, **kwargs
-                )
-        else:
-            # Use the SingularitySandbox log_dispatcher
-            return util.stream_subprocess(
-                log_dispatcher=self.log_dispatcher, args=args, **kwargs
-            )
 
     @staticmethod
     def _map_log_level(msg):
@@ -381,3 +302,39 @@ class SingularitySandbox:
         else:
             # If no prefix on message, assume its INFO level
             return logging.INFO
+
+
+def to_singularity_verbosity(verbosity: int) -> str:
+    """
+    Add a verbosity level to Singularity commands.
+
+    A mapping of the internal cotainr verbosity level to `Singularity
+    verbosity flags
+    <https://apptainer.org/docs/user/main/cli/apptainer.html#options>`_.
+
+    Parameters
+    ----------
+    args : list
+        The list of command line arguments constituting the full
+        singularity command.
+
+    Returns
+    -------
+    args : list
+        The updated list of singularity command line arguments.
+    """
+    if verbosity < 0:
+        # --silent (-s)
+        return "-s"
+    elif verbosity == 0:
+        # --quiet (-q)
+        return "-q"
+    elif verbosity >= 3:
+        # Assume --verbose (-v) is a debug level
+        return "-v"
+    elif verbosity == 1 or verbosity == 2:
+        return ""
+    else:
+        raise ValueError(
+            f"The value {verbosity} is cannot be converted to singularity level"
+        )

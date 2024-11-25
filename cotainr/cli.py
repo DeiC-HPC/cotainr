@@ -154,6 +154,12 @@ class Build(CotainrSubcommand):
         else:
             self.conda_env = None
 
+        self.metadata = {
+            "cotainr.command": " ".join(sys.argv),
+            "cotainr.version": _cotainr_version,
+            "cotainr.url": "https://github.com/DeiC-HPC/cotainr",
+        }
+
     @classmethod
     def add_arguments(cls, *, parser):
         """Add arguments to the "build" subcommand subparser."""
