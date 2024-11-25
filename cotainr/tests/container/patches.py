@@ -120,6 +120,6 @@ def patch_file_creation_outside_container(monkeypatch):
 
     monkeypatch.setattr(
         cotainr.container.SingularitySandbox,
-        "_create_env_file",
+        "_create_file",
         outside_container_create,
     )

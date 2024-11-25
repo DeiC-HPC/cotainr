@@ -118,7 +118,7 @@ class TestAddToEnv:
             with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
                 # Test file permissions
                 env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
-                sandbox._create_env_file(env_file=env_file)
+                sandbox._create_file(env_file=env_file)
                 assert env_file.exists()
                 test_file_mode = env_file.stat().st_mode
                 # file permissions extracted from the last 3 octal digits of st_mode

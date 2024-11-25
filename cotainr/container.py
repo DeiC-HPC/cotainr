@@ -176,7 +176,7 @@ class SingularitySandbox:
 
         env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
         if not env_file.exists():
-            self._create_env_file(env_file=env_file)
+            self._create_file(env_file=env_file)
 
         with env_file.open(mode="a") as f:
             f.write(shell_script + "\n")
