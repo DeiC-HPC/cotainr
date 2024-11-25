@@ -160,7 +160,9 @@ class SingularitySandbox:
 
         # ensure that the file is created *within* the container to get correct permissions, etc.
         self.run_command_in_container(cmd=f"touch {env_file}")
-        assert env_file.exists(), f"Creating file {env_file} failed."
+
+        if not env_file.exists():
+            raise FileNotFoundError(f"Creating file {env_file} failed.")
 
     def add_to_env(self, *, shell_script):
         """
