@@ -147,16 +147,14 @@ class SingularitySandbox:
             f.seek(0)
             json.dump(metadata, f)
 
-    def _create_env_file(self, *, env_file):
+    def _create_file(self, *, env_file):
         """
-        Create the file `env_file` in the Singularity container.
-        It is a bash file sourced on execution of the container.
+        Create the Path/file `env_file` in the Singularity container.
 
         Parameters
         ----------
-        env_file :
-            Path file with suffix .sh. For example,
-            'sandbox_dir/.singularity.d/env/92-cotainr-env.sh'
+        env_file : :class:`pathlib.PosixPath`
+            For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
         """
         self._assert_within_sandbox_context()
 
