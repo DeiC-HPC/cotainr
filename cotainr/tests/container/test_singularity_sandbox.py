@@ -17,7 +17,6 @@ from cotainr.tracing import LogDispatcher, LogSettings
 from .data import data_cached_alpine_sif
 from .patches import patch_fake_singularity_sandbox_env_folder
 from ..util.patches import patch_disable_stream_subprocess
-from ..container.patches import patch_file_creation_outside_container
 
 
 class TestConstructor:
@@ -78,7 +77,6 @@ class TestAddToEnv:
         self,
         patch_disable_stream_subprocess,
         patch_fake_singularity_sandbox_env_folder,
-        patch_file_creation_outside_container,
     ):
         lines = ["first script line", "second script line"]
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
@@ -139,7 +137,6 @@ class TestAddToEnv:
         self,
         patch_disable_stream_subprocess,
         patch_fake_singularity_sandbox_env_folder,
-        patch_file_creation_outside_container,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
@@ -147,11 +144,11 @@ class TestAddToEnv:
             sandbox.add_to_env(shell_script=shell_script)
             assert env_file.read_text() == shell_script + "\n"
 
-    def test_shell_script_append(
-        self, patch_disable_stream_subprocess, patch_fake_singularity_sandbox_env_folder
-    ):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+    @pytest.mark.singularity_integration
+    def test_existing_file(self, data_cached_alpine_sif):
+        with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+            env_file.touch()  # Note, file permissions corresponds to system default
             existing_shell_script = "some existing\nshell script"
             env_file.write_text(existing_shell_script)
             new_shell_script = "fancy_shell_script\nas_a_string"

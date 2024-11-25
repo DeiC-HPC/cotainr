@@ -56,6 +56,17 @@ def patch_fake_singularity_sandbox_env_folder(monkeypatch):
 
         return ret_val
 
+    def outside_container_create(self, env_file):
+        # Create file outside the container
+        env_file = env_file or self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        env_file.touch(exist_ok=True)
+
+    monkeypatch.setattr(
+        cotainr.container.SingularitySandbox,
+        "_create_file",
+        outside_container_create,
+    )
+
     monkeypatch.setattr(
         cotainr.container.SingularitySandbox,
         "_non_mocked_context_enter",
@@ -103,23 +114,4 @@ def patch_disable_add_metadata(monkeypatch):
 
     monkeypatch.setattr(
         cotainr.container.SingularitySandbox, "add_metadata", lambda _: None
-    )
-
-
-@pytest.fixture
-def patch_file_creation_outside_container(monkeypatch):
-    """
-    Create environment file outside the container.
-    Used when subproces is disabled, but environment file is still required.
-    """
-
-    def outside_container_create(self, env_file):
-        # Create file outside the container
-        env_file = env_file or self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
-        env_file.touch(exist_ok=True)
-
-    monkeypatch.setattr(
-        cotainr.container.SingularitySandbox,
-        "_create_file",
-        outside_container_create,
     )

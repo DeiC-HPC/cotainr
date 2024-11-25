@@ -20,7 +20,6 @@ from ..container.patches import (
     patch_fake_singularity_sandbox_env_folder,
     patch_disable_singularity_sandbox_subprocess_runner,
     patch_disable_add_metadata,
-    patch_file_creation_outside_container,
 )
 from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -343,7 +342,6 @@ class TestExecute:
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
         patch_fake_singularity_sandbox_env_folder,
-        patch_file_creation_outside_container,
         patch_save_singularity_sandbox_context,
         patch_disable_add_metadata,
         patch_disable_console_spinner,
