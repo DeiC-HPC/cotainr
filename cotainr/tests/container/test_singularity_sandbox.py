@@ -72,6 +72,14 @@ class TestContext:
         assert not sandbox_dir.exists()
 
 
+class TestCreateFile:
+    def test_broken_subprocess(self, patch_disable_stream_subprocess):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            any_file = sandbox.sandbox_dir / "anyfile.txt"
+            with pytest.raises(FileNotFoundError):
+                sandbox._create_file(f=any_file)
+
+
 class TestAddToEnv:
     def test_add_twice(
         self,
@@ -116,7 +124,7 @@ class TestAddToEnv:
             with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
                 # Test file permissions
                 env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
-                sandbox._create_file(env_file=env_file)
+                sandbox._create_file(f=env_file)
                 assert env_file.exists()
                 test_file_mode = env_file.stat().st_mode
                 # file permissions extracted from the last 3 octal digits of st_mode
