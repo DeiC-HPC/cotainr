@@ -147,22 +147,23 @@ class SingularitySandbox:
             f.seek(0)
             json.dump(metadata, f)
 
-    def _create_file(self, *, env_file):
+    def _create_file(self, *, f):
         """
-        Create the Path/file `env_file` in the Singularity container.
+        Create any file `f` in an existing folder in the Singularity container.
+        The file permissions will ignore the system umask.
 
         Parameters
         ----------
-        env_file : :class:`pathlib.PosixPath`
+        f : :class:`pathlib.PosixPath`
             For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
         """
         self._assert_within_sandbox_context()
 
         # ensure that the file is created *within* the container to get correct permissions, etc.
-        self.run_command_in_container(cmd=f"touch {env_file}")
+        self.run_command_in_container(cmd=f"touch {f}")
 
-        if not env_file.exists():
-            raise FileNotFoundError(f"Creating file {env_file} failed.")
+        if not f.exists():
+            raise FileNotFoundError(f"Creating file {f} failed.")
 
     def add_to_env(self, *, shell_script):
         """
