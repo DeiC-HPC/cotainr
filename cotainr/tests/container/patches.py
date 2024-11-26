@@ -59,9 +59,9 @@ def patch_fake_singularity_sandbox_env_folder(monkeypatch):
 
         return ret_val
 
-    def mock_create_file(self, env_file):
+    def mock_create_file(self, f):
         # Create file outside the container
-        env_file = env_file or self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        env_file = f or self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
         env_file.touch(exist_ok=True)
 
     monkeypatch.setattr(
