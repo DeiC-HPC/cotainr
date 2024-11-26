@@ -156,8 +156,9 @@ class TestAddToEnv:
     def test_existing_file(self, data_cached_alpine_sif):
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
-            env_file.touch()  # Note, file permissions corresponds to system default
             existing_shell_script = "some existing\nshell script"
+
+            # .write_text() creates the file with permissions corresponding to system default
             env_file.write_text(existing_shell_script)
             new_shell_script = "fancy_shell_script\nas_a_string"
             sandbox.add_to_env(shell_script=new_shell_script)
