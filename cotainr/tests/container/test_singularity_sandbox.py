@@ -72,14 +72,6 @@ class TestContext:
         assert not sandbox_dir.exists()
 
 
-class TestCreateFile:
-    def test_broken_subprocess(self, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            any_file = sandbox.sandbox_dir / "anyfile.txt"
-            with pytest.raises(FileNotFoundError):
-                sandbox._create_file(f=any_file)
-
-
 class TestAddToEnv:
     def test_add_twice(
         self,
@@ -309,6 +301,14 @@ class Test_AssertWithinSandboxContext:
             match=r"^The operation is only valid inside a sandbox context\.$",
         ):
             sandbox._assert_within_sandbox_context()
+
+
+class Test_CreateFile:
+    def test_broken_subprocess(self, patch_disable_stream_subprocess):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            any_file = sandbox.sandbox_dir / "anyfile.txt"
+            with pytest.raises(FileNotFoundError):
+                sandbox._create_file(f=any_file)
 
 
 class Test_SubprocessRunner:

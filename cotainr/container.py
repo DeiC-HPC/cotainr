@@ -147,24 +147,6 @@ class SingularitySandbox:
             f.seek(0)
             json.dump(metadata, f)
 
-    def _create_file(self, *, f):
-        """
-        Create any file `f` in an existing folder in the Singularity container.
-        The file permissions will ignore the system umask.
-
-        Parameters
-        ----------
-        f : :class:`pathlib.PosixPath`
-            For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
-        """
-        self._assert_within_sandbox_context()
-
-        # ensure that the file is created *within* the container to get correct permissions, etc.
-        self.run_command_in_container(cmd=f"touch {f}")
-
-        if not f.exists():
-            raise FileNotFoundError(f"Creating file {f} failed.")
-
     def add_to_env(self, *, shell_script):
         """
         Add `shell_script` to the sourced environment in the container.
@@ -317,6 +299,24 @@ class SingularitySandbox:
             args.insert(1, "-v")
 
         return args
+
+    def _create_file(self, *, f):
+        """
+        Create any file `f` in an existing folder in the Singularity container.
+        The file permissions will ignore the system umask.
+
+        Parameters
+        ----------
+        f : :class:`pathlib.PosixPath`
+            For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
+        """
+        self._assert_within_sandbox_context()
+
+        # ensure that the file is created *within* the container to get correct permissions, etc.
+        self.run_command_in_container(cmd=f"touch {f}")
+
+        if not f.exists():
+            raise FileNotFoundError(f"Creating file {f} failed.")
 
     def _subprocess_runner(self, *, custom_log_dispatcher=None, args, **kwargs):
         """
