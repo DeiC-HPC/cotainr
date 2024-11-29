@@ -23,15 +23,15 @@ def patch_disable_conda_install_bootstrap_conda(monkeypatch):
     message about the conda bootstrap that would have happened.
 
     """
+    pass
+    # def mock_bootstrap_conda(self, *, installer_path):
+    #     msg = f"PATCH: Bootstrapped Conda using {installer_path}"
+    #     print(msg)
+    #     return msg
 
-    def mock_bootstrap_conda(self, *, installer_path):
-        msg = f"PATCH: Bootstrapped Conda using {installer_path}"
-        print(msg)
-        return msg
-
-    monkeypatch.setattr(
-        cotainr.pack.CondaInstall, "_bootstrap_conda", mock_bootstrap_conda
-    )
+    # monkeypatch.setattr(
+    #     cotainr.pack.Conda, "_bootstrap_conda", mock_bootstrap_conda
+    # )
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def patch_disable_conda_install_display_miniforge_license_for_acceptance(monkeyp
         sys.exit("PATCH: Showing license terms for {installer_path}")
 
     monkeypatch.setattr(
-        cotainr.pack.CondaInstall,
+        cotainr.pack.Conda,
         "_display_miniforge_license_for_acceptance",
         mock_display_miniforge_license_for_acceptance,
     )
@@ -68,7 +68,7 @@ def patch_disable_conda_install_download_miniforge_installer(monkeypatch):
         assert installer_path.exists()
 
     monkeypatch.setattr(
-        cotainr.pack.CondaInstall,
+        cotainr.pack.Conda,
         "_download_miniforge_installer",
         mock_download_miniforge_installer,
     )

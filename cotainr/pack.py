@@ -29,7 +29,7 @@ from . import util
 logger = logging.getLogger(__name__)
 
 
-class CondaInstall:
+class Conda:
     """
     A Conda installation in a container sandbox.
 
@@ -73,31 +73,26 @@ class CondaInstall:
     <https://www.anaconda.com/blog/anaconda-commercial-edition-faq>`_.
     """
 
-    def __init__(
-        self, *, sandbox, prefix="/opt/conda", license_accepted=False, log_settings=None
-    ):
+    def __init__(self, *, directory, prefix="/opt/conda", log_settings=None):
         """Bootstrap a conda installation."""
-        self.sandbox = sandbox
         self.prefix = prefix
-        self.license_accepted = license_accepted
-        if log_settings is not None:
-            _verbosity = log_settings.verbosity
-            self.log_dispatcher = tracing.LogDispatcher(
-                name=__class__.__name__,
-                map_log_level_func=self._map_log_level,
-                filters=self._logging_filters,
-                log_settings=log_settings,
-            )
-        else:
-            _verbosity = 0
-            self.log_dispatcher = None
+        self.sandbox_dir = directory
+        if log_settings is None:
+            log_settings = tracing.LogSettings()
 
-        _conda_verbosity_arg = to_conda_verbosity_arg(_verbosity)
-
-        # Download Miniforge installer
-        conda_installer_path = (
-            Path(self.sandbox.sandbox_dir).resolve() / "conda_installer.sh"
+        self.log_dispatcher = tracing.LogDispatcher(
+            name=__class__.__name__,
+            map_log_level_func=self._map_log_level,
+            filters=self._logging_filters,
+            log_settings=log_settings,
         )
+
+        self._conda_verbosity_arg = to_conda_verbosity_arg(log_settings.verbosity)
+
+    def download(self, license_accepted=False):
+        """ """
+        # Download Miniforge installer
+        conda_installer_path = Path(self.sandbox_dir).resolve() / "conda_installer.sh"
         self._download_miniforge_installer(installer_path=conda_installer_path)
 
         # Make sure the user has accepted the Miniforge installer license
@@ -113,13 +108,29 @@ class CondaInstall:
                 ),
                 log_level=logging.WARNING,
             )
+        return conda_installer_path
 
-        # Bootstrap Conda environment in container
-        self._bootstrap_conda(installer_path=conda_installer_path)
+    def install(self, install_path, env_file):
+        """ """
+        # Run Conda installer
+        self._run_command_in_sandbox(
+            cmd=f"bash {install_path.name} -b -s -p {self.prefix}"
+        )
+
+        # Add Conda to container sandbox env
+        util.add_to_env(
+            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}",
+            env_file=env_file,
+        )
+
+        # Check that we correctly use the newly installed Conda from now on
+        self._check_conda_bootstrap_integrity()
+
+        # Update Conda package manager
+        self.update_conda_pacman()
 
         # Remove unneeded files
-        conda_installer_path.unlink()
-        self.cleanup_unused_files()
+        install_path.unlink()
 
     def add_environment(self, *, path, name):
         """
@@ -149,29 +160,11 @@ class CondaInstall:
             cmd="conda clean -y -a" + self._conda_verbosity_arg
         )
 
-    def _bootstrap_conda(self, *, installer_path):
+    def update_conda_pacman(self):
         """
-        Install Conda and at its source script to the sandbox env.
-
-        Parameters
-        ----------
-        installer_path : pathlib.Path
-            The path of the Conda installer to run to bootstrap Conda.
+        Update the installed Conda package manager to the latest version
         """
-        # Run Conda installer
-        self._run_command_in_sandbox(
-            cmd=f"bash {installer_path.name} -b -s -p {self.prefix}"
-        )
 
-        # Add Conda to container sandbox env
-        self.sandbox.add_to_env(
-            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}"
-        )
-
-        # Check that we correctly use the newly installed Conda from now on
-        self._check_conda_bootstrap_integrity()
-
-        # Update the installed Conda package manager to the latest version
         self._run_command_in_sandbox(
             cmd=(
                 "conda update -y -n base -c conda-forge conda"
@@ -273,11 +266,11 @@ class CondaInstall:
                 )
                 sys.exit(0)
 
-            self.license_accepted = True
             self._display_message(
                 msg="You have accepted the Miniforge installer license.",
                 log_level=logging.INFO,
             )
+            return True
         else:
             raise RuntimeError(
                 "No license seems to be displayed by the Miniforge installer."
@@ -337,8 +330,10 @@ class CondaInstall:
         process : :class:`subprocess.CompletedProcess`
             Information about the process that ran in the container sandbox.
         """
-        return self.sandbox.run_command_in_container(
-            cmd=cmd, custom_log_dispatcher=self.log_dispatcher
+        return util.run_command_in_sandbox(
+            cmd=cmd,
+            sandbox_dir=self.sandbox_dir,
+            log_dispatcher=self.log_dispatcher,
         )
 
     @property

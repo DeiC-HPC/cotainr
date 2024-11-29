@@ -16,14 +16,14 @@ SingularitySandbox
 import json
 import logging
 import os
+import sys
 from pathlib import Path
-import shlex
-import subprocess
 import weakref
 from tempfile import TemporaryDirectory
 
 from . import tracing
 from . import util
+from . import __version__ as _cotainr_version
 
 logger = logging.getLogger(__name__)
 
@@ -62,18 +62,24 @@ class SingularitySandbox:
     def __init__(self, *, base_image, log_settings=None):
         """Construct the SingularitySandbox context manager."""
 
-        if log_settings is not None:
-            _verbosity = log_settings.verbosity
-            self.log_dispatcher = tracing.LogDispatcher(
-                name=__class__.__name__,
-                map_log_level_func=self._map_log_level,
-                log_settings=log_settings,
-            )
-        else:
-            _verbosity = 0
-            self.log_dispatcher = None
-        self._singularity_verbosity = to_singularity_verbosity(_verbosity)
+        self.base_image = base_image
+        if log_settings is None:
+            log_settings = tracing.LogSettings()
 
+        self.log_dispatcher = tracing.LogDispatcher(
+            name=__class__.__name__,
+            map_log_level_func=self._map_log_level,
+            log_settings=log_settings,
+        )
+
+        self._singularity_verbosity = to_singularity_verbosity(log_settings.verbosity)
+
+    @staticmethod
+    def _cleanup(_origin, _tmp_dir):
+        os.chdir(_origin)
+        _tmp_dir.cleanup()
+
+    def __enter__(self):
         # Store current directory
         self._origin = Path().resolve()
 
@@ -93,7 +99,7 @@ class SingularitySandbox:
                 "--sandbox",
                 "--fix-perms",
                 self.sandbox_dir,
-                base_image,
+                self.base_image,
             ],
             log_dispatcher=self.log_dispatcher,
         )
@@ -109,23 +115,17 @@ class SingularitySandbox:
         if not self.env_file.exists():
             self._create_file(fil=self.env_file)
 
-        self.labels_file = self.sandbox_dir / ".singularity.d/labels.json"
-        if not self.labels_file.exists():
-            self._create_file(fil=self.labels_file)
+        self.labels_path = self.sandbox_dir / ".singularity.d/labels.json"
+        if not self.labels_path.exists():
+            self._create_file(fil=self.labels_path)
 
-    @staticmethod
-    def _cleanup(_origin, _tmp_dir):
-        os.chdir(_origin)
-        _tmp_dir.cleanup()
-
-    def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         """Exit and destroy sandbox context."""
         self.finalizer()
 
-    def add_metadata(self, metadata):
+    def add_metadata(self):
         """
         Add metadata to the container sandbox.
 
@@ -147,6 +147,9 @@ class SingularitySandbox:
 
         with open(self.labels_path, "r+") as f:
             metadata = json.load(f)
+            metadata["cotainr.command"] = " ".join(sys.argv)
+            metadata["cotainr.version"] = _cotainr_version
+            metadata["cotainr.url"] = "https://github.com/DeiC-HPC/cotainr"
             f.seek(0)
             json.dump(metadata, f)
 
@@ -161,23 +164,14 @@ class SingularitySandbox:
         """
 
         # ensure that the file is created *within* the container to get correct permissions, etc.
-        self.run_command_in_container(cmd=f"touch {fil}")
+        util.run_command_in_sandbox(
+            cmd=f"touch {fil}",
+            sandbox_dir=self.sandbox_dir,
+            log_dispatcher=self.log_dispatcher,
+        )
 
         if not fil.exists():
             raise FileNotFoundError(f"Creating file {fil} failed.")
-
-    def add_to_env(self, *, shell_script):
-        """
-        Add `shell_script` to the sourced environment in the container.
-
-        Parameters
-        ----------
-        shell_script : str
-            The shell script to add to the sourced environment in the
-            container.
-        """
-        with self.env_file.open(mode="a") as f:
-            f.write(shell_script + "\n")
 
     def build_image(self, *, path):
         """
@@ -203,75 +197,6 @@ class SingularitySandbox:
             ],
             log_dispatcher=self.log_dispatcher,
         )
-
-    def run_command_in_container(self, *, cmd, custom_log_dispatcher=None):
-        """
-        Run a command in the container sandbox.
-
-        Wraps `singularity exec` of the `cmd` in the container sandbox`
-        allowing for running commands inside the container sandbox context,
-        e.g. for installing software in the container sandbox.
-
-        Parameters
-        ----------
-        cmd : str
-            The command to run in the container sandbox.
-        custom_log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
-            The custom log dispatcher to use when running the command (the
-            default is None which implies that the `SingularitySandbox` log
-            dispatcher is used).
-
-        Returns
-        -------
-        process : :class:`subprocess.CompletedProcess`
-            Information about the process that ran in the container sandbox.
-
-        Notes
-        -----
-        We pass several flags to the `singularity exec` command to provide
-        maximum compatibility with different HPC systems. In particular, we
-        use:
-
-        - `--no-home` as trying to mount the home folder on some systems (e.g.
-          LUMI) causes problems. Thus, when running a command in the container,
-          you cannot reference files in your home directory. Instead you must
-          copy all files into the container sandbox and then reference the
-          files relative to the container root.
-        - `--no-umask` as some systems use a default umask (e.g. 0007 on LUMI)
-          that prevents you from accessing any files added to the container as
-          a regular user when you run the built container, e.g. such files are
-          owned by root:root with 660 permissions for a 0007 umask. Thus, all
-          files added to the container by running a command in the container
-          will have file permissions 644 (Apptainer/Singularity forces the
-          umask to 0022). If you need other file permissions, you must manually
-          change them.
-        """
-
-        try:
-            process = util.stream_subprocess(
-                args=[
-                    "singularity",
-                    self._singularity_verbosity,
-                    "--nocolor",
-                    "exec",
-                    "--writable",
-                    "--no-home",
-                    "--no-umask",
-                    self.sandbox_dir,
-                    *shlex.split(cmd),
-                ],
-                log_dispatcher=custom_log_dispatcher,
-            )
-        except subprocess.CalledProcessError as e:
-            singularity_fatal_error = "\n".join(
-                [line for line in e.stderr.split("\n") if line.startswith("FATAL")]
-            )
-            raise ValueError(
-                f"Invalid command {cmd=} passed to Singularity "
-                f"resulted in the FATAL error: {singularity_fatal_error}"
-            ) from e
-
-        return process
 
     @staticmethod
     def _map_log_level(msg):
@@ -336,5 +261,5 @@ def to_singularity_verbosity(verbosity: int) -> str:
         return ""
     else:
         raise ValueError(
-            f"The value {verbosity} is cannot be converted to singularity level"
+            f"The value {verbosity} is cannot be converted to singularity log-level"
         )

@@ -15,7 +15,7 @@ import urllib.error
 import pytest
 
 from cotainr.container import SingularitySandbox
-from cotainr.pack import CondaInstall, to_conda_verbosity_arg
+from cotainr.pack import Conda, to_conda_verbosity_arg
 from cotainr.tracing import LogSettings
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -27,57 +27,40 @@ from ..container.patches import patch_disable_singularity_sandbox_subprocess_run
 
 
 class TestConstructor:
-    def test_attributes(
-        self,
-        patch_disable_conda_install_bootstrap_conda,
-        patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
-    ):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
-        assert conda_install.sandbox == sandbox
+    def test_default_attributes(self):
+        conda_install = Conda(directory="/tmp")
         assert conda_install.prefix == "/opt/conda"
-        assert conda_install.license_accepted
-        assert conda_install.log_dispatcher is None
-        assert conda_install._verbosity == 0
+        assert conda_install._conda_verbosity_arg == " -q"
 
     def test_beforehand_license_acceptance(
         self,
-        patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
         capsys,
     ):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            CondaInstall(sandbox=sandbox, license_accepted=True)
+        conda = Conda(directory="/tmp")
+        conda.download(license_accepted=True)
 
         # Check that the message about accepting Miniforge license on
-        # beforehand is shown
-        (
-            _sandbox_create_cmd,
-            miniforge_license_accept_cmd,
-            _conda_bootstrap_cmd,
-            _conda_bootstrap_clean_cmd,
-        ) = capsys.readouterr().out.strip().split("\n")
+        # befor3ehand is shown
+        test = conda.log_dispatcher.logger_stderr
+        miniforge_license_accept_cmd = capsys.readouterr().out
         assert miniforge_license_accept_cmd == (
             "You have accepted the Miniforge installer license via the command line option "
             "'--accept-licenses'."
-        )
+        ), test
 
     def test_cleanup(
         self,
         capsys,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
-
+            conda = Conda(directory=sandbox.sandbox_dir)
+            install_path = conda.download(license_accepted=True)
+            conda.install(install_path=install_path, env_file=sandbox.env_file)
             # Check that installer was removed after use
-            assert not (
-                conda_install.sandbox.sandbox_dir / "conda_installer.sh"
-            ).exists()
+            assert not (conda.sandbox.sandbox_dir / "conda_installer.sh").exists()
 
         (
             _sandbox_create_cmd,
@@ -99,20 +82,20 @@ class TestConstructor:
         self,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         log_settings = LogSettings(verbosity=1)
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(
+            conda_install = Conda(
                 sandbox=sandbox, license_accepted=True, log_settings=log_settings
             )
         assert conda_install._verbosity == 1
         assert conda_install.log_dispatcher.verbosity == log_settings.verbosity
         assert conda_install.log_dispatcher.log_file_path == log_settings.log_file_path
         assert conda_install.log_dispatcher.no_color == log_settings.no_color
-        assert conda_install.log_dispatcher.map_log_level is CondaInstall._map_log_level
-        assert conda_install.log_dispatcher.logger_stdout.name == "CondaInstall.out"
-        assert conda_install.log_dispatcher.logger_stderr.name == "CondaInstall.err"
+        assert conda_install.log_dispatcher.map_log_level is Conda._map_log_level
+        assert conda_install.log_dispatcher.logger_stdout.name == "Conda.out"
+        assert conda_install.log_dispatcher.logger_stderr.name == "Conda.err"
 
 
 @pytest.mark.conda_integration
@@ -125,7 +108,7 @@ class TestAddEnvironment:
         )
         conda_env_name = "some_env_name_6021"
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
             conda_install.add_environment(path=conda_env_path, name=conda_env_name)
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
@@ -145,7 +128,7 @@ class TestAddEnvironment:
         )
         conda_env_name = "some_bioconda_env_6021"
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
             conda_install.add_environment(path=conda_env_path, name=conda_env_name)
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
@@ -162,7 +145,7 @@ class TestAddEnvironment:
 class TestCleanupUnusedFiles:
     def test_all_unneeded_removed(self, data_cached_ubuntu_sif):
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
-            CondaInstall(sandbox=sandbox, license_accepted=True)
+            Conda(sandbox=sandbox, license_accepted=True)
             process = sandbox.run_command_in_container(cmd="conda clean -d -a")
             clean_msg = "\n".join(
                 [
@@ -183,7 +166,7 @@ class Test_BootstrapConda:
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
             conda_install_dir = sandbox.sandbox_dir / "opt/conda"
             assert not conda_install_dir.exists()
-            CondaInstall(sandbox=sandbox, license_accepted=True)
+            Conda(sandbox=sandbox, license_accepted=True)
 
             # Check that conda has been installed
             assert conda_install_dir.exists()
@@ -204,10 +187,10 @@ class Test_CheckCondaBootstrapIntegrity:
         self,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
             with pytest.raises(RuntimeError) as exc_info:
                 # Abuse that the output of the mocked subprocess runner in the
                 # sandbox is a line about the command run
@@ -232,17 +215,17 @@ class Test_DisplayMessage:
         caplog,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         log_settings = LogSettings(verbosity=3)
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(
+            conda_install = Conda(
                 sandbox=sandbox, license_accepted=True, log_settings=log_settings
             )
             conda_install._display_message(msg="test_6021", log_level=level)
 
         assert caplog.records[-1].levelno == level
-        assert caplog.records[-1].name == "CondaInstall.out"
+        assert caplog.records[-1].name == "Conda.out"
         assert caplog.records[-1].msg == "test_6021"
 
     @pytest.mark.parametrize(
@@ -254,17 +237,17 @@ class Test_DisplayMessage:
         caplog,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         log_settings = LogSettings(verbosity=0)
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(
+            conda_install = Conda(
                 sandbox=sandbox, license_accepted=True, log_settings=log_settings
             )
             conda_install._display_message(msg="test_6021", log_level=level)
 
         assert caplog.records[-1].levelno == level
-        assert caplog.records[-1].name == "CondaInstall.err"
+        assert caplog.records[-1].name == "Conda.err"
         assert caplog.records[-1].msg == "test_6021"
 
     def test_no_log_dispatcher(
@@ -272,10 +255,10 @@ class Test_DisplayMessage:
         capsys,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
             conda_install._display_message(msg="test_6021", log_level=logging.INFO)
 
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
@@ -286,11 +269,11 @@ class Test_DisplayMessage:
         capsys,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         log_settings = LogSettings(verbosity=1)
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(
+            conda_install = Conda(
                 sandbox=sandbox, license_accepted=True, log_settings=log_settings
             )
             conda_install._display_message(msg="test_6021")
@@ -305,14 +288,14 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
         capsys,
         monkeypatch,
     ):
         monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox)
+            conda_install = Conda(sandbox=sandbox)
 
         stdout_lines = capsys.readouterr().out.strip().split("\n")
         assert "You have accepted the Miniforge installer license." in stdout_lines
@@ -325,7 +308,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
         capsys,
         monkeypatch,
     ):
@@ -333,7 +316,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             with pytest.raises(SystemExit):
-                CondaInstall(sandbox=sandbox)
+                Conda(sandbox=sandbox)
 
         stdout_lines = capsys.readouterr().out.strip().split("\n")
         assert (
@@ -344,7 +327,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         self,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
         monkeypatch,
     ):
         monkeypatch.setattr(subprocess, "Popen", StubEmptyLicensePopen)
@@ -353,21 +336,21 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
                 RuntimeError,
                 match="^No license seems to be displayed by the Miniforge installer.$",
             ):
-                CondaInstall(sandbox=sandbox)
+                Conda(sandbox=sandbox)
 
     def test_license_interaction_handling(
         self,
         factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
         capsys,
         monkeypatch,
     ):
         monkeypatch.setattr(subprocess, "Popen", StubShowLicensePopen)
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            CondaInstall(sandbox=sandbox)
+            Conda(sandbox=sandbox)
 
         stdout = capsys.readouterr().out.strip()
         stdout_lines = stdout.split("\n")
@@ -387,13 +370,13 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         self,
         factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
         capsys,
         monkeypatch,
     ):
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            CondaInstall(sandbox=sandbox)
+            Conda(sandbox=sandbox)
 
         stdout = capsys.readouterr().out.strip()
 
@@ -418,10 +401,10 @@ class Test_DownloadMiniforgeInstaller:
         self,
         patch_urllib_urlopen_as_bytes_stream,
         patch_disable_conda_install_bootstrap_conda,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
             conda_installer_path = (
                 conda_install.sandbox.sandbox_dir / "conda_installer_download"
             )
@@ -437,13 +420,13 @@ class Test_DownloadMiniforgeInstaller:
     def test_installer_download_fail(
         self,
         patch_urllib_urlopen_force_fail,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             with pytest.raises(
                 urllib.error.URLError, match="PATCH: urlopen error forced for url="
             ):
-                CondaInstall(sandbox=sandbox)
+                Conda(sandbox=sandbox)
 
 
 class Test_CondaVerbosityArg:
@@ -464,10 +447,10 @@ class Test_LoggingFilters:
         self,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
 
         filter_names = [
             filter_.__class__.__name__ for filter_ in conda_install._logging_filters
@@ -482,10 +465,10 @@ class Test_LoggingFilters:
         self,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
             filter_ = conda_install._logging_filters[0]
             assert filter_.__class__.__name__ == "StripANSIEscapeCodes"
 
@@ -511,10 +494,10 @@ class Test_LoggingFilters:
         keep,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
             filter_ = conda_install._logging_filters[2]
             assert filter_.__class__.__name__ == "NoEmptyLinesFilter"
 
@@ -533,23 +516,23 @@ class Test_LoggingFilters:
         ["msg", "keep"],
         [
             (
-                "CondaInstall.out:-: openssl-3.1.3        | 2.5 MB    |            |   0%",
+                "Conda.out:-: openssl-3.1.3        | 2.5 MB    |            |   0%",
                 False,
             ),
             (
-                "CondaInstall.out:-: jsonpatch-1.33       | 17 KB     | #########4 |  94%",
+                "Conda.out:-: jsonpatch-1.33       | 17 KB     | #########4 |  94%",
                 False,
             ),
             (
-                "CondaInstall.out:-: libnsl-2.0.0         | 32 KB     | ####9      |  49%",
+                "Conda.out:-: libnsl-2.0.0         | 32 KB     | ####9      |  49%",
                 False,
             ),
             (
-                "CondaInstall.out:-: zstandard-0.21.0     | 395 KB    | 4          |   4%",
+                "Conda.out:-: zstandard-0.21.0     | 395 KB    | 4          |   4%",
                 False,
             ),
             (
-                "CondaInstall.out:-: python-3.11.5        | 29.4 MB   | ########## | 100%",
+                "Conda.out:-: python-3.11.5        | 29.4 MB   | ########## | 100%",
                 True,
             ),
         ],
@@ -560,10 +543,10 @@ class Test_LoggingFilters:
         keep,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
-        patch_disable_singularity_sandbox_subprocess_runner,
+        # patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
+            conda_install = Conda(sandbox=sandbox, license_accepted=True)
             filter_ = conda_install._logging_filters[1]
             assert filter_.__class__.__name__ == "OnlyFinalProgressbarFilter"
 
@@ -606,4 +589,4 @@ class Test_MapLogLevel:
         ],
     )
     def test_correct_log_level_mapping(self, msg, log_level):
-        assert CondaInstall._map_log_level(msg=msg) == log_level
+        assert Conda._map_log_level(msg=msg) == log_level

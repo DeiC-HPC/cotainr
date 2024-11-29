@@ -303,12 +303,10 @@ class LogDispatcher:
         """Setup the log dispatcher."""
         self.map_log_level = map_log_level_func
         self.verbosity = log_settings.verbosity
-        self.log_file_path = log_settings.log_file_path
-        self.no_color = log_settings.no_color
-        log_level = self._determine_log_level(verbosity=log_settings.verbosity)
+        log_level = self._determine_log_level(verbosity=self.verbosity)
 
         # Setup cotainr log format
-        if self.verbosity >= 3:
+        if log_settings.verbosity >= 3:
             log_fmt = "%(asctime)s - %(name)s:-:%(levelname)s: %(message)s"
         else:
             log_fmt = "%(name)s:-: %(message)s"
@@ -317,17 +315,9 @@ class LogDispatcher:
         stdout_handlers = [logging.StreamHandler(stream=sys.stdout)]
         stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
 
-        if self.log_file_path is not None:
-            stdout_handlers.append(
-                logging.FileHandler(
-                    self.log_file_path.with_suffix(self.log_file_path.suffix + ".out")
-                )
-            )
-            stderr_handlers.append(
-                logging.FileHandler(
-                    self.log_file_path.with_suffix(self.log_file_path.suffix + ".err")
-                )
-            )
+        if log_settings.log_file_path is not None:
+            stdout_handlers.append(logging.FileHandler(log_settings.log_file_out))
+            stderr_handlers.append(logging.FileHandler(log_settings.log_file_err))
         for handler in stdout_handlers + stderr_handlers:
             handler.setLevel(log_level)
             handler.setFormatter(logging.Formatter(log_fmt))
@@ -335,7 +325,7 @@ class LogDispatcher:
                 for filter in filters:
                     handler.addFilter(filter)
 
-        if not self.no_color:
+        if not log_settings.no_color:
             # Replace console formatters with one that colors the output
             stdout_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
             stderr_handlers[0].setFormatter(ColoredOutputFormatter(log_fmt))
@@ -451,20 +441,33 @@ class LogSettings:
         The cotainr verbosity level used by the log dispatcher.
     log_file_path : :py:class:`pathlib.Path`, default=None
         The prefix of the file path to save logs to, if specified.
+    log_file_out : :py:class:`pathlib.Path`, default=None
+        The prefix of the file path to save logs to, if specified.
+    log_file_err : :py:class:`pathlib.Path`, default=None
+        The prefix of the file path to save logs to, if specified.
     no_color : bool, default=False
         The indicator of whether or not to disable the coloring of console
         message.
     """
 
     verbosity: int = 0
-    log_file_path: typing.Optional[pathlib.Path] = None
     no_color: bool = False
+    log_file_path: typing.Optional[pathlib.Path] = None
+    log_file_out: typing.Optional[pathlib.Path] = None
+    log_file_err: typing.Optional[pathlib.Path] = None
+    is_default: bool = True
 
     def __post_init__(self):
         """Cast fields to their expected types."""
         self.verbosity = int(self.verbosity)
         if self.log_file_path is not None:
             self.log_file_path = pathlib.Path(self.log_file_path)
+            self.log_file_out = self.log_file_path.with_suffix(
+                self.log_file_path.suffix + ".out"
+            )
+            self.log_file_err = self.log_file_path.with_suffix(
+                self.log_file_path.suffix + ".err"
+            )
         self.no_color = bool(self.no_color)
 
 
