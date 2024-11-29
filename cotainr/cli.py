@@ -230,19 +230,22 @@ class Build(CotainrSubcommand):
                     conda_env_name = "conda_container_env"
                     conda_env_file = sandbox.sandbox_dir / self.conda_env.name
                     shutil.copyfile(self.conda_env, conda_env_file)
-                    conda_install = pack.CondaInstall(
-                        sandbox=sandbox,
-                        license_accepted=self.accept_licenses,
-                        log_settings=self.log_settings,
+
+                    conda = pack.Conda(
+                        directory=sandbox.sandbox_dir, log_settings=self.log_settings
                     )
-                    conda_install.add_environment(
-                        path=conda_env_file, name=conda_env_name
+                    install_path = conda.download(license_accepted=self.accept_licenses)
+                    conda.install(install_path=install_path, env_file=sandbox.env_file)
+                    conda.add_environment(path=conda_env_file, name=conda_env_name)
+
+                    util.add_to_env(
+                        shell_script=f"conda activate {conda_env_name}",
+                        env_file=sandbox.env_file,
                     )
-                    sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
                     # Clean-up unused files
                     logger.info("Cleaning up unused Conda files")
-                    conda_install.cleanup_unused_files()
+                    conda.cleanup_unused_files()
                     logger.info(
                         "Finished installing conda environment: %s", self.conda_env
                     )
@@ -547,18 +550,10 @@ class CotainrCLI:
         cotainr_stderr_handlers = [logging.StreamHandler(stream=sys.stderr)]
         if log_settings.log_file_path is not None:
             cotainr_stdout_handlers.append(
-                logging.FileHandler(
-                    log_settings.log_file_path.with_suffix(
-                        log_settings.log_file_path.suffix + ".out"
-                    )
-                )
+                logging.FileHandler(log_settings.log_file_out)
             )
             cotainr_stderr_handlers.append(
-                logging.FileHandler(
-                    log_settings.log_file_path.with_suffix(
-                        log_settings.log_file_path.suffix + ".err"
-                    )
-                )
+                logging.FileHandler(log_settings.log_file_err)
             )
 
         for stdout_handler in cotainr_stdout_handlers:

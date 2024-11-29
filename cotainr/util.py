@@ -27,6 +27,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import shlex
 
 logger = logging.getLogger(__name__)
 systems_file = (Path(__file__) / "../../systems.json").resolve()
@@ -136,6 +137,125 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     completed_process.check_returncode()
 
     return completed_process
+
+
+def run_command_in_sandbox(*, cmd, sandbox_dir, log_dispatcher):
+    """
+    Run a command in the container sandbox.
+
+    Wraps `singularity exec` of the `cmd` in the container sandbox`
+    allowing for running commands inside the container sandbox context,
+    e.g. for installing software in the container sandbox.
+
+    Parameters
+    ----------
+    cmd : str
+        The command to run in the container sandbox.
+    sandbox_dir : :class:`pathlib.PosixPath`
+    log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`
+        The log dispatcher to use when running the command.
+    verbosity : int
+
+    Returns
+    -------
+    process : :class:`subprocess.CompletedProcess`
+        Information about the process that ran in the container sandbox.
+
+    Notes
+    -----
+    We pass several flags to the `singularity exec` command to provide
+    maximum compatibility with different HPC systems. In particular, we
+    use:
+
+    - `--no-home` as trying to mount the home folder on some systems (e.g.
+        LUMI) causes problems. Thus, when running a command in the container,
+        you cannot reference files in your home directory. Instead you must
+        copy all files into the container sandbox and then reference the
+        files relative to the container root.
+    - `--no-umask` as some systems use a default umask (e.g. 0007 on LUMI)
+        that prevents you from accessing any files added to the container as
+        a regular user when you run the built container, e.g. such files are
+        owned by root:root with 660 permissions for a 0007 umask. Thus, all
+        files added to the container by running a command in the container
+        will have file permissions 644 (Apptainer/Singularity forces the
+        umask to 0022). If you need other file permissions, you must manually
+        change them.
+    """
+    sing_verbosity = to_singularity_verbosity(log_dispatcher.verbosity)
+    try:
+        process = stream_subprocess(
+            args=[
+                "singularity",
+                sing_verbosity,
+                "--nocolor",
+                "exec",
+                "--writable",
+                "--no-home",
+                "--no-umask",
+                sandbox_dir,
+                *shlex.split(cmd),
+            ],
+            log_dispatcher=log_dispatcher,
+        )
+    except subprocess.CalledProcessError as e:
+        singularity_fatal_error = "\n".join(
+            [line for line in e.stderr.split("\n") if line.startswith("FATAL")]
+        )
+        raise ValueError(
+            f"Invalid command {cmd=} passed to Singularity "
+            f"resulted in the FATAL error: {singularity_fatal_error}"
+        ) from e
+
+    return process
+
+
+def add_to_env(*, shell_script, env_file):
+    """
+    Add `shell_script` to the sourced environment in the container.
+
+    Parameters
+    ----------
+    shell_script : str
+        The shell script to add to the sourced environment in the
+        container.
+    env_file : Path
+    """
+    with env_file.open(mode="a") as f:
+        f.write(shell_script + "\n")
+
+
+def to_singularity_verbosity(verbosity: int) -> str:
+    """
+    Add a verbosity level to Singularity commands.
+
+    A mapping of the internal cotainr verbosity level to `Singularity
+    verbosity flags
+    <https://apptainer.org/docs/user/main/cli/apptainer.html#options>`_.
+
+    Parameters
+    ----------
+    args : list
+        The list of command line arguments constituting the full
+        singularity command.
+
+    Returns
+    -------
+    args : list
+        The updated list of singularity command line arguments.
+    """
+    if verbosity < 0:
+        # --silent (-s)
+        return "-s"
+    elif verbosity == 0:
+        # --quiet (-q)
+        return "-q"
+    elif verbosity >= 3:
+        # Assume --verbose (-v) is a debug level
+        return "-v"
+    else:
+        raise ValueError(
+            f"The value {verbosity} is cannot be converted to singularity level"
+        )
 
 
 def _print_and_capture_stream(*, stream_handle, print_dispatch):
