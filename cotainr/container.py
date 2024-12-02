@@ -151,10 +151,6 @@ class SingularitySandbox:
         """
         Add `shell_script` to the sourced environment in the container.
 
-        The content of `shell_script` is written as-is to the file
-        /.singularity.d/env/92-cotainr-env.sh in the Singularity container
-        which is sourced on execution of the container.
-
         Parameters
         ----------
         shell_script : str
@@ -164,6 +160,9 @@ class SingularitySandbox:
         self._assert_within_sandbox_context()
 
         env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        if not env_file.exists():
+            self._create_file(f=env_file)
+
         with env_file.open(mode="a") as f:
             f.write(shell_script + "\n")
 
@@ -300,6 +299,24 @@ class SingularitySandbox:
             args.insert(1, "-v")
 
         return args
+
+    def _create_file(self, *, f):
+        """
+        Create any file `f` in an existing folder in the Singularity container.
+        The file permissions will ignore the system umask.
+
+        Parameters
+        ----------
+        f : :class:`pathlib.PosixPath`
+            For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
+        """
+        self._assert_within_sandbox_context()
+
+        # ensure that the file is created *within* the container to get correct permissions, etc.
+        self.run_command_in_container(cmd=f"touch {f}")
+
+        if not f.exists():
+            raise FileNotFoundError(f"Creating file {f} failed.")
 
     def _subprocess_runner(self, *, custom_log_dispatcher=None, args, **kwargs):
         """

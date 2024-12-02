@@ -238,6 +238,7 @@ class Build(CotainrSubcommand):
                     conda_install.add_environment(
                         path=conda_env_file, name=conda_env_name
                     )
+
                     sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
                     # Clean-up unused files
