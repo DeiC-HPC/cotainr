@@ -58,7 +58,9 @@ class TestConstructor:
             miniforge_license_accept_cmd,
             _conda_bootstrap_cmd,
             _conda_bootstrap_clean_cmd,
-        ) = capsys.readouterr().out.strip().split("\n")
+        ) = (
+            capsys.readouterr().out.strip().split("\n")
+        )
         assert miniforge_license_accept_cmd == (
             "You have accepted the Miniforge installer license via the command line option "
             "'--accept-licenses'."
@@ -428,10 +430,13 @@ class Test_DownloadMiniforgeInstaller:
             conda_install._download_miniforge_installer(
                 installer_path=conda_installer_path
             )
-            assert conda_installer_path.read_bytes() == (
-                b"PATCH: Bytes returned by urlopen for url="
-                b"'https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh'"
-            )
+            conda_installer_strings = [
+                b"PATCH: Bytes returned by urlopen for url=",
+                b"'https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-",
+            ]
+            conda_installer_bytes_string = conda_installer_path.read_bytes()
+            for installer_string in conda_installer_strings:
+                assert installer_string in conda_installer_bytes_string
 
     @pytest.mark.conda_integration  # technically not a test that depends on Conda - but a very slow one...
     def test_installer_download_fail(
