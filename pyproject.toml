@@ -1,0 +1,140 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cotainr"
+version = "2024.10.0"
+dependencies = []
+requires-python = ">=3.8"
+authors = [
+    {name = "Christian Schou Oxvig"},
+    {name = "René Løwe Jacobsen"},
+    {name = "Eske Christiansen"},
+    {name = "Joachim Sødequist"},
+    {name = "Tor Skovsgaard"},
+    {name = "Julius Roeder"},
+]
+maintainers = [
+    {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
+    {name = "Joachim Sødequist", email = "joachim.soedequist@deic.dk"},
+    {name = "Tor Skovsgaard", email = "tor.skovsgaard@deic.dk"},
+    {name = "Julius Roeder", email = "julius.roeder@deic.dk"},
+]
+description = "A user space Apptainer/Singularity container builder"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["hpc", "container", "singularity", "apptainer", "conda"]
+classifiers = [
+    "Development Status :: 5 - Stable",
+    "Intended Audience :: Users",
+    "Topic :: Software Development :: HPC Tools",
+    "License :: EUPL-1.2",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.optional-dependencies]
+tests = [
+    "pytest-cov>=2.10",
+    "pytest>=6.0"
+]
+lint = [
+    "cfgv>=3.4.0",
+    "distlib>=0.3.9",
+    "filelock>=3.17.0",
+    "identify>=2.6.6",
+    "nodeenv>=1.9.1",
+    "platformdirs>=4.3.6",
+    "pre-commit>=4.1.0",
+    "virtualenv>=20.29.1",
+]
+docs = [
+    "numpydoc>=1.5.0",
+    "pydata-sphinx-theme>=0.13.3",
+    "sphinx>=7.2.5",
+    "sphinx-design>=0.5.0",
+    "myst-parser>=2.0.0",
+]
+dev = ["cotainr[tests,lint,docs]"]
+
+[project.scripts]
+cotainr = "cotainr.cli:main"
+
+[project.urls]
+Documentation = "https://cotainr.readthedocs.io/en/stable/"
+Repository = "https://github.com/DeiC-HPC/cotainr.git"
+"Bug Tracker" = "https://github.com/DeiC-HPC/cotainr/issues"
+Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
+
+[tool.ruff]
+target-version = "py38"
+line-length = 88
+
+lint.extend-select = [
+    "B", # flake8-bugbear
+    "E", # pycodestyle errors
+    "F", # Pyflakes
+    "W", # pycodestyle warnings
+]
+lint.ignore = [
+    "E501",  # Automatic conversion of .format() to f-strings
+]
+lint.exclude = [
+    "examples/**/*.ipynb"
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"cotainr/tests/**/test_*.py" = [
+    # The non-standard way to import py.test fixtures in
+    # tests means we will need to ignore "imported but not used"
+    # as well as argument shadowing tests in test modules.
+    "F401",
+    "F811",
+]
+"cotainr/tests/**.py" = [
+    "S101", # assertions are OK in tests
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.format]
+exclude = [
+    "examples/**/*.ipynb",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["cotainr"]
+omit = [
+     "cotainr/tests/*",
+     ".venv/*",
+	]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "--import-mode=importlib",
+    "-ra",
+    "-l",
+    "--cov",
+    "--cov-config=pyproject.toml",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+testpaths = [
+    "cotainr/tests",
+]
+junit_suite_name = [
+    "cotainr_test_suite",
+]
+markers =[
+    "conda_integration: marks tests of integration with conda/mamba",
+    "endtoend: marks end-to-end test cases",
+    "singularity_integration: marks tests of integration with singularity",
+]
