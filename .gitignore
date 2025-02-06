@@ -141,3 +141,5 @@ dmypy.json
 _build/
 
 systems.json
+
+.idea/
