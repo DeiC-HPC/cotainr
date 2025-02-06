@@ -20,6 +20,7 @@ from cotainr.tracing import LogSettings
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_miniforge_installer,
+    patch_disable_get_install_script,
 )
 from .stubs import StubEmptyLicensePopen, StubShowLicensePopen
 from ..container.data import data_cached_ubuntu_sif
@@ -58,9 +59,7 @@ class TestConstructor:
             miniforge_license_accept_cmd,
             _conda_bootstrap_cmd,
             _conda_bootstrap_clean_cmd,
-        ) = (
-            capsys.readouterr().out.strip().split("\n")
-        )
+        ) = capsys.readouterr().out.strip().split("\n")
         assert miniforge_license_accept_cmd == (
             "You have accepted the Miniforge installer license via the command line option "
             "'--accept-licenses'."
@@ -390,6 +389,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_singularity_sandbox_subprocess_runner,
+        patch_disable_get_install_script,
         capsys,
         monkeypatch,
     ):
@@ -420,6 +420,7 @@ class Test_DownloadMiniforgeInstaller:
         self,
         patch_urllib_urlopen_as_bytes_stream,
         patch_disable_conda_install_bootstrap_conda,
+        patch_disable_get_install_script,
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
@@ -443,6 +444,7 @@ class Test_DownloadMiniforgeInstaller:
         self,
         patch_urllib_urlopen_force_fail,
         patch_disable_singularity_sandbox_subprocess_runner,
+        patch_disable_get_install_script,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             with pytest.raises(

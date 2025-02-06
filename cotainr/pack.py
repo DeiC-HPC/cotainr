@@ -15,7 +15,6 @@ CondaInstall
 
 import logging
 from pathlib import Path
-import platform
 import random
 import re
 import subprocess
@@ -287,23 +286,28 @@ class CondaInstall:
         Determine the Miniforge installer to be downloaded based on system information.
 
         ALways downloads a linux version as we expect the container to always be linux
+
+        Raises
+        ------
+        NotImplementedError
+            Unknown architectures are not supported
         """
-        architecture = platform.machine()
+        arch_process = self._run_command_in_sandbox(cmd="uname -m")
+        architecture = arch_process.stdout.strip()
         if architecture == "arm64":
-            #MAC ARM64 - dowmload for a linux container
+            # MAC ARM64 - dowmload for a linux container
             return "Miniforge3-Linux-aarch64.sh"
         elif architecture == "aarch64":
             # LINUX ARM64
             return "Miniforge3-Linux-aarch64.sh"
-        elif architecture == "ppc64le":
-            # LINUX PowerPC
-            return "Miniforge3-Linux-ppc64le.sh"
         elif architecture == "x86_64":
             # LINUX x86
             return "Miniforge3-Linux-x86_64.sh"
         else:
-            # Default to linux x86
-            return "Miniforge3-Linux-x86_64.sh"
+            raise NotImplementedError(
+                "Cotainr only supports x86_64 and arm64/aarch64. "
+                f'The output of uname -m in your container was "{architecture}"'
+            )
 
     def _download_miniforge_installer(self, *, installer_path):
         """
@@ -328,9 +332,7 @@ class CondaInstall:
         # Make up to 3 attempts at downloading the installer
         for retry in range(3):
             try:
-                with urllib.request.urlopen(
-                    miniforge_installer_url
-                ) as url:  # nosec B310
+                with urllib.request.urlopen(miniforge_installer_url) as url:  # nosec B310
                     installer_path.write_bytes(url.read())
 
                 break
