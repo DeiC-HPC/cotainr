@@ -120,29 +120,7 @@ split-on-trailing-comma = true
 max-line-length = 88
 max-doc-length = 88
 
-
 [tool.coverage.run]
 branch = true
-data_file = "/home/usr/.cache/coverage/data"
-
-[tool.coverage.report]
-ignore_errors = true
-fail_under = 100
-show_missing = true
-skip_covered = true
-omit = [
-    "*/tests/*",
-    "demo/settings.py",
-    "manage.py",
-    ".venv/*"
-]
-exclude_lines = [
-    "pragma: no cover",
-    "raise NotImplementedError"
-]
-
-
-# Coverage reports get written to `.cache`, which is ignored by git thanks to
-# .gitignore
-[tool.coverage.html]
-directory = "/home/usr/.cache/coverage/report"
+source = ["cotainr"]
+omit = ["cotainr/tests/*"]
