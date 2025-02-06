@@ -75,6 +75,12 @@ Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 target-version = "py38"
 line-length = 88
 
+lint.extend-select = [
+    "B", # flake8-bugbear
+    "E", # pycodestyle errors
+    "F", # Pyflakes
+    "W", # pycodestyle warnings
+]
 # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
 lint.ignore = [
     "E501",  # Automatic conversion of .format() to f-strings
@@ -82,9 +88,6 @@ lint.ignore = [
     "E111",  # indentation-with-invalid-multiple
     "E114",  # indentation-with-invalid-multiple-comment
     "E117",  # over-indented
-]
-lint.ignore = [
-    "E501",  # Automatic conversion of .format() to f-strings
 ]
 lint.exclude = [
     "examples/**/*.ipynb"
