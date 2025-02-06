@@ -11,6 +11,8 @@ authors = [
     {name = "Christian Schou Oxvig"},
     {name = "René Løwe Jacobsen"},
     {name = "Eske Christiansen"},
+    {name = "Joachim Sødequist"},
+    {name = "Tor Skovsgaard"},
     {name = "Julius Roeder"},
 ]
 maintainers = [
