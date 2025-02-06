@@ -281,37 +281,12 @@ class CondaInstall:
                 "No license seems to be displayed by the Miniforge installer."
             )
 
-    def _get_install_script(self):
-        """
-        Determine the Miniforge installer to be downloaded based on system information.
-
-        ALways downloads a linux version as we expect the container to always be linux
-
-        Raises
-        ------
-        NotImplementedError
-            Unknown architectures are not supported
-        """
-        arch_process = self._run_command_in_sandbox(cmd="uname -m")
-        architecture = arch_process.stdout.strip()
-        if architecture == "arm64":
-            # MAC ARM64 - dowmload for a linux container
-            return "Miniforge3-Linux-aarch64.sh"
-        elif architecture == "aarch64":
-            # LINUX ARM64
-            return "Miniforge3-Linux-aarch64.sh"
-        elif architecture == "x86_64":
-            # LINUX x86
-            return "Miniforge3-Linux-x86_64.sh"
-        else:
-            raise NotImplementedError(
-                "Cotainr only supports x86_64 and arm64/aarch64. "
-                f'The output of uname -m in your container was "{architecture}"'
-            )
-
     def _download_miniforge_installer(self, *, installer_path):
         """
         Download the Miniforge installer to `installer_path`.
+
+        Determines the architecture of the installer to download based on the
+        container architecture, i.e. output of `uname -m`.
 
         Parameters
         ----------
@@ -320,13 +295,27 @@ class CondaInstall:
 
         Raises
         ------
+        NotImplementedError
+            If the architecture of the container is not x86_64 or ARM64.
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
-        install_script = self._get_install_script()
+        # Determine the correct Miniforge installer to download based on the container architecture
+        arch_check_process = self._run_command_in_sandbox(cmd="uname -m")
+        container_architecture = arch_check_process.stdout.strip()
+        if container_architecture in ("arm64", "aarch64"):
+            installer_name = "Miniforge3-Linux-aarch64.sh"
+        elif container_architecture == "x86_64":
+            installer_name = "Miniforge3-Linux-x86_64.sh"
+        else:
+            raise NotImplementedError(
+                "Cotainr only supports x86_64 and arm64/aarch64. "
+                f"The output of 'uname -m' in your container was '{container_architecture}'"
+            )
+
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
-            + install_script
+            + installer_name
         )
 
         # Make up to 3 attempts at downloading the installer

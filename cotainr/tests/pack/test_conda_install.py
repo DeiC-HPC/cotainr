@@ -20,7 +20,7 @@ from cotainr.tracing import LogSettings
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_miniforge_installer,
-    patch_disable_get_install_script,
+    factory_mock_run_command_in_sandbox_stdout,
 )
 from .stubs import StubEmptyLicensePopen, StubShowLicensePopen
 from ..container.data import data_cached_ubuntu_sif
@@ -387,12 +387,17 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
     def test_miniforge_still_showing_license(
         self,
         factory_mock_input,
+        factory_mock_run_command_in_sandbox_stdout,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_singularity_sandbox_subprocess_runner,
-        patch_disable_get_install_script,
         capsys,
         monkeypatch,
     ):
+        monkeypatch.setattr(
+            CondaInstall,
+            "_run_command_in_sandbox",
+            factory_mock_run_command_in_sandbox_stdout("x86_64"),
+        )
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             CondaInstall(sandbox=sandbox)
@@ -418,11 +423,17 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
 class Test_DownloadMiniforgeInstaller:
     def test_installer_download_success(
         self,
+        factory_mock_run_command_in_sandbox_stdout,
         patch_urllib_urlopen_as_bytes_stream,
         patch_disable_conda_install_bootstrap_conda,
-        patch_disable_get_install_script,
         patch_disable_singularity_sandbox_subprocess_runner,
+        monkeypatch,
     ):
+        monkeypatch.setattr(
+            CondaInstall,
+            "_run_command_in_sandbox",
+            factory_mock_run_command_in_sandbox_stdout("x86_64"),
+        )
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
             conda_installer_path = (
@@ -442,10 +453,16 @@ class Test_DownloadMiniforgeInstaller:
     @pytest.mark.conda_integration  # technically not a test that depends on Conda - but a very slow one...
     def test_installer_download_fail(
         self,
+        factory_mock_run_command_in_sandbox_stdout,
         patch_urllib_urlopen_force_fail,
         patch_disable_singularity_sandbox_subprocess_runner,
-        patch_disable_get_install_script,
+        monkeypatch,
     ):
+        monkeypatch.setattr(
+            CondaInstall,
+            "_run_command_in_sandbox",
+            factory_mock_run_command_in_sandbox_stdout("x86_64"),
+        )
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             with pytest.raises(
                 urllib.error.URLError, match="PATCH: urlopen error forced for url="
