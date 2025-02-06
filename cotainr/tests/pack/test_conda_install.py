@@ -469,6 +469,28 @@ class Test_DownloadMiniforgeInstaller:
             ):
                 CondaInstall(sandbox=sandbox)
 
+    def test_installer_wrong_architecture(
+        self,
+        factory_mock_run_command_in_sandbox_stdout,
+        patch_disable_conda_install_bootstrap_conda,
+        patch_disable_singularity_sandbox_subprocess_runner,
+        monkeypatch,
+    ):
+        monkeypatch.setattr(
+            CondaInstall,
+            "_run_command_in_sandbox",
+            factory_mock_run_command_in_sandbox_stdout("test_arch_6021"),
+        )
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            with pytest.raises(
+                NotImplementedError,
+                match=(
+                    "Cotainr only supports x86_64 and arm64/aarch64. "
+                    "The output of 'uname -m' in your container was 'test_arch_6021'"
+                ),
+            ):
+                CondaInstall(sandbox=sandbox)
+
 
 class Test_CondaVerbosityArg:
     @pytest.mark.parametrize(

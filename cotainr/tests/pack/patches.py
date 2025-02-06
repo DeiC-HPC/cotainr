@@ -27,7 +27,9 @@ def factory_mock_run_command_in_sandbox_stdout():
 
     def create_mock_run_command_in_sandbox(fixed_output=None):
         def mock_run_command_in_sandbox(self, *, cmd):
-            return subprocess.CompletedProcess(stdout=fixed_output)
+            return subprocess.CompletedProcess(
+                args="", returncode=0, stdout=fixed_output
+            )
 
         return mock_run_command_in_sandbox
 
