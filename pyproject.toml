@@ -52,6 +52,7 @@ lint = [
     "platformdirs>=4.3.6",
     "pre-commit>=4.1.0",
     "virtualenv>=20.29.1",
+    "ruff>=0.6.9",
 ]
 docs = [
     "numpydoc>=1.5.0",
@@ -88,7 +89,7 @@ lint.exclude = [
 ]
 preview = true
 
-[tool.ruff.extend-per-file-ignores]
+[tool.ruff.lint.extend-per-file-ignores]
 "cotainr/tests/**/test_*.py" = [
     # The non-standard way to import py.test fixtures in
     # tests means we will need to ignore "imported but not used"
@@ -118,7 +119,6 @@ split-on-trailing-comma = true
 # Not following pep8
 [tool.ruff.lint.pycodestyle]
 max-line-length = 88
-max-doc-length = 88
 
 [tool.coverage.run]
 branch = true
