@@ -72,8 +72,9 @@ Repository = "https://github.com/DeiC-HPC/cotainr.git"
 Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 
 [tool.ruff]
-cache-dir = ".cache/ruff"
+target-version = "py38"
 line-length = 88
+
 lint.extend-select = [
     "B", # flake8-bugbear
     "E", # pycodestyle errors
@@ -86,7 +87,6 @@ lint.ignore = [
 lint.exclude = [
     "examples/**/*.ipynb"
 ]
-preview = true
 
 [tool.ruff.lint.extend-per-file-ignores]
 "cotainr/tests/**/test_*.py" = [
@@ -107,17 +107,6 @@ convention = "numpy"
 exclude = [
     "examples/**/*.ipynb",
 ]
-
-#[tool.ruff.lint.isort]
-#case-sensitive = true
-#lines-after-imports = 2
-#lines-between-types = 1
-#combine-as-imports = true
-#split-on-trailing-comma = true
-
-# Not following pep8
-#[tool.ruff.lint.pycodestyle]
-#max-line-length = 88
 
 [tool.coverage.run]
 branch = true
