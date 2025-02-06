@@ -81,8 +81,13 @@ lint.extend-select = [
     "F", # Pyflakes
     "W", # pycodestyle warnings
 ]
+# https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
 lint.ignore = [
     "E501",  # Automatic conversion of .format() to f-strings
+    "W191",  # tab-indentation
+    "E111",  # indentation-with-invalid-multiple
+    "E114",  # indentation-with-invalid-multiple-comment
+    "E117",  # over-indented
 ]
 lint.exclude = [
     "examples/**/*.ipynb"
