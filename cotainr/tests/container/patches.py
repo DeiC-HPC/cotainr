@@ -40,10 +40,13 @@ def patch_disable_singularity_sandbox_subprocess_runner(monkeypatch):
 def patch_fake_singularity_sandbox_env_folder(monkeypatch):
     """
     Fake the creation of the .singularity.d/env/ folder.
+    Additionally, fake creation of the environment file 92-cotainr-env.sh
 
     Normally, the folder is created by SingularitySandbox.__enter__() when it
     runs Singularity to create the sandbox, but when the call to singularity
     has been patched, this fixture may be used to create the folder anyway.
+    When singularity is patched, the environment file can no longer be created
+    inside the container with correct file permissions, so here it is created outside.
     """
 
     def mock_enter(self):
@@ -55,6 +58,17 @@ def patch_fake_singularity_sandbox_env_folder(monkeypatch):
         singularity_env_folder.mkdir(parents=True, exist_ok=True)
 
         return ret_val
+
+    def mock_create_file(self, f):
+        # Create file outside the container
+        env_file = f or self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        env_file.touch(exist_ok=True)
+
+    monkeypatch.setattr(
+        cotainr.container.SingularitySandbox,
+        "_create_file",
+        mock_create_file,
+    )
 
     monkeypatch.setattr(
         cotainr.container.SingularitySandbox,
