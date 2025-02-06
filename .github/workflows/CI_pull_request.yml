@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: "3.x"
       - uses: pre-commit/action@v3.0.1
-  run-full-test-suite:
+  run-full-test-suite-x86:
     name: Run full test suite on x86
     runs-on: ${{ matrix.os }}
     strategy:
