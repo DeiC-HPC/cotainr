@@ -84,7 +84,7 @@ jobs:
         singularity: [
           {provider: "apptainer", version: "lastest"}
           ]
-      steps:
+    steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Attempt to restore Singularity/Apptainer installer from cache
