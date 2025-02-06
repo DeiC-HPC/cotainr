@@ -1,0 +1,133 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cotainr"
+version = "2023.11.0"
+dependencies = []
+requires-python = ">=3.9"
+authors = [
+    {name = "Christian Schou Oxvig"},
+    {name = "René Løwe Jacobsen"},
+    {name = "Eske Christiansen"},
+    {name = "Julius Roeder"}.
+]
+maintainers = [
+    {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
+    {name = "Joachim Sødequist", email = "joachim.soedequist@deic.dk"},
+    {name = "Tor Skovsgaard", email = "tor.skovsgaard@deic.dk"},
+    {name = "Julius Roeder", email = "julius.roeder@deic.dk"},
+]
+description = "A user space Apptainer/Singularity container builder"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["hpc", "container", "singularity", "apptainer"]
+classifiers = [
+    "Development Status :: 5 - Stable",
+    "Intended Audience :: Users",
+    "Topic :: Software Development :: HPC Tools",
+    "License :: EUPL-1.2",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=6.0",
+    "pytest-cov>=2.10",
+    "numpydoc>=1.5.0",
+    "pydata-sphinx-theme>=0.13.3",
+    "sphinx>=7.2.5",
+    "sphinx-design>=0.5.0",
+    "myst-parser>=2.0.0",
+]
+
+[project.scripts]
+cotainr = "cotainr.cli:main"
+
+[project.urls]
+Documentation = "https://cotainr.readthedocs.io/en/stable/"
+Repository = "https://github.com/DeiC-HPC/cotainr.git"
+"Bug Tracker" = "https://github.com/DeiC-HPC/cotainr/issues"
+Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
+
+[tool.ruff]
+cache-dir = ".cache/ruff"
+line-length = 88
+lint.extend-select = [
+    "B", # flake8-bugbear
+    "E", # pycodestyle errors
+    "F", # Pyflakes
+    "W", # pycodestyle warnings
+]
+lint.ignore = [
+    "E501",  # Automatic conversion of .format() to f-strings
+]
+lint.exclude = [
+    "examples/**/*.ipynb"
+]
+preview = true
+
+[tool.ruff.extend-per-file-ignores]
+"cotainr/tests/**/test_*.py" = [
+    # The non-standard way to import py.test fixtures in
+    # tests means we will need to ignore "imported but not used"
+    # as well as argument shadowing tests in test modules.
+    "F401",
+    "F811",
+]
+"cotainr/tests/**.py" = [
+    "S101", # assertions are OK in tests
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.format]
+exclude = [
+    "examples/**/*.ipynb",
+]
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+lines-after-imports = 2
+lines-between-types = 1
+combine-as-imports = true
+split-on-trailing-comma = true
+
+# Not following pep8
+[tool.ruff.lint.pycodestyle]
+max-line-length = 88
+max-doc-length = 88
+
+
+[tool.coverage.run]
+branch = true
+data_file = "/home/usr/.cache/coverage/data"
+
+[tool.coverage.report]
+ignore_errors = true
+fail_under = 100
+show_missing = true
+skip_covered = true
+omit = [
+    "*/tests/*",
+    "demo/settings.py",
+    "manage.py",
+    ".venv/*"
+]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError"
+]
+
+
+# Coverage reports get written to `.cache`, which is ignored by git thanks to
+# .gitignore
+[tool.coverage.html]
+directory = "/home/usr/.cache/coverage/report"
