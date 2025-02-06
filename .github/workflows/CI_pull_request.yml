@@ -73,7 +73,7 @@ jobs:
           path: |
             pytest_junit_out.xml
             htmlcov/*
-  run-full-test-suite:
+  run-full-test-suite-ARM:
     name: Run full test suite ARM64
     runs-on: ${{ matrix.os }}
     strategy:
