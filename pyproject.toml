@@ -36,8 +36,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[project.optional-dependencies]
+dev = [
     "pytest>=6.0",
     "pytest-cov>=2.10",
     "numpydoc>=1.5.0",
