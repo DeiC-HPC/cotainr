@@ -36,7 +36,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Attempt to restore Singularity/Apptainer installer from cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-singularity-installer
         with:
           path: ./singularity_installer.deb
@@ -67,7 +67,7 @@ jobs:
       - name: Run test suite via pytest
         run: pytest -vv --junitxml=pytest_junit_out.xml
       - name: Archive the test results and coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-and-coverage_python${{ matrix.python-version }}_${{ matrix.singularity.provider }}${{ matrix.singularity.version }}
           path: |
