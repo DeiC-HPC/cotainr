@@ -124,3 +124,25 @@ max-doc-length = 88
 branch = true
 source = ["cotainr"]
 omit = ["cotainr/tests/*"]
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "--import-mode=importlib",
+    "-ra",
+    "-l",
+    "--cov",
+    "--cov-config=.coveragerc",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+testpaths = [
+    "cotainr/tests",
+]
+junit_suite_name = [
+    "cotainr_test_suite",
+]
+markers =[
+    "conda_integration: marks tests of integration with conda/mamba",
+    "endtoend: marks end-to-end test cases",
+    "singularity_integration: marks tests of integration with singularity",
+]
