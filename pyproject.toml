@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cotainr"
-version = "2023.11.0"
+version = "2024.10.0"
 dependencies = []
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 authors = [
     {name = "Christian Schou Oxvig"},
     {name = "René Løwe Jacobsen"},
     {name = "Eske Christiansen"},
-    {name = "Julius Roeder"}.
+    {name = "Julius Roeder"},
 ]
 maintainers = [
     {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
@@ -22,7 +22,7 @@ maintainers = [
 description = "A user space Apptainer/Singularity container builder"
 readme = "README.md"
 license = {file = "LICENSE"}
-keywords = ["hpc", "container", "singularity", "apptainer"]
+keywords = ["hpc", "container", "singularity", "apptainer", "conda"]
 classifiers = [
     "Development Status :: 5 - Stable",
     "Intended Audience :: Users",
