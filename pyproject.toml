@@ -124,6 +124,7 @@ max-doc-length = 88
 branch = true
 source = ["cotainr"]
 omit = ["cotainr/tests/*"]
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = [
