@@ -26,10 +26,10 @@ readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["hpc", "container", "singularity", "apptainer", "conda"]
 classifiers = [
-    "Development Status :: 5 - Stable",
-    "Intended Audience :: Users",
-    "Topic :: Software Development :: HPC Tools",
-    "License :: EUPL-1.2",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    #"Topic :: Software Development :: HPC Tools",
+    "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
