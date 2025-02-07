@@ -30,7 +30,9 @@ hooks is to run something like
 
 .. code-block:: bash
 
-    pip install pre-commit
+    uv venv
+    source .venv/bin/activate
+    uv pip install -r pyproject.toml --extra lint
     pre-commit install
 
 but this varies depending on your system and setup.
