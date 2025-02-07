@@ -11,6 +11,8 @@ import sys
 
 import pytest
 
+import platform
+
 import cotainr.pack
 
 
@@ -71,4 +73,38 @@ def patch_disable_conda_install_download_miniforge_installer(monkeypatch):
         cotainr.pack.CondaInstall,
         "_download_miniforge_installer",
         mock_download_miniforge_installer,
+    )
+
+
+@pytest.fixture
+def patch_disable_get_install_script(monkeypatch):
+    """
+    Disable CondaInstall._download_minforge_installer(...).
+
+    The installer download is replaced by a method that, in place of the
+    installer, creates a file containing a line saying that this is where the
+    installer would have been downloaded to.
+    """
+
+    def mock_get_install_script(self):
+        architecture = platform.machine()
+        if architecture == "arm64":
+            # MAC ARM64 - dowmload for a linux container
+            return "Miniforge3-Linux-aarch64.sh"
+        elif architecture == "aarch64":
+            # LINUX ARM64
+            return "Miniforge3-Linux-aarch64.sh"
+        elif architecture == "x86_64":
+            # LINUX x86
+            return "Miniforge3-Linux-x86_64.sh"
+        else:
+            raise NotImplementedError(
+                "Cotainr only supports x86_64 and arm64/aarch64. "
+                f'The output of uname -m in your container was "{architecture}"'
+            )
+
+    monkeypatch.setattr(
+        cotainr.pack.CondaInstall,
+        "_get_install_script",
+        mock_get_install_script,
     )
