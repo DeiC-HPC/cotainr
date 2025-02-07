@@ -5,7 +5,7 @@ Getting Started
 
 `cotainr` makes it easy to build `Singularity`_/`Apptainer`_ containers for certain :ref:`use cases <use_cases>`. If this is your first time learning about `cotainr`, we encourage you to read the :ref:`motivation for using cotainr <why_cotainr>`.
 
-In order to get started using `cotainr`, you need to download and install the `cotainr` source code. Alternative, you may be in luck that you are using an HPC system on which `cotainr` is already installed.
+In order to get started using `cotainr`, you need to download and install the `cotainr` source code. Please note that cotainr only supports x86 and arm64/aarch64 architectures. Alternative, you may be in luck that you are using an HPC system on which `cotainr` is already installed.
 
 .. grid:: 1
     :gutter: 4
