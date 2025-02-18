@@ -48,7 +48,12 @@ The conda environment is automatically activated when the container is run, allo
 
 Pip packages
 ------------
-`cotainr` does not support creating a container directly from a `pip requirements.txt <https://pip.pypa.io/en/stable/user_guide/#requirements-files>`_ file. However, `pip packages may be included in a conda environment <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#using-pip-in-an-environment>`_, e.g. updating `my_conda_env.yml` to
+
+.. seealso::
+
+    - :ref:`pip_environments`
+
+`Pip packages may be included in a conda environment <https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#using-pip-in-an-environment>`_, e.g. updating `my_conda_env.yml` to
 
 .. code-block:: yaml
     :caption: my_conda_env.yml
