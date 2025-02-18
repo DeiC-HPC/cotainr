@@ -15,9 +15,9 @@ Licensed under the European Union Public License (EUPL) 1.2
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 import os
-from pathlib import Path
 import sys
 import time
+from pathlib import Path
 
 sys.path.insert(0, f'{Path("..").resolve()}')
 
@@ -116,15 +116,12 @@ html_theme_options = {
 
 
 def add_api_headline_to_module_docs(app, what, name, obj, options, lines):
-    """
-    Event for adding a 'API reference' headline before showing API content in
-    auto modules.
-    """
+    """Add an 'API reference' headline before showing API content in auto modules."""
     if what == "module":
         lines.append("\n")
         lines.append("API reference")
         lines.append("-------------")
 
 
-def setup(app):
+def setup(app):  # noqa: D103
     app.connect("autodoc-process-docstring", add_api_headline_to_module_docs)

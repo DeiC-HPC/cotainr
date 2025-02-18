@@ -88,7 +88,6 @@ def patch_save_singularity_sandbox_context(monkeypatch):
     The content on `SingularitySandbox.sandbox_dir` is copied to
     `saved_sandbox_dir` before being cleaned up.
     """
-
     saved_sandbox_dir_name = "saved_sandbox_dir"
 
     def mock_exit(self, exc_type, exc_value, traceback):
@@ -114,7 +113,6 @@ def patch_disable_add_metadata(monkeypatch):
     """
     Disable SingularitySandbox.add_metadata().
     """
-
     monkeypatch.setattr(
         cotainr.container.SingularitySandbox, "add_metadata", lambda _: None
     )

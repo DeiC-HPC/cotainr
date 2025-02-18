@@ -17,13 +17,14 @@ import pytest
 from cotainr.container import SingularitySandbox
 from cotainr.pack import CondaInstall
 from cotainr.tracing import LogSettings
+
+from ..container.data import data_cached_ubuntu_sif
+from ..container.patches import patch_disable_singularity_sandbox_subprocess_runner
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_miniforge_installer,
 )
 from .stubs import StubEmptyLicensePopen, StubShowLicensePopen
-from ..container.data import data_cached_ubuntu_sif
-from ..container.patches import patch_disable_singularity_sandbox_subprocess_runner
 
 
 class TestConstructor:
@@ -164,14 +165,12 @@ class TestCleanupUnusedFiles:
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
             CondaInstall(sandbox=sandbox, license_accepted=True)
             process = sandbox.run_command_in_container(cmd="conda clean -d -a")
-            clean_msg = "\n".join(
-                [
-                    "There are no unused tarball(s) to remove.",
-                    "There are no index cache(s) to remove.",
-                    "There are no unused package(s) to remove.",
-                    "There are no tempfile(s) to remove.",
-                    "There are no logfile(s) to remove.",
-                ]
+            clean_msg = (
+                "There are no unused tarball(s) to remove.\n"
+                "There are no index cache(s) to remove.\n"
+                "There are no unused package(s) to remove.\n"
+                "There are no tempfile(s) to remove.\n"
+                "There are no logfile(s) to remove."
             )
             assert process.stdout.strip() == clean_msg
 

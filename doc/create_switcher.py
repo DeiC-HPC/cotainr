@@ -13,10 +13,10 @@ More information about releasing can be found here: https://cotainr.readthedocs.
 """
 
 import json
-from pathlib import Path
-from re import match
 import subprocess
 import sys
+from pathlib import Path
+from re import match
 
 sys.path.insert(0, f'{(Path(__file__) / "../..").resolve()}')
 

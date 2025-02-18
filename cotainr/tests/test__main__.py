@@ -7,14 +7,15 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
-from .cli.patches import patch_disable_main
 import cotainr
+
+from .cli.patches import patch_disable_main
 
 
 class Test__main__:
