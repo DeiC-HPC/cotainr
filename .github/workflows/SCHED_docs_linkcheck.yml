@@ -18,11 +18,10 @@ jobs:
         with:
           python-version: '3.x'
           cache: pip
-          cache-dependency-path: "**/docs-requirements.txt"
       - name: Install docs dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install -r docs-requirements.txt
+          python3 -m pip install -e .[docs]
       - name: Build documentation
         run: |
           make -C doc apidoc

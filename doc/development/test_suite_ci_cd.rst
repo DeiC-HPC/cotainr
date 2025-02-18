@@ -16,11 +16,8 @@ The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>
 
 Dependencies
 ~~~~~~~~~~~~
-In order to run the tests, you must have the Python packages listed in `test-requirements.txt <https://github.com/DeiC-HPC/cotainr/blob/main/test-requirements.txt>`_ installed, i.e.
-
-.. include:: ../../test-requirements.txt
-    :literal:
-
+In order to run the tests, you must have the Python packages listed in the `test` extra.
+You can use ``pip install -e .[tests]`` to install the required packages.
 
 Pytest marks
 ~~~~~~~~~~~~
