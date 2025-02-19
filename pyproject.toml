@@ -24,7 +24,7 @@ maintainers = [
 description = "A user space Apptainer/Singularity container builder"
 readme = "README.md"
 license = "EUPL-1.2"
-license-files = ["LICENSE"]
+license-files = { paths = ["LICENSE"] }
 keywords = ["hpc", "container", "singularity", "apptainer", "conda"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -74,6 +74,11 @@ Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 
 [tool.hatch.version]
 path = "cotainr/__init__.py"
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple/"
+publish-url = "https://pypi.org/legacy/"
 
 [[tool.uv.index]]
 name = "testpypi"
