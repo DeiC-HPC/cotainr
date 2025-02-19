@@ -52,10 +52,11 @@ jobs:
       with:
         name: dist
         path: dist/
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v5
     - name: Publish distribution to TestPyPI
-      run: uv publish --index testpypi
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+
 
   run-full-test-suite:
     name: Run full test suite
