@@ -76,11 +76,7 @@ Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 path = "cotainr/__init__.py"
 
 [[tool.uv.index]]
-name = "pypi"
-url = "https://pypi.org/simple/"
-publish-url = "https://pypi.org/legacy/"
-
-[[tool.uv.index]]
+explicit=true
 name = "testpypi"
 url = "https://test.pypi.org/simple/"
 publish-url = "https://test.pypi.org/legacy/"
