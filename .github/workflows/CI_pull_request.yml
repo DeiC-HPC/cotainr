@@ -46,6 +46,7 @@ jobs:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
     steps:
+    - uses: actions/checkout@v4  # Checkout because `uv publish` requires pyproject.toml
     - name: Download all the dists
       uses: actions/download-artifact@v4
       with:
