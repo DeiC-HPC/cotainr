@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+	  persist-credentials: false
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
       - name: Build a binary wheel and a source tarball
@@ -30,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: dist
 
   publish-to-testpypi:
     name: Publish to TestPyPI
@@ -51,14 +53,11 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: dist
-        path: dist/
+        path: dist
     - name: Set up uv
-      uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v5
     - name: Publish distribution to TestPyPI
-      run: uv publish --index testpypi
-
-  run-full-test-suite:
-    name: Run full test suite
+        run: uv publish --index testpypi
 
   run-full-test-suite-x86:
     name: Run full test suite on x86
