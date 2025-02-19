@@ -16,17 +16,48 @@ jobs:
         with:
           python-version: "3.x"
       - uses: pre-commit/action@v3.0.1
+
   build:
     name: Build package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - run: uv build .
-      - uses: actions/upload-artifact@v4
+        with:
+	  persist-credentials: false
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+      - name: Build a binary wheel and a source tarball
+        run: uv build .
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist
+          path: dist/
+
+  publish-to-testpypi:
+    name: Publish to TestPyPI
+    needs:
+    - build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/cotainr
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+    - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+    - name: Publish distribution to TestPyPI
+        run: uv publish --index testpypi
+
   run-full-test-suite:
     name: Run full test suite
     runs-on: ${{ matrix.os }}
