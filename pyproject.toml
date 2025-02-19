@@ -24,7 +24,7 @@ maintainers = [
 description = "A user space Apptainer/Singularity container builder"
 readme = "README.md"
 license = "EUPL-1.2"
-license-files = { paths = ["LICENSE"] }
+license-files = ["LICENSE"]
 keywords = ["hpc", "container", "singularity", "apptainer", "conda"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
