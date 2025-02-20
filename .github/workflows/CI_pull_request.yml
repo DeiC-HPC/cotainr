@@ -56,7 +56,7 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://test.pypi.org/legacy/
-	skip-existing: true
+        skip-existing: true
 
   run-full-test-suite:
     name: Run full test suite
