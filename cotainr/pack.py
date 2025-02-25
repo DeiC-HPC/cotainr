@@ -281,19 +281,26 @@ class CondaInstall:
                 "No license seems to be displayed by the Miniforge installer."
             )
 
-    def _get_install_script(self):
+    def _get_install_script(self, architecture):
         """
         Determine the Miniforge installer to be downloaded based on system information.
 
-        ALways downloads a linux version as we expect the container to always be linux
+        Always downloads a linux version as we expect the container to always be linux
+
+        Parameters
+        ----------
+        architecture : str
+            String value of the container architecture or "auto". "auto" menas that we will determine the architecture ourselves
 
         Raises
         ------
         NotImplementedError
             Unknown architectures are not supported
         """
-        arch_process = self._run_command_in_sandbox(cmd="uname -m")
-        architecture = arch_process.stdout.strip()
+        if architecture == "auto":
+            # Determine architecture automatically
+            arch_process = self._run_command_in_sandbox(cmd="uname -m")
+            architecture = arch_process.stdout.strip()
         if architecture == "arm64":
             # MAC ARM64 - dowmload for a linux container
             return "Miniforge3-Linux-aarch64.sh"
@@ -309,7 +316,7 @@ class CondaInstall:
                 f'The output of uname -m in your container was "{architecture}"'
             )
 
-    def _download_miniforge_installer(self, *, installer_path):
+    def _download_miniforge_installer(self, *, installer_path, architecture):
         """
         Download the Miniforge installer to `installer_path`.
 
@@ -323,7 +330,7 @@ class CondaInstall:
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
-        install_script = self._get_install_script()
+        install_script = self._get_install_script(architecture)
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
             + install_script
