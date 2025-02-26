@@ -109,6 +109,10 @@ class SingularitySandbox:
         # Change directory to the sandbox
         os.chdir(self.sandbox_dir)
 
+        # Get the architecture of the sandbox
+        arch_process = self.run_command_in_container(cmd="uname -m")
+        self.architecture = arch_process.stdout.strip()
+
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):

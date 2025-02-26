@@ -297,10 +297,6 @@ class CondaInstall:
         NotImplementedError
             Unknown architectures are not supported
         """
-        if architecture == "auto":
-            # Determine architecture automatically
-            arch_process = self._run_command_in_sandbox(cmd="uname -m")
-            architecture = arch_process.stdout.strip()
         if architecture == "arm64":
             # MAC ARM64 - dowmload for a linux container
             return "Miniforge3-Linux-aarch64.sh"
@@ -316,7 +312,7 @@ class CondaInstall:
                 f'The output of uname -m in your container was "{architecture}"'
             )
 
-    def _download_miniforge_installer(self, *, installer_path, architecture):
+    def _download_miniforge_installer(self, *, installer_path):
         """
         Download the Miniforge installer to `installer_path`.
 
@@ -330,7 +326,7 @@ class CondaInstall:
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
-        install_script = self._get_install_script(architecture)
+        install_script = self._get_install_script(self.sandbox.architecture)
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
             + install_script
