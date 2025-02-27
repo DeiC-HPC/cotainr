@@ -60,11 +60,11 @@ class SingularitySandbox:
         used.
     """
 
-    def __init__(self, *, base_image, log_settings=None):
+    def __init__(self, *, base_image, log_settings=None, architecture=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
-        self.architecture = None
+        self.architecture = architecture
         if log_settings is not None:
             self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
@@ -111,8 +111,9 @@ class SingularitySandbox:
         os.chdir(self.sandbox_dir)
 
         # Get the architecture of the sandbox
-        arch_process = self.run_command_in_container(cmd="uname -m")
-        self.architecture = arch_process.stdout.strip()
+        if self.architecture is None:
+            arch_process = self.run_command_in_container(cmd="uname -m")
+            self.architecture = arch_process.stdout.strip()
 
         return self
 

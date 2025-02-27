@@ -322,9 +322,10 @@ class TestExecute:
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
         Build(image_path=image_path, base_image=base_image).execute()
-        sandbox_create_cmd, sandbox_build_cmd = (
+        (sandbox_create_cmd, _uname, sandbox_build_cmd) = (
             capsys.readouterr().out.strip().split("\n")
         )
+
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
         assert all(
             s in sandbox_create_cmd
@@ -375,6 +376,7 @@ class TestExecute:
         # Check sandbox interaction commands
         (
             sandbox_create_cmd,
+            _uname,
             conda_bootstrap_cmd,
             conda_bootstrap_clean_cmd,
             conda_env_create_cmd,

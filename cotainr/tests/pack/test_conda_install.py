@@ -11,6 +11,7 @@ import logging
 import re
 import subprocess
 import urllib.error
+import platform
 
 import pytest
 
@@ -20,7 +21,6 @@ from cotainr.tracing import LogSettings
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_miniforge_installer,
-    patch_disable_get_install_script,
 )
 from .stubs import StubEmptyLicensePopen, StubShowLicensePopen
 from ..container.data import data_cached_ubuntu_sif
@@ -56,6 +56,7 @@ class TestConstructor:
         # beforehand is shown
         (
             _sandbox_create_cmd,
+            _uname,
             miniforge_license_accept_cmd,
             _conda_bootstrap_cmd,
             _conda_bootstrap_clean_cmd,
@@ -82,10 +83,11 @@ class TestConstructor:
 
         (
             _sandbox_create_cmd,
+            _uname,
             _miniforge_license_accept_cmd,
             bootstrap_cmd,
             clean_cmd,
-            _,
+            _empty_string,
         ) = capsys.readouterr().out.split("\n")
 
         # Check that installer (mock) was created in the first place
@@ -389,12 +391,13 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         factory_mock_input,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_singularity_sandbox_subprocess_runner,
-        patch_disable_get_install_script,
         capsys,
         monkeypatch,
     ):
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        with SingularitySandbox(
+            base_image="my_base_image_6021", architecture=platform.machine()
+        ) as sandbox:
             CondaInstall(sandbox=sandbox)
 
         stdout = capsys.readouterr().out.strip()
@@ -420,10 +423,11 @@ class Test_DownloadMiniforgeInstaller:
         self,
         patch_urllib_urlopen_as_bytes_stream,
         patch_disable_conda_install_bootstrap_conda,
-        patch_disable_get_install_script,
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        with SingularitySandbox(
+            base_image="my_base_image_6021", architecture="x86_64"
+        ) as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
             conda_installer_path = (
                 conda_install.sandbox.sandbox_dir / "conda_installer_download"
@@ -444,13 +448,53 @@ class Test_DownloadMiniforgeInstaller:
         self,
         patch_urllib_urlopen_force_fail,
         patch_disable_singularity_sandbox_subprocess_runner,
-        patch_disable_get_install_script,
     ):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        with SingularitySandbox(
+            base_image="my_base_image_6021", architecture="x86_64"
+        ) as sandbox:
             with pytest.raises(
                 urllib.error.URLError, match="PATCH: urlopen error forced for url="
             ):
                 CondaInstall(sandbox=sandbox)
+
+
+class Test_GetInstallScript:
+    @pytest.mark.parametrize("arch", ["arm64", "aarch64"])
+    def test_arm_success(self, arch):
+        assert CondaInstall.get_install_script(arch) == "Miniforge3-Linux-aarch64.sh"
+
+    def test_x86_success(self):
+        assert CondaInstall.get_install_script("x86_64") == "Miniforge3-Linux-x86_64.sh"
+
+    def test_None_error(self):
+        with pytest.raises(
+            RuntimeError, match="which indicates that it has not been started correctly"
+        ):
+            CondaInstall.get_install_script(None)
+
+    @pytest.mark.parametrize(
+        "arch",
+        [
+            "test",
+            "arms64",
+            "aarchs64",
+            "None",
+            "Weird",
+            "WINDOWS",
+            "icecream",
+            "86_64",
+            "pc",
+        ],
+    )
+    def test_arm_success(self, arch):
+        with pytest.raises(
+            NotImplementedError,
+            match=(
+                "Cotainr only supports x86_64 and arm64/aarch64. "
+                f'The output of uname -m in your container was "{arch}"'
+            ),
+        ):
+            CondaInstall.get_install_script(arch)
 
 
 class Test_CondaVerbosityArg:

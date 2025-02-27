@@ -74,7 +74,12 @@ class CondaInstall:
     """
 
     def __init__(
-        self, *, sandbox, prefix="/opt/conda", license_accepted=False, log_settings=None
+        self,
+        *,
+        sandbox,
+        prefix="/opt/conda",
+        license_accepted=False,
+        log_settings=None,
     ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
@@ -281,7 +286,8 @@ class CondaInstall:
                 "No license seems to be displayed by the Miniforge installer."
             )
 
-    def _get_install_script(self, architecture):
+    @staticmethod
+    def get_install_script(architecture):
         """
         Determine the Miniforge installer to be downloaded based on system information.
 
@@ -331,7 +337,7 @@ class CondaInstall:
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
-        install_script = self._get_install_script(self.sandbox.architecture)
+        install_script = CondaInstall.get_install_script(self.sandbox.architecture)
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
             + install_script
