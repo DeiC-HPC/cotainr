@@ -64,6 +64,7 @@ class SingularitySandbox:
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
+        self.architecture = None
         if log_settings is not None:
             self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(

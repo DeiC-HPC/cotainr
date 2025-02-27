@@ -290,7 +290,7 @@ class CondaInstall:
         Parameters
         ----------
         architecture : str
-            String value of the container architecture or "auto". "auto" menas that we will determine the architecture ourselves
+            String value of the container architecture.
 
         Raises
         ------
@@ -306,6 +306,11 @@ class CondaInstall:
         elif architecture == "x86_64":
             # LINUX x86
             return "Miniforge3-Linux-x86_64.sh"
+        elif architecture is None:
+            raise RuntimeError(
+                f'Cotainr got architecture "{architecture}"'
+                "which indicates that it has not been started correctly"
+            )
         else:
             raise NotImplementedError(
                 "Cotainr only supports x86_64 and arm64/aarch64. "
