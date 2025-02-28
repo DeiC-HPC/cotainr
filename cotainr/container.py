@@ -64,11 +64,11 @@ class SingularitySandbox:
         The architecture of the sandbox. Used for testing purposes
     """
 
-    def __init__(self, *, base_image, log_settings=None, architecture=None):
+    def __init__(self, *, base_image, log_settings=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
-        self.architecture = architecture
+        self.architecture = None
         if log_settings is not None:
             self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
