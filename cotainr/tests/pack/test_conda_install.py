@@ -395,9 +395,8 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         monkeypatch,
     ):
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
-        with SingularitySandbox(
-            base_image="my_base_image_6021", architecture=platform.machine()
-        ) as sandbox:
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.architecture = platform.machine()
             CondaInstall(sandbox=sandbox)
 
         stdout = capsys.readouterr().out.strip()
@@ -448,9 +447,9 @@ class Test_DownloadMiniforgeInstaller:
         patch_urllib_urlopen_force_fail,
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
-        with SingularitySandbox(
-            base_image="my_base_image_6021", architecture="x86_64"
-        ) as sandbox:
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            # Just needs a supported architecture - not the real one
+            sandbox.architecture = "x86_64"
             with pytest.raises(
                 urllib.error.URLError, match="PATCH: urlopen error forced for url="
             ):
