@@ -487,7 +487,7 @@ class Test_GetInstallScript:
             "pc",
         ],
     )
-    def test_arm_success(self, arch):
+    def test_unknown_arch_error(self, arch):
         with pytest.raises(
             NotImplementedError,
             match=(
