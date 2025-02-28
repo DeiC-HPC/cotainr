@@ -83,7 +83,7 @@ class TestConstructor:
 
         (
             _sandbox_create_cmd,
-            _uname,
+            _sandbox_uname_cmd,
             _miniforge_license_accept_cmd,
             bootstrap_cmd,
             clean_cmd,
