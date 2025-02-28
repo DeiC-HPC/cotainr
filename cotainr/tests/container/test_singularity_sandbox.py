@@ -45,7 +45,9 @@ class TestConstructor:
 
 class TestContext:
     def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021", architecture="test"):
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             pass
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[0]
