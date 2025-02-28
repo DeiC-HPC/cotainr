@@ -56,7 +56,7 @@ class TestConstructor:
         # beforehand is shown
         (
             _sandbox_create_cmd,
-            _uname,
+            _sandbox_uname_cmd,
             miniforge_license_accept_cmd,
             _conda_bootstrap_cmd,
             _conda_bootstrap_clean_cmd,
