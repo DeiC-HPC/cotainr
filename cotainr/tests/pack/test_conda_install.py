@@ -425,9 +425,8 @@ class Test_DownloadMiniforgeInstaller:
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
-        with SingularitySandbox(
-            base_image="my_base_image_6021", architecture="x86_64"
-        ) as sandbox:
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.architecture = "x86_64"  # Needs to be real, does not need to work
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
             conda_installer_path = (
                 conda_install.sandbox.sandbox_dir / "conda_installer_download"
