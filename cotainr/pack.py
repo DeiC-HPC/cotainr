@@ -287,9 +287,9 @@ class CondaInstall:
             )
 
     @staticmethod
-    def get_install_script(architecture):
+    def _get_install_script(architecture):
         """
-        Determine the Miniforge installer to be downloaded based on system information.
+        Determine the Miniforge installer to be downloaded based on system architecture.
 
         Always downloads a linux version as we expect the container to always be linux
 
@@ -300,6 +300,8 @@ class CondaInstall:
 
         Raises
         ------
+        RuntimeError
+            The architecture has not been set - most likely the sandbox has not been initiated correctly
         NotImplementedError
             Unknown architectures are not supported
         """
@@ -337,7 +339,7 @@ class CondaInstall:
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
-        install_script = CondaInstall.get_install_script(self.sandbox.architecture)
+        install_script = CondaInstall._get_install_script(self.sandbox.architecture)
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
             + install_script

@@ -46,6 +46,8 @@ class SingularitySandbox:
     log_settings : :class:`~cotainr.tracing.LogSettings`, optional
         The data used to setup the logging machinery (the default is None which
         implies that the logging machinery is not used).
+    architecture : str, optional
+        String denoting the architecture (default is None which implies that the sandbox will determine the architecture itself (used for testing purposes)
 
     Attributes
     ----------
@@ -58,6 +60,8 @@ class SingularitySandbox:
         The log dispatcher used to process stdout/stderr message from
         Singularity commands that run in sandbox, if the logging machinery is
         used.
+    architecture : str or None.
+        The architecture of the sandbox. Used for testing purposes
     """
 
     def __init__(self, *, base_image, log_settings=None, architecture=None):
@@ -110,7 +114,8 @@ class SingularitySandbox:
         # Change directory to the sandbox
         os.chdir(self.sandbox_dir)
 
-        # Get the architecture of the sandbox
+        # Get the architecture of the sandbox if it is not already set
+        # (should not be set in real world scenarios)
         if self.architecture is None:
             arch_process = self.run_command_in_container(cmd="uname -m")
             self.architecture = arch_process.stdout.strip()

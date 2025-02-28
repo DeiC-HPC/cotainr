@@ -461,16 +461,18 @@ class Test_DownloadMiniforgeInstaller:
 class Test_GetInstallScript:
     @pytest.mark.parametrize("arch", ["arm64", "aarch64"])
     def test_arm_success(self, arch):
-        assert CondaInstall.get_install_script(arch) == "Miniforge3-Linux-aarch64.sh"
+        assert CondaInstall._get_install_script(arch) == "Miniforge3-Linux-aarch64.sh"
 
     def test_x86_success(self):
-        assert CondaInstall.get_install_script("x86_64") == "Miniforge3-Linux-x86_64.sh"
+        assert (
+            CondaInstall._get_install_script("x86_64") == "Miniforge3-Linux-x86_64.sh"
+        )
 
     def test_None_error(self):
         with pytest.raises(
             RuntimeError, match="which indicates that it has not been started correctly"
         ):
-            CondaInstall.get_install_script(None)
+            CondaInstall._get_install_script(None)
 
     @pytest.mark.parametrize(
         "arch",
@@ -494,7 +496,7 @@ class Test_GetInstallScript:
                 f'The output of uname -m in your container was "{arch}"'
             ),
         ):
-            CondaInstall.get_install_script(arch)
+            CondaInstall._get_install_script(arch)
 
 
 class Test_CondaVerbosityArg:
