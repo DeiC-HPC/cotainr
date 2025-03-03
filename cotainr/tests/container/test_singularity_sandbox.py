@@ -167,6 +167,13 @@ class TestAddToEnv:
                 env_file.read_text().strip() == existing_shell_script + new_shell_script
             )
 
+    @pytest.mark.singularity_integration
+    def test_when_architecture_is_set(self, data_cached_alpine_sif):
+        sandbox = SingularitySandbox(base_image=data_cached_alpine_sif)
+        sandbox.architecture = "test"
+        with sandbox:
+            assert sandbox.architecture == "test"
+
 
 @pytest.mark.singularity_integration
 class TestBuildImage:

@@ -59,7 +59,7 @@ class SingularitySandbox:
         Singularity commands that run in sandbox, if the logging machinery is
         used.
     architecture : str or None.
-        The architecture of the sandbox. Used for testing purposes
+        The machine architecture of the sandbox.
     """
 
     def __init__(self, *, base_image, log_settings=None):
