@@ -316,13 +316,13 @@ class CondaInstall:
             return "Miniforge3-Linux-x86_64.sh"
         elif architecture is None:
             raise RuntimeError(
-                f'Cotainr got architecture "{architecture}"'
-                "which indicates that it has not been started correctly"
+                f"Cotainr's CondaInstall got '{architecture=}'"
+                "which indicates that it has not been instantiated correctly"
             )
         else:
             raise NotImplementedError(
-                "Cotainr only supports x86_64 and arm64/aarch64. "
-                f'The output of uname -m in your container was "{architecture}"'
+                "Cotainr's CondaInstall only supports x86_64 and arm64/aarch64. "
+                f'Cotainr got "{architecture=}" for your container'
             )
 
     def _download_miniforge_installer(self, *, installer_path):
