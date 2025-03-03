@@ -46,8 +46,6 @@ class SingularitySandbox:
     log_settings : :class:`~cotainr.tracing.LogSettings`, optional
         The data used to setup the logging machinery (the default is None which
         implies that the logging machinery is not used).
-    architecture : str, optional
-        String denoting the architecture (default is None which implies that the sandbox will determine the architecture itself (used for testing purposes)
 
     Attributes
     ----------
