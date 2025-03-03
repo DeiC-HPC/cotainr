@@ -63,5 +63,7 @@ def _get_importlib_metadata_version():
 
 
 # The cotainr version based on git history or the installed package version. If
-# neither is available, the reported version is `None`, i.e. unknown.
-__version__ = _get_hatch_version() or _get_importlib_metadata_version()
+# neither is available, the reported version is "<unknown version>".
+__version__ = (
+    _get_hatch_version() or _get_importlib_metadata_version() or "<unknown version>"
+)
