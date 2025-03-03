@@ -9,7 +9,10 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import sys
 
-__version__ = "2024.10.0"
+from ._version import __version__
+
+__all__ = ["__version__"]
+
 _minimum_dependency_version = {
     # Versions must be specified as a (major, minor, patchlevel) tuple of
     # integers
