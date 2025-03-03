@@ -468,7 +468,13 @@ class Test_GetInstallScript:
 
     def test_None_error(self):
         with pytest.raises(
-            RuntimeError, match="which indicates that it has not been started correctly"
+            RuntimeError,
+            match=(
+                r".*"
+                r"Cotainr.*"
+                r"CondaInstall.*"
+                r"not been instantiated correctly.*"
+            ),
         ):
             CondaInstall._get_install_script(None)
 
@@ -490,8 +496,14 @@ class Test_GetInstallScript:
         with pytest.raises(
             NotImplementedError,
             match=(
-                "Cotainr only supports x86_64 and arm64/aarch64. "
-                f'The output of uname -m in your container was "{arch}"'
+                r".*"
+                r"Cotainr.*"
+                r"CondaInstall.*"
+                r"supports.*"
+                r"x86_64.*"
+                r"arm64.*"
+                r"aarch64.*"
+                rf"{arch}.*"
             ),
         ):
             CondaInstall._get_install_script(arch)
