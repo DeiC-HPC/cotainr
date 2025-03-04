@@ -92,7 +92,7 @@ jobs:
         os: ["ubuntu-22.04-arm"]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         singularity: [
-          {provider: "apptainer", version: "lastest"}
+          {provider: "apptainer", version: "latest"}
           ]
     steps:
       - name: Checkout code
