@@ -23,9 +23,8 @@ The HTML version of the documentation is based on the `PyData Spinx Theme <https
 
 Dependencies
 ~~~~~~~~~~~~
-In order to build the HTML version of the documentation, you must have the Python packages listed the `docs-requirements.txt <https://github.com/DeiC-HPC/cotainr/blob/main/docs-requirements.txt>`_ installed, i.e.
 
-.. include:: ../../docs-requirements.txt
-    :literal:
+In order to build the HTML version of the documentation, you must have the Python packages listed in the `docs` extra.
+You can use ``pip install -e .[docs]`` to install the required packages.
 
 Also, in order to run the above :code:`make` commands, you muse have `make <https://www.gnu.org/software/make/>`_ installed.

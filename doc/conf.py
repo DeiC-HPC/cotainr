@@ -58,6 +58,10 @@ linkcheck_ignore = [
     # For now, let's avoid checking these
     "https://github.com/DeiC-HPC/cotainr",
 ]
+linkcheck_anchors_ignore_for_url = [
+    # Ignore GitHub issue comment anchors that apparently fails
+    "https://github.com/apptainer/singularity/issues/5941"
+]
 if "GITHUB_TOKEN" in os.environ:
     # Authenticate with GitHub token in GitHub Actions to avoid hitting rate limits
     # It is not entirely clear if this has any effect outside of api.github.com, though...
