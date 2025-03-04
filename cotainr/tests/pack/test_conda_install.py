@@ -425,7 +425,8 @@ class Test_DownloadMiniforgeInstaller:
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            sandbox.architecture = "x86_64"  # Needs to be real, does not need to work
+            # Just needs some supported architecture
+            sandbox.architecture = "x86_64"
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
             conda_installer_path = (
                 conda_install.sandbox.sandbox_dir / "conda_installer_download"
@@ -448,12 +449,28 @@ class Test_DownloadMiniforgeInstaller:
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            # Just needs a supported architecture - not the real one
+            # Just needs some supported architecture
             sandbox.architecture = "x86_64"
             with pytest.raises(
                 urllib.error.URLError, match="PATCH: urlopen error forced for url="
             ):
                 CondaInstall(sandbox=sandbox)
+
+    def test_unknown_architecture(
+        self, patch_disable_singularity_sandbox_subprocess_runner
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.architecture = None
+            with pytest.raises(
+                RuntimeError,
+                match=(
+                    r".*"
+                    r"Cotainr.*"
+                    r"CondaInstall.*"
+                    r"which indicates that it is not running in a container sandbox context"
+                ),
+            ):
+                CondaInstall(sandbox=sandbox, license_accepted=True)
 
 
 class Test_GetInstallScript:
@@ -465,18 +482,6 @@ class Test_GetInstallScript:
         assert (
             CondaInstall._get_install_script("x86_64") == "Miniforge3-Linux-x86_64.sh"
         )
-
-    def test_None_error(self):
-        with pytest.raises(
-            RuntimeError,
-            match=(
-                r".*"
-                r"Cotainr.*"
-                r"CondaInstall.*"
-                r"not been instantiated correctly.*"
-            ),
-        ):
-            CondaInstall._get_install_script(None)
 
     @pytest.mark.parametrize(
         "arch",
