@@ -74,7 +74,12 @@ class CondaInstall:
     """
 
     def __init__(
-        self, *, sandbox, prefix="/opt/conda", license_accepted=False, log_settings=None
+        self,
+        *,
+        sandbox,
+        prefix="/opt/conda",
+        license_accepted=False,
+        log_settings=None,
     ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
@@ -281,33 +286,34 @@ class CondaInstall:
                 "No license seems to be displayed by the Miniforge installer."
             )
 
-    def _get_install_script(self):
+    @staticmethod
+    def _get_install_script(architecture):
         """
-        Determine the Miniforge installer to be downloaded based on system information.
+        Determine the Miniforge installer to be downloaded based on system architecture.
 
-        ALways downloads a linux version as we expect the container to always be linux
+        Always downloads a Linux version as the container is expected to always be Linux.
+
+        Parameters
+        ----------
+        architecture : str
+            The container architecture as returned by "uname -m".
 
         Raises
         ------
         NotImplementedError
-            Unknown architectures are not supported
+            If the container sandbox architecture is not supported.
         """
-        arch_process = self._run_command_in_sandbox(cmd="uname -m")
-        architecture = arch_process.stdout.strip()
-        if architecture == "arm64":
-            # MAC ARM64 - dowmload for a linux container
-            return "Miniforge3-Linux-aarch64.sh"
-        elif architecture == "aarch64":
-            # LINUX ARM64
-            return "Miniforge3-Linux-aarch64.sh"
+        if architecture in ("arm64", "aarch64"):
+            install_script = "Miniforge3-Linux-aarch64.sh"
         elif architecture == "x86_64":
-            # LINUX x86
-            return "Miniforge3-Linux-x86_64.sh"
+            install_script = "Miniforge3-Linux-x86_64.sh"
         else:
             raise NotImplementedError(
-                "Cotainr only supports x86_64 and arm64/aarch64. "
-                f'The output of uname -m in your container was "{architecture}"'
+                "Cotainr's CondaInstall only supports x86_64 and arm64/aarch64. "
+                f'Cotainr got "{architecture=}" for your container'
             )
+
+        return install_script
 
     def _download_miniforge_installer(self, *, installer_path):
         """
@@ -320,10 +326,19 @@ class CondaInstall:
 
         Raises
         ------
+        RuntimeError
+            If the container sandbox architecture is unknown.
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
-        install_script = self._get_install_script()
+        architecture = self.sandbox.architecture
+        if architecture is None:
+            raise RuntimeError(
+                f"Cotainr's CondaInstall got '{architecture=}' "
+                "which indicates that it is not running in a container sandbox context."
+            )
+
+        install_script = CondaInstall._get_install_script(architecture)
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
             + install_script
