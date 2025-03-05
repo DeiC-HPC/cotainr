@@ -213,8 +213,9 @@ class SingularitySandbox:
 
         Parameters
         ----------
-        cmd : str
+        cmd : str | list
             The command to run in the container sandbox.
+            If a string, subjected to `shlex.split()`; if a list, passed through as-is.
         custom_log_dispatcher : :class:`~cotainr.tracing.LogDispatcher`, optional
             The custom log dispatcher to use when running the command (the
             default is None which implies that the `SingularitySandbox` log
@@ -248,6 +249,10 @@ class SingularitySandbox:
         self._assert_within_sandbox_context()
 
         try:
+            if isinstance(cmd, list):
+                args = [str(arg) for arg in cmd]
+            else:
+                args = shlex.split(cmd)
             process = self._subprocess_runner(
                 custom_log_dispatcher=custom_log_dispatcher,
                 args=self._add_verbosity_arg(
@@ -259,7 +264,7 @@ class SingularitySandbox:
                         "--no-home",
                         "--no-umask",
                         self.sandbox_dir,
-                        *shlex.split(cmd),
+                        *args,
                     ]
                 ),
             )
