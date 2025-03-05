@@ -121,7 +121,7 @@ jobs:
       - name: Archive the test results and coverage
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-and-coverage_python${{ matrix.python-version }}_${{ matrix.singularity.provider }}${{ matrix.singularity.version }}
+          name: test-results-and-coverage_${{ matrix.os }}_python${{ matrix.python-version }}_${{ matrix.singularity.provider }}${{ matrix.singularity.version }}
           path: |
             pytest_junit_out.xml
             htmlcov/*
