@@ -499,7 +499,7 @@ class Test_GetInstallScript:
     )
     def test_unknown_arch_error(self, arch):
         with pytest.raises(
-            NotImplementedError,
+            ValueError,
             match=(
                 r".*"
                 r"Cotainr.*"

@@ -300,7 +300,7 @@ class CondaInstall:
 
         Raises
         ------
-        NotImplementedError
+        ValueError
             If the container sandbox architecture is not supported.
         """
         if architecture in ("arm64", "aarch64"):
@@ -308,7 +308,7 @@ class CondaInstall:
         elif architecture == "x86_64":
             install_script = "Miniforge3-Linux-x86_64.sh"
         else:
-            raise NotImplementedError(
+            raise ValueError(
                 "Cotainr's CondaInstall only supports x86_64 and arm64/aarch64. "
                 f'Cotainr got "{architecture=}" for your container'
             )
