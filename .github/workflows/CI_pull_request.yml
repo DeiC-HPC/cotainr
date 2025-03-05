@@ -97,12 +97,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Attempt to restore Singularity/Apptainer installer from cache
-        uses: actions/cache@v4
-        id: cache-singularity-installer
-        with:
-          path: ./singularity_installer.deb
-          key: ${{ matrix.os }}-${{ matrix.singularity.provider }}_installer-${{ matrix.singularity.version }}
       - name: Set up Singularity/Apptainer
         run: |
           export DEBIAN_FRONTEND=noninteractive
