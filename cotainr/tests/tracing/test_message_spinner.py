@@ -211,7 +211,7 @@ class Test_SpinMsg:
             "⣾ some_message_longer_than_terminal_width..."
         )
         expected_one_line_msg = (
-            f"⣾ some_message_longer_than_terminal_width{'!'*exclamation_marks}..."
+            f"⣾ some_message_longer_than_terminal_width{'!' * exclamation_marks}..."
         )
         safe_MessageSpinner._spin_msg()
         one_line_stream_msg = stream.getvalue().split("\r\x1b[2K")[1]

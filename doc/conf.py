@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 import time
 
-sys.path.insert(0, f'{Path("..").resolve()}')
+sys.path.insert(0, f"{Path('..').resolve()}")
 
 import cotainr
 

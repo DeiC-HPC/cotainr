@@ -58,12 +58,16 @@ class SingularitySandbox:
         The log dispatcher used to process stdout/stderr message from
         Singularity commands that run in sandbox, if the logging machinery is
         used.
+    architecture : str or None.
+        The machine architecture of the sandbox as returned by `uname -m`. Its
+        value is `None` (unknown) until entering the the sandbox context.
     """
 
     def __init__(self, *, base_image, log_settings=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
+        self.architecture = None
         if log_settings is not None:
             self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
@@ -108,6 +112,12 @@ class SingularitySandbox:
 
         # Change directory to the sandbox
         os.chdir(self.sandbox_dir)
+
+        # Get the architecture of the sandbox if it is not already set
+        # (should not be set in real world scenarios)
+        if self.architecture is None:
+            arch_process = self.run_command_in_container(cmd="uname -m")
+            self.architecture = arch_process.stdout.strip()
 
         return self
 

@@ -27,8 +27,8 @@ jobs:
         with:
           name: dist
           path: dist
-  run-full-test-suite:
-    name: Run full test suite
+  run-full-test-suite-x86:
+    name: Run full test suite on x86
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -80,6 +80,48 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-and-coverage_python${{ matrix.python-version }}_${{ matrix.singularity.provider }}${{ matrix.singularity.version }}
+          path: |
+            pytest_junit_out.xml
+            htmlcov/*
+  run-full-test-suite-ARM:
+    name: Run full test suite ARM64
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu-22.04-arm"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        singularity: [
+          {provider: "apptainer", version: "latest"}
+          ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Singularity/Apptainer
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt update
+          sudo apt install -y software-properties-common
+          sudo add-apt-repository -y ppa:apptainer/ppa
+          sudo apt update
+          sudo apt install -y apptainer
+          singularity --version
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: "**/test-requirements.txt"
+      - name: Install test dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r test-requirements.txt
+      - name: Run test suite via pytest
+        run: pytest -vv --junitxml=pytest_junit_out.xml
+      - name: Archive the test results and coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-and-coverage_${{ matrix.os }}_python${{ matrix.python-version }}_${{ matrix.singularity.provider }}${{ matrix.singularity.version }}
           path: |
             pytest_junit_out.xml
             htmlcov/*

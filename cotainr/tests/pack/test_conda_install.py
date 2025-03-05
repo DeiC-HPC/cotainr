@@ -11,6 +11,7 @@ import logging
 import re
 import subprocess
 import urllib.error
+import platform
 
 import pytest
 
@@ -55,6 +56,7 @@ class TestConstructor:
         # beforehand is shown
         (
             _sandbox_create_cmd,
+            _sandbox_uname_cmd,
             miniforge_license_accept_cmd,
             _conda_bootstrap_cmd,
             _conda_bootstrap_clean_cmd,
@@ -81,10 +83,11 @@ class TestConstructor:
 
         (
             _sandbox_create_cmd,
+            _sandbox_uname_cmd,
             _miniforge_license_accept_cmd,
             bootstrap_cmd,
             clean_cmd,
-            _,
+            _empty_string,
         ) = capsys.readouterr().out.split("\n")
 
         # Check that installer (mock) was created in the first place
@@ -393,6 +396,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
     ):
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.architecture = platform.machine()
             CondaInstall(sandbox=sandbox)
 
         stdout = capsys.readouterr().out.strip()
@@ -421,6 +425,8 @@ class Test_DownloadMiniforgeInstaller:
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            # Just needs some supported architecture
+            sandbox.architecture = "x86_64"
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
             conda_installer_path = (
                 conda_install.sandbox.sandbox_dir / "conda_installer_download"
@@ -428,10 +434,13 @@ class Test_DownloadMiniforgeInstaller:
             conda_install._download_miniforge_installer(
                 installer_path=conda_installer_path
             )
-            assert conda_installer_path.read_bytes() == (
-                b"PATCH: Bytes returned by urlopen for url="
-                b"'https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh'"
-            )
+            conda_installer_strings = [
+                b"PATCH: Bytes returned by urlopen for url=",
+                b"'https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-",
+            ]
+            conda_installer_bytes_string = conda_installer_path.read_bytes()
+            for installer_string in conda_installer_strings:
+                assert installer_string in conda_installer_bytes_string
 
     @pytest.mark.conda_integration  # technically not a test that depends on Conda - but a very slow one...
     def test_installer_download_fail(
@@ -440,10 +449,69 @@ class Test_DownloadMiniforgeInstaller:
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            # Just needs some supported architecture
+            sandbox.architecture = "x86_64"
             with pytest.raises(
                 urllib.error.URLError, match="PATCH: urlopen error forced for url="
             ):
                 CondaInstall(sandbox=sandbox)
+
+    def test_unknown_architecture(
+        self, patch_disable_singularity_sandbox_subprocess_runner
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.architecture = None
+            with pytest.raises(
+                RuntimeError,
+                match=(
+                    r".*"
+                    r"Cotainr.*"
+                    r"CondaInstall.*"
+                    r"which indicates that it is not running in a container sandbox context"
+                ),
+            ):
+                CondaInstall(sandbox=sandbox, license_accepted=True)
+
+
+class Test_GetInstallScript:
+    @pytest.mark.parametrize("arch", ["arm64", "aarch64"])
+    def test_arm_success(self, arch):
+        assert CondaInstall._get_install_script(arch) == "Miniforge3-Linux-aarch64.sh"
+
+    def test_x86_success(self):
+        assert (
+            CondaInstall._get_install_script("x86_64") == "Miniforge3-Linux-x86_64.sh"
+        )
+
+    @pytest.mark.parametrize(
+        "arch",
+        [
+            "test",
+            "arms64",
+            "aarchs64",
+            "None",
+            "Weird",
+            "WINDOWS",
+            "icecream",
+            "86_64",
+            "pc",
+        ],
+    )
+    def test_unknown_arch_error(self, arch):
+        with pytest.raises(
+            ValueError,
+            match=(
+                r".*"
+                r"Cotainr.*"
+                r"CondaInstall.*"
+                r"supports.*"
+                r"x86_64.*"
+                r"arm64.*"
+                r"aarch64.*"
+                rf"{arch}.*"
+            ),
+        ):
+            CondaInstall._get_install_script(arch)
 
 
 class Test_CondaVerbosityArg:
