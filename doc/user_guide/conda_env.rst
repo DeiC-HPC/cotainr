@@ -64,6 +64,36 @@ Pip packages
 
 allows for installing SciPy via pip.
 
+
+Editable Pip Packages from Git Repositories
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In addition to installing pip packages from private repositories using SSH, as described below, you can also install packages directly from a Git repository using HTTPS. This is useful for including the latest development version of a package or a specific branch in your Conda environment.
+
+To include an editable package from a Git repository using HTTPS, modify your `my_conda_env.yml` file as follows:
+
+.. code-block:: yaml
+    :caption: my_conda_env.yml
+
+    channels:
+      - conda-forge
+    dependencies:
+      - python=3.11.0
+      - git
+      - pip
+      - pip:
+        - "--editable=git+https://github.com/foo/bar.git@develop#egg=bar"
+
+In this example:
+
+- `git+https://github.com/foo/bar.git`: Specifies the Git repository URL from which the package should be installed.
+- `@develop`: Indicates that the `develop` branch should be used. Replace `develop` with the desired branch name if different.
+- `#egg=bar`: Specifies the package name, which is necessary for pip to correctly identify and install the package.
+
+This approach allows you to work with the latest changes in a specific branch of a repository, ensuring that your environment is up-to-date with the latest development efforts.
+
+By using HTTPS, you avoid the need for SSH keys, simplifying the setup process, especially in environments where SSH access is restricted or not available.
+
+
 Pip packages from private repositories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 A pip package from a private repository behind an ssh key may be installed by enabling `ssh-agent forwarding <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/using-ssh-agent-forwarding>`_ on the host machine using `cotainr`.
