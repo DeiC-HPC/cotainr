@@ -9,7 +9,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import sys
 
-__version__ = "2023.11.0"
+__version__ = "2024.10.0"
 _minimum_dependency_version = {
     # Versions must be specified as a (major, minor, patchlevel) tuple of
     # integers
@@ -21,8 +21,12 @@ _minimum_dependency_version = {
 
 # Error early on too old Python version
 if sys.version_info < _minimum_dependency_version["python"]:
+    # Note that this is using percent formatting on purpose, so this
+    # file can be executed by Python versions older than the minimum
+    # for Cotainr in general; this includes being able to run with
+    # Python 2.7!
     sys.exit(
-        (
+        (  # noqa: UP031
             "\x1b[38;5;160m"  # start of red colored text
             "Cotainr requires Python>=%s\n"
             "You are running Python==%s\n"

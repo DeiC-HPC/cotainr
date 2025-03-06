@@ -1,5 +1,8 @@
 name: Scheduled documentation link check
 on:
+  pull_request:
+    branches:
+      - main
   schedule:
     - cron: '15 2 * * TUE'  # every Tuesday night
   workflow_dispatch:  # allow for manually trigging the workflow
@@ -9,21 +12,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
           cache: pip
-          cache-dependency-path: "**/docs-requirements.txt"
       - name: Install docs dependencies
         run: |
           python3 -m pip install --upgrade pip
-          python3 -m pip install -r docs-requirements.txt
+          python3 -m pip install -e .[docs]
       - name: Build documentation
         run: |
           make -C doc apidoc
           make -C doc relnotes
           make -C doc html
       - name: Run Sphinx linkcheck on documentation
-        run: make -C doc linkcheck || make -C doc linkcheck || make -C doc linkcheck  # simple "retry 3 times" - for flaky links
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: make -C doc linkcheck

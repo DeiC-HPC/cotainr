@@ -38,12 +38,9 @@ import subprocess
 import sys
 import time
 
-from . import container
-from . import pack
-from . import tracing
-from . import util
-from . import _minimum_dependency_version as _min_dep_ver
 from . import __version__ as _cotainr_version
+from . import _minimum_dependency_version as _min_dep_ver
+from . import container, pack, tracing, util
 
 logger = logging.getLogger(__name__)
 
@@ -238,6 +235,7 @@ class Build(CotainrSubcommand):
                     conda_install.add_environment(
                         path=conda_env_file, name=conda_env_name
                     )
+
                     sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
                     # Clean-up unused files
@@ -504,7 +502,7 @@ class CotainrCLI:
 
     def _setup_cotainr_cli_logging(self, *, log_settings):
         """
-        Setup logging for the cotainr main CLI.
+        Set up logging for the cotainr main CLI.
 
         Setting up the logging for the cotainr main CLI includes:
         - Defining log levels based on CLI verbosity arguments.

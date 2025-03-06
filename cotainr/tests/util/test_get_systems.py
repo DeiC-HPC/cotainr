@@ -8,13 +8,15 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import pytest
+
+import cotainr.util
+
 from .patches import (
     patch_empty_system,
     patch_system_with_actual_file,
-    patch_system_with_non_existing_file,
     patch_system_with_badly_formatted_file,
+    patch_system_with_non_existing_file,
 )
-import cotainr.util
 
 
 class TestGetSystems:

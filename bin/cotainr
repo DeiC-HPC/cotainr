@@ -4,10 +4,13 @@
 # Licensed under the European Union Public License (EUPL) 1.2
 # - see the LICENSE file for details.
 
-import sys
 from pathlib import Path
+import sys
 
 if __name__ == "__main__":
+    # Preferably use the `cotainr` entrypoint defined in pyproject.toml, but this
+    # works for a "source install".
+
     sys.path.insert(0, (Path(__file__) / "../..").resolve().as_posix())
     from cotainr.cli import main
 

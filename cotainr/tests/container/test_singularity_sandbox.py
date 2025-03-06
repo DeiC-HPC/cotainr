@@ -14,8 +14,10 @@ import pytest
 
 from cotainr.container import SingularitySandbox
 from cotainr.tracing import LogDispatcher, LogSettings
-from .data import data_cached_alpine_sif
+
 from ..util.patches import patch_disable_stream_subprocess
+from .data import data_cached_alpine_sif
+from .patches import patch_fake_singularity_sandbox_env_folder
 
 
 class TestConstructor:
@@ -26,6 +28,7 @@ class TestConstructor:
         assert sandbox.sandbox_dir is None
         assert sandbox.log_dispatcher is None
         assert sandbox._verbosity == 0
+        assert sandbox.architecture is None
 
     def test_setup_log_dispatcher(self):
         log_settings = LogSettings(verbosity=1)
@@ -43,7 +46,9 @@ class TestConstructor:
 
 class TestContext:
     def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021"):
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             pass
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[0]
@@ -58,7 +63,9 @@ class TestContext:
 
     def test_tmp_dir_setup_and_teardown(self, patch_disable_stream_subprocess):
         test_dir = Path().resolve()
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             # Check that we are in the temporary sandbox directory
             sandbox_dir = sandbox.sandbox_dir
             assert sandbox_dir.stem == "singularity_sandbox"
@@ -72,25 +79,88 @@ class TestContext:
 
 
 class TestAddToEnv:
-    def test_add_twice(self, patch_disable_stream_subprocess):
+    def test_add_twice(
+        self,
+        patch_disable_stream_subprocess,
+        patch_fake_singularity_sandbox_env_folder,
+    ):
         lines = ["first script line", "second script line"]
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            env_file = sandbox.sandbox_dir / "environment"
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
+            env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
             for line in lines:
                 sandbox.add_to_env(shell_script=line)
             assert env_file.read_text() == lines[0] + "\n" + lines[1] + "\n"
 
-    def test_newline_encapsulation(self, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            env_file = sandbox.sandbox_dir / "environment"
+    @pytest.mark.singularity_integration
+    @pytest.mark.parametrize(
+        "umask",
+        [
+            # umask  file permissions  directory permissions
+            0o000,  # 666 (rw-rw-rw-)   777 (rwxrwxrwx)
+            0o002,  # 664 (rw-rw-r--)   775 (rwxrwxr-x)
+            0o007,  # 660 (rw-rw----)   770 (rwxrwx---)  # umask used on LUMI
+            0o022,  # 644 (rw-r--r--)   755 (rwxr-xr-x)  # default umask in most cases
+            0o027,  # 640 (rw-r-----)   750 (rwxr-x---)
+            0o077,  # 600 (rw-------)   700 (rwx------)
+        ],
+    )
+    def test_correct_umask(
+        self,
+        umask,
+        context_set_umask,
+        data_cached_alpine_sif,
+        singularity_exec,
+        tmp_path,
+    ):
+        with context_set_umask(umask):  # default umask on LUMI
+            tmp_path.chmod(
+                # apply effective umask permissions to tmp_path as well
+                # it is created without the custom umask
+                0o777 - umask
+            )
+            built_image_path = tmp_path / "built_image_6021"
+            with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
+                # Test file permissions
+                env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+                sandbox._create_file(f=env_file)
+                assert env_file.exists()
+                test_file_mode = env_file.stat().st_mode
+                # file permissions extracted from the last 3 octal digits of st_mode
+                test_file_permissions = test_file_mode & 0o777
+                assert oct(test_file_permissions) == "0o644"
+
+                # Test source 92-cotainr-env.sh
+                sandbox.add_to_env(
+                    shell_script="echo 'we can read the env file, 6021!'"
+                )
+                sandbox.build_image(path=built_image_path)
+
+            assert singularity_exec(
+                f"{built_image_path} echo 'more text...'"
+            ).stdout == ("we can read the env file, 6021!\nmore text...\n")
+
+    def test_newline_encapsulation(
+        self,
+        patch_disable_stream_subprocess,
+        patch_fake_singularity_sandbox_env_folder,
+    ):
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
+            env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
             shell_script = "fancy shell_script\nas a double line string"
             sandbox.add_to_env(shell_script=shell_script)
             assert env_file.read_text() == shell_script + "\n"
 
-    def test_shell_script_append(self, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
-            env_file = sandbox.sandbox_dir / "environment"
+    @pytest.mark.singularity_integration
+    def test_existing_file(self, data_cached_alpine_sif):
+        with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
+            env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
             existing_shell_script = "some existing\nshell script"
+
+            # .write_text() creates the file with permissions corresponding to system default
             env_file.write_text(existing_shell_script)
             new_shell_script = "fancy_shell_script\nas_a_string"
             sandbox.add_to_env(shell_script=new_shell_script)
@@ -98,14 +168,66 @@ class TestAddToEnv:
                 env_file.read_text().strip() == existing_shell_script + new_shell_script
             )
 
+    @pytest.mark.singularity_integration
+    def test_when_architecture_is_set(self, data_cached_alpine_sif):
+        sandbox = SingularitySandbox(base_image=data_cached_alpine_sif)
+        sandbox.architecture = "test"
+        with sandbox:
+            assert sandbox.architecture == "test"
+
 
 @pytest.mark.singularity_integration
 class TestBuildImage:
     def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             sandbox.build_image(path="some_path_6021")
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[-1]
+
+    def test_environment_not_overwritten(
+        self, data_cached_alpine_sif, singularity_exec, tmp_path
+    ):
+        # Test that any custom environment variables set via
+        # SingularitySandbox.add_to_env(...) are not overwritten when the SIF
+        # image file is built.
+        # We used to write our custom environment variables to /environment
+        # which is a symlink to /.singularity.d/env/90-environment.sh However,
+        # as of some newer version of Apptainer, the content of /environment is
+        # set to its default value when building the SIF image from the
+        # sandbox, erasing our modifications. It is unclear if this is
+        # intentional. Looking at both the Apptainer documentation
+        # (https://apptainer.org/docs/user/main/environment_and_metadata.html#singularity-d-directory)
+        # as well as the Singularity documentation
+        # (https://docs.sylabs.io/guides/latest/user-guide/environment_and_metadata.html#singularity-d-directory)
+        # it is sketchy to edit this /environment file as they both state that
+        # "You should not manually modify files under /.singularity.d" and "In
+        # the longer term, metadata will be moved outside of the container, and
+        # stored only in the SIF file metadata descriptor."
+        # As a workaround, we now write our custom environment variables to a
+        # custom /.singularity.d/env/92-cotainr-env.sh file which is probably
+        # not the right solution. However, at this point, though, it is unclear
+        # how to set custom environment variables in any other way when using a
+        # Singularity sandbox.
+        build_container_path = tmp_path / "container_6021.sif"
+        with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
+            sandbox.add_to_env(shell_script="some shell script")
+            assert (
+                sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+            ).exists()
+            assert (
+                (sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh")
+                .read_text()
+                .endswith("some shell script\n")
+            )
+            sandbox.build_image(path=build_container_path)
+
+        container_cat_env_process = singularity_exec(
+            f"{build_container_path} cat /.singularity.d/env/92-cotainr-env.sh"
+        )
+        env_file_contents = container_cat_env_process.stdout
+        assert env_file_contents.endswith("some shell script\n")
 
     def test_fix_perms_on_oci_docker_images(self, tmp_path):
         # Tests correct permission handling in relation to the error:
@@ -154,7 +276,9 @@ class TestBuildImage:
 @pytest.mark.singularity_integration
 class TestRunCommandInContainer:
     def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             sandbox.run_command_in_container(cmd="ls")
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[-1]
@@ -198,6 +322,16 @@ class Test_AssertWithinSandboxContext:
             match=r"^The operation is only valid inside a sandbox context\.$",
         ):
             sandbox._assert_within_sandbox_context()
+
+
+class Test_CreateFile:
+    def test_broken_subprocess(self, patch_disable_stream_subprocess):
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
+            any_file = sandbox.sandbox_dir / "anyfile.txt"
+            with pytest.raises(FileNotFoundError):
+                sandbox._create_file(f=any_file)
 
 
 class Test_SubprocessRunner:

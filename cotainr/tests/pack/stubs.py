@@ -36,8 +36,5 @@ class StubEmptyLicensePopen(StubLicensePopen):
 
 class StubShowLicensePopen(StubLicensePopen):
     license_text = (
-        "STUB:\n"
-        "Please, press ENTER to continue\n"
-        ">>> \n"
-        "This is the license terms...\n"
+        "STUB:\nPlease, press ENTER to continue\n>>> \nThis is the license terms...\n"
     )

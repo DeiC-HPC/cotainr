@@ -23,8 +23,7 @@ import sys
 from tempfile import TemporaryDirectory
 
 from . import __version__ as _cotainr_version
-from . import tracing
-from . import util
+from . import tracing, util
 
 logger = logging.getLogger(__name__)
 
@@ -58,12 +57,16 @@ class SingularitySandbox:
         The log dispatcher used to process stdout/stderr message from
         Singularity commands that run in sandbox, if the logging machinery is
         used.
+    architecture : str or None.
+        The machine architecture of the sandbox as returned by `uname -m`. Its
+        value is `None` (unknown) until entering the the sandbox context.
     """
 
     def __init__(self, *, base_image, log_settings=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
+        self.architecture = None
         if log_settings is not None:
             self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
@@ -109,6 +112,12 @@ class SingularitySandbox:
         # Change directory to the sandbox
         os.chdir(self.sandbox_dir)
 
+        # Get the architecture of the sandbox if it is not already set
+        # (should not be set in real world scenarios)
+        if self.architecture is None:
+            arch_process = self.run_command_in_container(cmd="uname -m")
+            self.architecture = arch_process.stdout.strip()
+
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -151,10 +160,6 @@ class SingularitySandbox:
         """
         Add `shell_script` to the sourced environment in the container.
 
-        The content of `shell_script` is written as-is to the /environment file
-        in the Singularity container which is sourced on execution of the
-        container.
-
         Parameters
         ----------
         shell_script : str
@@ -163,7 +168,10 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
-        env_file = self.sandbox_dir / "environment"
+        env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
+        if not env_file.exists():
+            self._create_file(f=env_file)
+
         with env_file.open(mode="a") as f:
             f.write(shell_script + "\n")
 
@@ -300,6 +308,25 @@ class SingularitySandbox:
             args.insert(1, "-v")
 
         return args
+
+    def _create_file(self, *, f):
+        """
+        Create any file `f` in an existing folder in the Singularity container.
+
+        The file permissions will ignore the system umask.
+
+        Parameters
+        ----------
+        f : :class:`pathlib.PosixPath`
+            For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
+        """
+        self._assert_within_sandbox_context()
+
+        # ensure that the file is created *within* the container to get correct permissions, etc.
+        self.run_command_in_container(cmd=f"touch {f}")
+
+        if not f.exists():
+            raise FileNotFoundError(f"Creating file {f} failed.")
 
     def _subprocess_runner(self, *, custom_log_dispatcher=None, args, **kwargs):
         """

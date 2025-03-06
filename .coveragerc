@@ -1,4 +1,0 @@
-[run]
-source = cotainr
-omit = cotainr/tests/*
-branch = True
