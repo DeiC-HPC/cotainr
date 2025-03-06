@@ -346,9 +346,7 @@ class CondaInstall:
         # Make up to 3 attempts at downloading the installer
         for retry in range(3):
             try:
-                with urllib.request.urlopen(
-                    miniforge_installer_url
-                ) as url:  # nosec B310
+                with urllib.request.urlopen(miniforge_installer_url) as url:  # nosec B310
                     installer_path.write_bytes(url.read())
 
                 break
