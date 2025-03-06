@@ -23,8 +23,7 @@ import time
 import urllib.error
 import urllib.request
 
-from . import tracing
-from . import util
+from . import tracing, util
 
 logger = logging.getLogger(__name__)
 
@@ -438,9 +437,7 @@ class CondaInstall:
                 return True
 
         class NoEmptyLinesFilter(logging.Filter):
-            """
-            Remove any empty lines.
-            """
+            """Remove any empty lines."""
 
             def filter(self, record):
                 return record.msg.strip() != ""

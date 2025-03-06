@@ -11,7 +11,6 @@ import sys
 
 import pytest
 
-
 import cotainr.pack
 
 

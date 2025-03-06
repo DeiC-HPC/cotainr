@@ -22,8 +22,8 @@ systems_file
 
 from concurrent.futures import ThreadPoolExecutor
 import functools
-import logging
 import json
+import logging
 from pathlib import Path
 import subprocess
 import sys
@@ -165,7 +165,8 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
 def _flush_stdin_buffer():
     """
     Discard queued data on stdin file descriptor.
-    TCIOFLUSH selects both the input queue and output queue to be discarded
+
+    TCIOFLUSH selects both the input queue and output queue to be discarded.
 
     https://stackoverflow.com/questions/2520893/how-to-flush-the-input-stream
     """
@@ -178,6 +179,6 @@ def _flush_stdin_buffer():
         return
 
     # Python Standard library, Linux/Unix/OSX
-    from termios import tcflush, TCIOFLUSH
+    from termios import TCIOFLUSH, tcflush
 
     tcflush(sys.stdin, TCIOFLUSH)

@@ -23,8 +23,7 @@ import sys
 from tempfile import TemporaryDirectory
 
 from . import __version__ as _cotainr_version
-from . import tracing
-from . import util
+from . import tracing, util
 
 logger = logging.getLogger(__name__)
 
@@ -313,6 +312,7 @@ class SingularitySandbox:
     def _create_file(self, *, f):
         """
         Create any file `f` in an existing folder in the Singularity container.
+
         The file permissions will ignore the system umask.
 
         Parameters
