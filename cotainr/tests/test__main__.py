@@ -13,8 +13,9 @@ import sys
 
 import pytest
 
-from .cli.patches import patch_disable_main
 import cotainr
+
+from .cli.patches import patch_disable_main
 
 
 class Test__main__:

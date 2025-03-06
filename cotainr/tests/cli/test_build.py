@@ -15,11 +15,12 @@ import shlex
 import pytest
 
 from cotainr.cli import Build, CotainrCLI
+
 from ..container.patches import (
-    patch_save_singularity_sandbox_context,
-    patch_fake_singularity_sandbox_env_folder,
-    patch_disable_singularity_sandbox_subprocess_runner,
     patch_disable_add_metadata,
+    patch_disable_singularity_sandbox_subprocess_runner,
+    patch_fake_singularity_sandbox_env_folder,
+    patch_save_singularity_sandbox_context,
 )
 from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -27,7 +28,7 @@ from ..pack.patches import (
     patch_disable_conda_install_download_miniforge_installer,
 )
 from ..tracing.patches import patch_disable_console_spinner
-from ..util.patches import patch_system_with_actual_file, patch_empty_system
+from ..util.patches import patch_empty_system, patch_system_with_actual_file
 
 
 class TestConstructor:
@@ -322,9 +323,11 @@ class TestExecute:
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
         Build(image_path=image_path, base_image=base_image).execute()
-        sandbox_create_cmd, sandbox_build_cmd = (
+        (sandbox_create_cmd, sandbox_uname_cmd, sandbox_build_cmd) = (
             capsys.readouterr().out.strip().split("\n")
         )
+
+        assert "'uname', '-m'" in sandbox_uname_cmd
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
         assert all(
             s in sandbox_create_cmd
@@ -375,6 +378,7 @@ class TestExecute:
         # Check sandbox interaction commands
         (
             sandbox_create_cmd,
+            sandbox_uname_cmd,
             conda_bootstrap_cmd,
             conda_bootstrap_clean_cmd,
             conda_env_create_cmd,
@@ -382,6 +386,7 @@ class TestExecute:
             sandbox_build_cmd,
         ) = capsys.readouterr().out.strip().split("\n")
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
+        assert "'uname', '-m'" in sandbox_uname_cmd
         assert all(
             s in sandbox_create_cmd
             for s in ["'singularity'", "'build'", "'--sandbox'", f"'{base_image}'"]

@@ -103,8 +103,12 @@ line-length = 88
 
 lint.extend-select = [
     "B", # flake8-bugbear
+    "D", # docstrings
     "E", # pycodestyle errors
     "F", # Pyflakes
+    "FLY", # F-strings
+    "I", # import ordering
+    "UP", # pyupgrade
     "W", # pycodestyle warnings
 ]
 # https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
@@ -127,9 +131,19 @@ lint.exclude = [
     "F401",
     "F811",
 ]
+"examples/**.py" = [
+    "D",  # docstring formatting doesn't matter that much
+]
 "cotainr/tests/**.py" = [
+    "D",  # docstring formatting doesn't matter that much
     "S101", # assertions are OK in tests
 ]
+"bin/cotainr" = [
+    "D",  # docstring formatting doesn't matter that much
+]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

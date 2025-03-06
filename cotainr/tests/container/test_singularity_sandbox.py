@@ -14,9 +14,10 @@ import pytest
 
 from cotainr.container import SingularitySandbox
 from cotainr.tracing import LogDispatcher, LogSettings
+
+from ..util.patches import patch_disable_stream_subprocess
 from .data import data_cached_alpine_sif
 from .patches import patch_fake_singularity_sandbox_env_folder
-from ..util.patches import patch_disable_stream_subprocess
 
 
 class TestConstructor:
@@ -27,6 +28,7 @@ class TestConstructor:
         assert sandbox.sandbox_dir is None
         assert sandbox.log_dispatcher is None
         assert sandbox._verbosity == 0
+        assert sandbox.architecture is None
 
     def test_setup_log_dispatcher(self):
         log_settings = LogSettings(verbosity=1)
@@ -44,7 +46,9 @@ class TestConstructor:
 
 class TestContext:
     def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021"):
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             pass
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[0]
@@ -59,7 +63,9 @@ class TestContext:
 
     def test_tmp_dir_setup_and_teardown(self, patch_disable_stream_subprocess):
         test_dir = Path().resolve()
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             # Check that we are in the temporary sandbox directory
             sandbox_dir = sandbox.sandbox_dir
             assert sandbox_dir.stem == "singularity_sandbox"
@@ -79,7 +85,9 @@ class TestAddToEnv:
         patch_fake_singularity_sandbox_env_folder,
     ):
         lines = ["first script line", "second script line"]
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
             for line in lines:
                 sandbox.add_to_env(shell_script=line)
@@ -138,7 +146,9 @@ class TestAddToEnv:
         patch_disable_stream_subprocess,
         patch_fake_singularity_sandbox_env_folder,
     ):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             env_file = sandbox.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
             shell_script = "fancy shell_script\nas a double line string"
             sandbox.add_to_env(shell_script=shell_script)
@@ -158,11 +168,20 @@ class TestAddToEnv:
                 env_file.read_text().strip() == existing_shell_script + new_shell_script
             )
 
+    @pytest.mark.singularity_integration
+    def test_when_architecture_is_set(self, data_cached_alpine_sif):
+        sandbox = SingularitySandbox(base_image=data_cached_alpine_sif)
+        sandbox.architecture = "test"
+        with sandbox:
+            assert sandbox.architecture == "test"
+
 
 @pytest.mark.singularity_integration
 class TestBuildImage:
     def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             sandbox.build_image(path="some_path_6021")
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[-1]
@@ -257,7 +276,9 @@ class TestBuildImage:
 @pytest.mark.singularity_integration
 class TestRunCommandInContainer:
     def test_add_verbosity_arg(self, capsys, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             sandbox.run_command_in_container(cmd="ls")
         stdout_lines = capsys.readouterr().out.rstrip("\n").split("\n")
         assert "args=['singularity', '-q', " in stdout_lines[-1]
@@ -305,7 +326,9 @@ class Test_AssertWithinSandboxContext:
 
 class Test_CreateFile:
     def test_broken_subprocess(self, patch_disable_stream_subprocess):
-        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+        sandbox = SingularitySandbox(base_image="my_base_image_6021")
+        sandbox.architecture = "test"
+        with sandbox:
             any_file = sandbox.sandbox_dir / "anyfile.txt"
             with pytest.raises(FileNotFoundError):
                 sandbox._create_file(f=any_file)
