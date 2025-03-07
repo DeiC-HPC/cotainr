@@ -35,7 +35,7 @@ jobs:
 
     - name: Test TestPyPI build
       run: |
-        uv pip install cotainr --index testpypi 
+        uv pip install cotainr --index testpypi
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
         pytest .
 
@@ -64,6 +64,6 @@ jobs:
 
     - name: Test PyPI build
       run: |
-        uv pip install cotainr[tests] --index pypi 
+        uv pip install cotainr[tests] --index pypi
         pytest .
-  
+
