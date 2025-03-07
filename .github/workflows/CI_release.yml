@@ -66,4 +66,3 @@ jobs:
       run: |
         uv pip install cotainr[tests] --index pypi
         pytest .
-
