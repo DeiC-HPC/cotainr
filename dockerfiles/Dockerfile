@@ -3,11 +3,26 @@ LABEL authors="julius"
 
 ENTRYPOINT ["top", "-b"]
 
+ARG PYTHON_VERSION
+ENV PYTHON_VERSION=${PYTHON_VERSION}
+
 ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux ; \
     apt -y update ;\
     apt -y upgrade ;\
-    apt -y install wget
+    apt -y install wget python3-full python3-pip; \
+    apt -y install --no-install-recommends curl ca-certificates
+
+#install uv
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN set -eux ;sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
+
+#setup environment and install hatchling
+RUN set -eux ; \
+    uv venv test_environment --python $PYTHON_VERSION;\
+    . test_environment/bin/activate;\
+    uv pip install hatchling
 
 ARG SINGULARITY_PROVIDER
 ENV SINGULARITY_PROVIDER=${SINGULARITY_PROVIDER}
