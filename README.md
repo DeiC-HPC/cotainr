@@ -27,7 +27,7 @@ Our documentation is hosted [here on Read the Docs](https://cotainr.readthedocs.
 
 ## Installation
 
-cotainr has no external dependencies other than Python >= 3.8 and Singularity/Apptainer.
+cotainr has no external dependencies other than Python >= 3.9 and Singularity/Apptainer.
 This means that a release can be unpacked and run directly from the `bin/` directory.
 
 ### Easybuild
