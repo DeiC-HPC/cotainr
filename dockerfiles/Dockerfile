@@ -14,10 +14,11 @@ RUN echo $SINGULARITY_VERSION
 
 
 RUN set -eux ; \
-    apt update ;\
-    apt upgrade ;\
-    apt install gdebi
+    apt -y update ;\
+    apt -y upgrade ;\
+    apt -y install gdebi
 
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN set -eux ; \
     if [$SINGULARITY_PROVIDER == "apptainer"]; then \
