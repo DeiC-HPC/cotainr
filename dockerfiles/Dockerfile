@@ -21,13 +21,14 @@ RUN set -eux ; \
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN set -eux ; \
-    if [$SINGULARITY_PROVIDER == "apptainer"]; then \
-    wget -O singularity_installer.deb https://github.com/apptainer/apptainer/releases/download/v${SINGULARITY_VERSION}/apptainer_${SINGULARITY_VERSION}_amd64.deb ;\
+    if ["$SINGULARITY_PROVIDER" == "apptainer"]; then \
+        echo "match apptainer" ;\
+        wget -O singularity_installer.deb https://github.com/apptainer/apptainer/releases/download/v${SINGULARITY_VERSION}/apptainer_${SINGULARITY_VERSION}_amd64.deb ;\
     fi; \
-    if [$SINGULARITY_PROVIDER == "singularity"]; then \
-    wget -O singularity_installer.deb https://github.com/apptainer/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-container_${SINGULARITY_VERSION}_amd64.deb ;\
+    if ["$SINGULARITY_PROVIDER" == "singularity"]; then \
+        wget -O singularity_installer.deb https://github.com/apptainer/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-container_${SINGULARITY_VERSION}_amd64.deb ;\
     fi;\
-    gdebi ./singularity_installer.deb ;\
+    gdebi singularity_installer.deb ;\
     singularity --version
 
 
