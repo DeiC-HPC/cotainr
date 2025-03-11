@@ -16,10 +16,11 @@ authors = [
     {name = "Julius Roeder"},
 ]
 maintainers = [
-    {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
-    {name = "Joachim Sødequist", email = "joachim.soedequist@deic.dk"},
-    {name = "Tor Skovsgaard", email = "tor.skovsgaard@deic.dk"},
-    {name = "Julius Roeder", email = "julius.roeder@deic.dk"},
+    {name = "DeiC HPC"},
+    # {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
+    # {name = "Joachim Sødequist", email = "joachim.soedequist@deic.dk"},
+    # {name = "Tor Skovsgaard", email = "tor.skovsgaard@deic.dk"},
+    # {name = "Julius Roeder", email = "julius.roeder@deic.dk"},
 ]
 description = "A user space Apptainer/Singularity container builder"
 readme = "README.md"
