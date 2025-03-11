@@ -21,7 +21,7 @@ pip install cotainr
 
 Alternatively, you may also simply download, unpack, and run cotainr directly from the `bin/` directory, which is possible since cotainr has no external dependencies other than Python and Singularity/Apptainer.
 
-If you are using EasyBuild for managing your software stack, you may use the `cotainr-easyconfig.eb` EasyConfig as a starting point for installing cotainr via EasyBuild. 
+If you are using EasyBuild for managing your software stack, you may use the `cotainr-easyconfig.eb` EasyConfig as a starting point for installing cotainr via EasyBuild.
 
 ## Documentation
 
