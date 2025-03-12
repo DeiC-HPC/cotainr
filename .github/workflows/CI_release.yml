@@ -2,7 +2,7 @@ name: CI for release
 
 on:
   workflow_run:
-    workflows: ["CI on pull request"]
+    workflows: [CI on pull request]
     branches: [release-gh-action]
     types:
       - completed
