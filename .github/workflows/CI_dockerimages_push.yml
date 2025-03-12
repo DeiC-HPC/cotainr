@@ -69,5 +69,7 @@ jobs:
         run: | 
           . /test_environment/bin/activate
           python3 --version
+          which python3
           uv pip install -e .[tests]
+          pip list
           pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
