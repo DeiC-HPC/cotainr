@@ -53,10 +53,13 @@ jobs:
     - name: Publish distribution to TestPyPI
       run: uv publish --index testpypi
 
-    - name: Test TestPyPI build
+    - name: Activate test environment
       run: |
         uv venv
         source .venv/bin/activate
+
+    - name: Test TestPyPI build
+      run: |
         uv pip install cotainr --index testpypi
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
         pytest .
