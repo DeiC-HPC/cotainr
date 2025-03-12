@@ -54,6 +54,7 @@ jobs:
       run: uv publish --index testpypi
 
   test-testpypi:
+    name: Test TestPyPI Build
     needs: publish-to-testpypi
     runs-on: ubuntu-latest
 
@@ -61,15 +62,19 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
 
-    - name: Test TestPyPI build
-      working-directory: .venv/lib/python3.12/site-packages/cotainr/tests/
+    - name: Install TestPyPI build
       run: |
         uv venv
         source .venv/bin/activate
-        python3 --version
-        which python3
         uv pip install cotainr==0.0.0.dev6 --index https://test.pypi.org/simple/
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
+
+    - name: Build TestPyPI build
+      working-directory: .venv/lib/python3.12/site-packages/cotainr/tests/
+      run: |
+        source ../../../../../bin/activate
+        python3 --version
+        which python3
         python3 -m pytest -vv --junitxml=pytest_junit_out.xml
 
     - name: Archive the test results and coverage
