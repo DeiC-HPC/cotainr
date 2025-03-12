@@ -56,9 +56,33 @@ jobs:
   test-testpypi:
     name: Test TestPyPI Build
     needs: publish-to-testpypi
+    env:
+        OS: "ubuntu-latest"
+        PROVIDER: "singularity-ce"
+        VERSION: "4.2.1"
     runs-on: ubuntu-latest
 
     steps:
+    - name: Attempt to restore Singularity/Apptainer installer from cache
+      uses: actions/cache@v4
+      id: cache-singularity-installer
+      with:
+        path: ./singularity_installer.deb
+        key: ${{ env.OS }}-${{ env.PROVIDER }}_installer-${{ env.VERSION }}
+    - name: Download Singularity ${{ env.VERSION }}
+      if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && env.PROVIDER == 'singularity' }}
+      run: wget -O singularity_installer.deb https://github.com/apptainer/singularity/releases/download/v${{ env.VERSION }}/singularity-container_${{ env.VERSION }}_amd64.deb
+    - name: Download Apptainer ${{ env.VERSION }}
+      if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && env.PROVIDER == 'apptainer' }}
+      run: wget -O singularity_installer.deb https://github.com/apptainer/apptainer/releases/download/v${{ env.VERSION }}/apptainer_${{ env.VERSION }}_amd64.deb
+    - name: Download SingularityCE ${{ env.VERSION }}
+      if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && env.PROVIDER == 'singularity-ce' }}
+      run: wget -O singularity_installer.deb https://github.com/sylabs/singularity/releases/download/v${{ env.VERSION }}/singularity-ce_${{ env.VERSION }}-focal_amd64.deb
+    - name: Set up Singularity/Apptainer
+      run: |
+        sudo apt install ./singularity_installer.deb
+        singularity --version
+          
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
 
