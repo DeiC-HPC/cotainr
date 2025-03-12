@@ -89,13 +89,13 @@ include = [
 [tool.hatch.build.targets.sdist]
 include = [
     "pyproject.toml",
-    "README.md"
+    "/cotainr"
 ]
 
 [tool.hatch.build.targets.wheel]
 artifacts = [
     "pyproject.toml",
-    "README.md"
+    "/cotainr"
 ]
 
 exclude = [
