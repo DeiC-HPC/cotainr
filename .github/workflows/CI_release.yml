@@ -62,6 +62,7 @@ jobs:
       uses: astral-sh/setup-uv@v5
 
     - name: Test TestPyPI build
+      working-directory: .venv/lib/python3.12/site-packages/cotainr/tests/
       run: |
         uv venv
         source .venv/bin/activate
@@ -69,8 +70,6 @@ jobs:
         which python3
         uv pip install cotainr==0.0.0.dev6 --index https://test.pypi.org/simple/
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
-        ls
-        ls .venv/lib/python3.12/site-packages/cotainr/tests/
         python3 -m pytest -vv --junitxml=pytest_junit_out.xml
 
     - name: Archive the test results and coverage
