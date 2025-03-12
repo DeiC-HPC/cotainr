@@ -26,7 +26,7 @@ jobs:
   run-unittests:
     name: Run unittests
     permissions:
-      contents: read
+      packages: read
 #    strategy:
 #      fail-fast: false
 #      matrix:
@@ -40,24 +40,24 @@ jobs:
 #          #        {provider: "singularity-ce", version: "4.1.3"},
 #          #        {provider: "singularity-ce", version: "4.2.1"}
 #        ]
-#    container:
-#      image: ghcr.io/owner/image
-#      credentials:
-#        username: ${{ github.actor }}
-#        password: ${{ secrets.GITHUB_TOKEN }}
+    container:
+      image: ghcr.io/deic-hpc/cotainr/singularity/3.8.7/3.9:docker_dev_env
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 #    pull_image:
 #      name: Pull Docker Image
 #        run: docker pull ghcr.io/OWNER/IMAGE_NAME:TAG
     runs-on: ubuntu-latest
     steps:
-      - name: Log into registry ${{ env.REGISTRY }}
-        uses: docker/login-action@v3 # v3.0.0
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pull Docker Image
-        run: docker pull ghcr.io/deic-hpc/cotainr/singularity/3.8.7/3.9:docker_dev_env
+#      - name: Log into registry ${{ env.REGISTRY }}
+#        uses: docker/login-action@v3 # v3.0.0
+#        with:
+#          registry: ${{ env.REGISTRY }}
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Pull Docker Image
+#        run: docker pull ghcr.io/deic-hpc/cotainr/singularity/3.8.7/3.9:docker_dev_env
       - name: Checkout code
         uses: actions/checkout@v4
 #      - name: Set up Python ${{ matrix.python-version }}
