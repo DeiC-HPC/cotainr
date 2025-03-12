@@ -68,7 +68,7 @@ jobs:
       - name: Activate uv
         run: . /test_environment/bin/activate
       - name: Test
-        run: python --version
+        run: python3 --version
       - name: Install test dependencies
         run: |
           uv pip install -e .[tests]
