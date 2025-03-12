@@ -85,6 +85,19 @@ include = [
     ".pre-commit-config.yaml",
     ".readthedocs.yml",
 ]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "pyproject.toml",
+    "README.md"
+]
+
+[tool.hatch.build.targets.wheel]
+artifacts = [
+    "pyproject.toml",
+    "README.md"
+]
+
 exclude = [
     "/examples",
     "/bin"
