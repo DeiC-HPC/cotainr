@@ -85,23 +85,13 @@ include = [
     ".pre-commit-config.yaml",
     ".readthedocs.yml",
 ]
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "pyproject.toml",
-    "/cotainr"
-]
-
-[tool.hatch.build.targets.wheel]
-artifacts = [
-    "pyproject.toml",
-    "/cotainr"
-]
-
 exclude = [
     "/examples",
     "/bin"
 ]
+
+[tool.hatch.build.targets.wheel.force-include]
+"pyproject.toml" = "cotainr/pyproject.toml"
 
 [[tool.uv.index]]
 explicit=true
