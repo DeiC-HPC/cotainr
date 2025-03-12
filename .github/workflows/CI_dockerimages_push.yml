@@ -65,12 +65,9 @@ jobs:
 #        with:
 #          python-version: ${{ matrix.python-version }}
 #          cache: pip
-      - name: Activate uv
-        run: . /test_environment/bin/activate
-      - name: Test
-        run: python3 --version
-      - name: Install test dependencies
-        run: |
+      - name: Activate uv, install dependencies and run tests
+        run: | 
+          . /test_environment/bin/activate
+          python3 --version
           uv pip install -e .[tests]
-      - name: Run unittests via pytest
-        run: pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+          pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
