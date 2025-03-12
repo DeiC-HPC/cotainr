@@ -56,9 +56,6 @@ jobs:
   test-testpypi:
     needs: publish-to-testpypi
     runs-on: ubuntu-latest
-    environment:
-        name: testpypi
-        url: https://test.pypi.org/simple/
 
     steps:
     - name: Set up uv
@@ -71,7 +68,7 @@ jobs:
 
     - name: Install TestPyPI build
       run: |
-        uv pip install cotainr==0.0.0.dev3 --index testpypi
+        uv pip install cotainr==0.0.0.dev3 --index https://test.pypi.org/simple/
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
 
     - name: Run test suite via pytest
