@@ -7,7 +7,11 @@ on:
     branches:
       - docker_dev_env
 
-
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   lint-and-format:
@@ -23,11 +27,6 @@ jobs:
     name: Run unittests
     permissions:
       packages: read
-    env:
-      # Use docker.io for Docker Hub if empty
-      REGISTRY: ghcr.io
-      # github.repository as <account>/<repo>
-      IMAGE_NAME: ${{ github.repository }}
     strategy:
       fail-fast: false
       matrix:
@@ -42,7 +41,7 @@ jobs:
           #        {provider: "singularity-ce", version: "4.2.1"}
         ]
     container:
-      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}/${{ matrix.python-version }}:docker_dev_env
+      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}/${{ matrix.python-version }}:docker_dev_env
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
