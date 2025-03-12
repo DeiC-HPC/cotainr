@@ -53,16 +53,36 @@ jobs:
     - name: Publish distribution to TestPyPI
       run: uv publish --index testpypi
 
+  test-testpypi:
+    needs: publish-to-testpypi
+    runs-on: ubuntu-latest
+    environment:
+        name: testpypi
+        url: https://test.pypi.org/simple/
+
+    steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+
     - name: Activate test environment
       run: |
         uv venv
         source .venv/bin/activate
 
-    - name: Test TestPyPI build
+    - name: Install TestPyPI build
       run: |
-        uv pip install cotainr --index testpypi
+        uv pip install cotainr==0.0.0.dev3 --index testpypi
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
-        pytest .
+
+    - name: Run test suite via pytest
+      run: pytest -vv --junitxml=pytest_junit_out.xml
+    - name: Archive the test results and coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-and-coverage_python
+        path: |
+          pytest_junit_out.xml
+          htmlcov/*
 
   publish-to-pypi:
     needs: publish-to-testpypi
