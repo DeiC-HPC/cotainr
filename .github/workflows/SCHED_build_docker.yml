@@ -7,11 +7,11 @@ name: Build Docker and Deploy Images to GHCR
 
 on:
 #  schedule:
-  #    - cron: '17 15 * * *'
-  #  workflow_dispatch:
-  push:
-    branches:
-      - docker_dev_env
+#      - cron: '17 15 * * *'
+  workflow_dispatch:
+#  push:
+#    branches:
+#      - docker_dev_env
 
 
 env:
