@@ -7,11 +7,7 @@ on:
     branches:
       - docker_dev_env
 
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+
 
 jobs:
   lint-and-format:
@@ -27,6 +23,11 @@ jobs:
     name: Run unittests
     permissions:
       packages: read
+    env:
+      # Use docker.io for Docker Hub if empty
+      REGISTRY: ghcr.io
+      # github.repository as <account>/<repo>
+      IMAGE_NAME: ${{ github.repository }}
     strategy:
       fail-fast: false
       matrix:
