@@ -55,6 +55,8 @@ jobs:
 
     - name: Test TestPyPI build
       run: |
+        uv venv
+	source .venv/bin/activate
         uv pip install cotainr --index testpypi
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
         pytest .
