@@ -66,13 +66,12 @@ jobs:
         uv venv
         source .venv/bin/activate
 
-    - name: Install TestPyPI build
+    - name: Test TestPyPI build
       run: |
         uv pip install cotainr==0.0.0.dev3 --index https://test.pypi.org/simple/
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
+        pytest -vv --junitxml=pytest_junit_out.xml
 
-    - name: Run test suite via pytest
-      run: pytest -vv --junitxml=pytest_junit_out.xml
     - name: Archive the test results and coverage
       uses: actions/upload-artifact@v4
       with:
@@ -82,7 +81,7 @@ jobs:
           htmlcov/*
 
   publish-to-pypi:
-    needs: publish-to-testpypi
+    needs: test-testpypi
     runs-on: ubuntu-latest
 
     environment:
