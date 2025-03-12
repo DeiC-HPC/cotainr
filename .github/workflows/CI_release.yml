@@ -61,13 +61,12 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
 
-    - name: Activate test environment
+    - name: Test TestPyPI build
       run: |
         uv venv
         source .venv/bin/activate
-
-    - name: Test TestPyPI build
-      run: |
+        python3 --version
+        which python3
         uv pip install cotainr==0.0.0.dev3 --index https://test.pypi.org/simple/
         uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
         which python3
