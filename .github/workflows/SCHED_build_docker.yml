@@ -180,6 +180,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
+                      DOCKER_DEFAULT_PLATFORM=linux/arm64
                       SINGULARITY_PROVIDER=${{ matrix.singularity.provider }}
                       SINGULARITY_VERSION=${{ matrix.singularity.version }}
                       PYTHON_VERSION=${{ matrix.python-version }}

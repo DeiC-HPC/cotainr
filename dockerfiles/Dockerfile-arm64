@@ -1,5 +1,5 @@
-FROM ubuntu:latest --platform=linux/arm64
-LABEL authors="tor"
+FROM ubuntu:latest
+LABEL authors="tor, julius"
 
 ENTRYPOINT ["top", "-b"]
 
