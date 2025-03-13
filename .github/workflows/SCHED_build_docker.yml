@@ -8,10 +8,10 @@ name: Build Docker and Deploy Images to GHCR
 on:
 #  schedule:
 #      - cron: '17 15 * * *'
-  workflow_dispatch:
-#  push:
-#    branches:
-#      - docker_dev_env
+#  workflow_dispatch:
+  push:
+    branches:
+      - docker_dev_env
 
 
 env:
@@ -90,7 +90,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platform: linux/amd64,linux/arm64
+          platform: linux/amd64,linux/arm64/v7,linux/arm64/v8
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
