@@ -43,5 +43,3 @@ RUN set -eux ; \
     fi;\
     apt -y install ./singularity_installer.deb ;\
     singularity --version
-
-
