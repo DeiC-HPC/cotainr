@@ -75,7 +75,7 @@ Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 path = "cotainr/__init__.py"
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 88
 
 lint.extend-select = [
