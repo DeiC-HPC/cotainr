@@ -85,8 +85,8 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v6 # v5.0.0
         with:
-          # context: "{{defaultContext}}:dockerfiles/Dockerfile-amd64"
           file: {{defaultContext}}:dockerfiles/Dockerfile-amd64
+          # context: "{{defaultContext}}:dockerfiles/Dockerfile-amd64"
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -171,8 +171,8 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v6 # v5.0.0
         with:
-          # context: "{{defaultContext}}:dockerfiles/Dockerfile-amd64"
           file: {{defaultContext}}:dockerfiles/Dockerfile-arm64
+          # context: "{{defaultContext}}:dockerfiles/Dockerfile-amd64"
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

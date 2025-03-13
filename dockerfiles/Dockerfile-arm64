@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ubuntu:latest --platform=linux/arm64
 LABEL authors="tor"
 
 ENTRYPOINT ["top", "-b"]
