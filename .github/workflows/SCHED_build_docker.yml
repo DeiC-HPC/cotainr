@@ -101,6 +101,9 @@ jobs:
         ]
 
     steps:
+      # Set up QEMU for ARM support
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
       # https://github.com/docker/setup-buildx-action
