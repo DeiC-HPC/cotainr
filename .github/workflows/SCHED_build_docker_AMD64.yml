@@ -37,7 +37,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.configure.outputs.matrix) }}
     steps:
-      - run: echo ${{ matrix.name }}
+      - run: echo ${{ matrix }}
 #  build-amd64:
 #    needs: [ read_matrix ]
 #    runs-on: ubuntu-latest
