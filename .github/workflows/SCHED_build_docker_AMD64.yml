@@ -50,8 +50,7 @@ jobs:
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
     strategy:
-        matrix:
-          cfg: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+        matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
 
     steps:
       # Set up BuildKit Docker container builder to be able to build
