@@ -11,7 +11,7 @@ RUN set -eux ; \
     apt -y update ;\
     apt -y upgrade ;\
     apt -y install wget python3-full python3-pip; \
-    apt -y install --no-install-recommends curl ca-certificates
+    apt -y install --no-install-recommends curl ca-certificates:; \
 
 #install uv
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
@@ -36,8 +36,10 @@ RUN echo $SINGULARITY_VERSION
 RUN set -eux ; \
     if [ "$SINGULARITY_PROVIDER" = "apptainer" ]; then \
 #        echo "match apptainer" ;\
-        add-apt-repository -y ppa:apptainer/ppa;\
-        apt update;\
+#    Add apptainer repo
+        apt -y install software-properties-common; \
+        add-apt-repository -y ppa:apptainer/ppa; \
+        apt update; \
         apt -y install apptainer;\
     fi; \
     if [ "$SINGULARITY_PROVIDER" = "singularity" ]; then \
