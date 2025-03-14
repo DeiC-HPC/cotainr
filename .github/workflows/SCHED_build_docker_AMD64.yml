@@ -92,4 +92,3 @@ jobs:
                       SINGULARITY_PROVIDER=${{ matrix.singularity.provider }}
                       SINGULARITY_VERSION=${{ matrix.singularity.version }}
                       PYTHON_VERSION=${{ matrix.python-version }}
-
