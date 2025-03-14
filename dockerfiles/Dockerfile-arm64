@@ -36,9 +36,12 @@ RUN echo $SINGULARITY_VERSION
 RUN set -eux ; \
     if [ "$SINGULARITY_PROVIDER" = "apptainer" ]; then \
 #        echo "match apptainer" ;\
+        add-apt-repository -y ppa:apptainer/ppa;\
+        apt update;\
         apt -y install apptainer;\
     fi; \
     if [ "$SINGULARITY_PROVIDER" = "singularity" ]; then \
+#Does not work - singularity in the linux-repo is a game
         apt -y install singularity;\
     fi;\
     singularity --version
