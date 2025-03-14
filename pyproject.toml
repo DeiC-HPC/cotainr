@@ -74,6 +74,30 @@ Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 [tool.hatch.version]
 path = "cotainr/__init__.py"
 
+[tool.hatch.build]
+include = [
+    "/cotainr",
+    "/doc",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+    ".pre-commit-config.yaml",
+    ".readthedocs.yml",
+]
+exclude = [
+    "/examples",
+    "/bin"
+]
+
+[tool.hatch.build.targets.wheel.force-include]
+"pyproject.toml" = "cotainr/pyproject.toml"
+
+[[tool.uv.index]]
+explicit=true
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+
 [tool.ruff]
 target-version = "py39"
 line-length = 88
