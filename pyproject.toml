@@ -38,7 +38,16 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
-[project.optional-dependencies]
+[project.scripts]
+cotainr = "cotainr.cli:main"
+
+[project.urls]
+Documentation = "https://cotainr.readthedocs.io/en/stable/"
+Repository = "https://github.com/DeiC-HPC/cotainr.git"
+"Bug Tracker" = "https://github.com/DeiC-HPC/cotainr/issues"
+Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
+
+[dependency-groups]
 tests = [
     "pytest-cov>=2.10",
     "pytest>=6.0"
@@ -60,16 +69,7 @@ docs = [
     "sphinx-design>=0.5.0",
     "myst-parser>=2.0.0",
 ]
-dev = ["cotainr[tests,lint,docs]"]
-
-[project.scripts]
-cotainr = "cotainr.cli:main"
-
-[project.urls]
-Documentation = "https://cotainr.readthedocs.io/en/stable/"
-Repository = "https://github.com/DeiC-HPC/cotainr.git"
-"Bug Tracker" = "https://github.com/DeiC-HPC/cotainr/issues"
-Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
+dev = [{include-group = "tests"}, {include-group = "lint"}, {include-group = "docs"}]
 
 [tool.hatch.version]
 path = "cotainr/__init__.py"
