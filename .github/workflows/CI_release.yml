@@ -45,7 +45,7 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
     - name: Publish distribution to TestPyPI
-      uv publish --index testpypi
+      run: uv publish --index testpypi
 
   test-testpypi:
     name: Test TestPyPI Build
