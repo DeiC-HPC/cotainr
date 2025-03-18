@@ -1,17 +1,11 @@
-name: CI for release
+name: CI on release
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: [CI on pull request]
-    branches: [release-gh-action]
-    types:
-      - completed
-  push:
-    branches:
-      - "**"
-    tags-ignore:
-      - "**"
+  push:    # Initialize release with 'git push origin --tags'
+    tags:  # Actual deployment to testpypi and pypi environments requires review
+      - '20[0-9][0-9].0[1-9].[0-9]+'  # Expected limits: 2000.01.0 - 2099.09.123+
+      - '20[0-9][0-9].1[0-2].[0-9]+'  # Expected limits: 2000.10.0 - 2099.12.123+
 
 jobs:
   build:
@@ -29,9 +23,6 @@ jobs:
   publish-to-testpypi:
     needs: build
     name: Publish to TestPyPI
-    # only publish to TestPyPI on tag pushes and successful test workflow
-    # if: github.event.workflow_run.conclusion == 'success'
-    # && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
 
     environment:
@@ -51,63 +42,24 @@ jobs:
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
     - name: Publish distribution to TestPyPI
-      run: uv publish --index testpypi
+      run: echo 'Simulate uv publish --index testpypi'
 
   test-testpypi:
     name: Test TestPyPI Build
     needs: publish-to-testpypi
-    env:
-        OS: "ubuntu-latest"
-        PROVIDER: "singularity-ce"
-        VERSION: "4.2.1"
     runs-on: ubuntu-latest
 
     steps:
-    - name: Attempt to restore Singularity/Apptainer installer from cache
-      uses: actions/cache@v4
-      id: cache-singularity-installer
-      with:
-        path: ./singularity_installer.deb
-        key: ${{ env.OS }}-${{ env.PROVIDER }}_installer-${{ env.VERSION }}
-    - name: Download Singularity ${{ env.VERSION }}
-      if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && env.PROVIDER == 'singularity' }}
-      run: wget -O singularity_installer.deb https://github.com/apptainer/singularity/releases/download/v${{ env.VERSION }}/singularity-container_${{ env.VERSION }}_amd64.deb
-    - name: Download Apptainer ${{ env.VERSION }}
-      if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && env.PROVIDER == 'apptainer' }}
-      run: wget -O singularity_installer.deb https://github.com/apptainer/apptainer/releases/download/v${{ env.VERSION }}/apptainer_${{ env.VERSION }}_amd64.deb
-    - name: Download SingularityCE ${{ env.VERSION }}
-      if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && env.PROVIDER == 'singularity-ce' }}
-      run: wget -O singularity_installer.deb https://github.com/sylabs/singularity/releases/download/v${{ env.VERSION }}/singularity-ce_${{ env.VERSION }}-focal_amd64.deb
-    - name: Set up Singularity/Apptainer
-      run: |
-        sudo apt install ./singularity_installer.deb
-        singularity --version
-          
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
 
-    - name: Install TestPyPI build
+    - name: Test TestPyPI build
       run: |
         uv venv
         source .venv/bin/activate
-        uv pip install cotainr==0.0.0.dev6 --index https://test.pypi.org/simple/
-        uv pip install 'cotainr[tests]' # Get Pytest from real PyPI distribution
-
-    - name: Build TestPyPI build
-      working-directory: .venv/lib/python3.12/site-packages/cotainr/
-      run: |
-        source ../../../../bin/activate
-        python3 --version
-        which python3
-        python3 -m pytest -vv --junitxml=pytest_junit_out.xml
-
-    - name: Archive the test results and coverage
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results-and-coverage_python
-        path: |
-          pytest_junit_out.xml
-          htmlcov/*
+        uv pip install cotainr==${{ github.ref_name }} --index https://test.pypi.org/simple/
+        cotainr info
+        cotainr build --help
 
   publish-to-pypi:
     needs: test-testpypi
@@ -129,10 +81,6 @@ jobs:
         path: dist
     - name: Set up uv
       uses: astral-sh/setup-uv@v5
-    # - name: Publish distribution to PyPI
-    #   run: uv publish
+    - name: Publish distribution to PyPI
+      run: echo 'Simulate uv publish'
 
-    # - name: Test PyPI build
-    #   run: |
-    #     uv pip install cotainr[tests]
-    #     pytest .
