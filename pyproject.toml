@@ -75,7 +75,7 @@ Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 [tool.hatch.version]
 path = "cotainr/__init__.py"
 
-[tool.hatch.build]
+[tool.hatch.build.targets.sdist]
 include = [
     "/cotainr",
     "/doc",
@@ -89,9 +89,6 @@ exclude = [
     "/examples",
     "/bin"
 ]
-
-[tool.hatch.build.targets.wheel.force-include]
-"pyproject.toml" = "cotainr/pyproject.toml"
 
 [[tool.uv.index]]
 explicit=true
