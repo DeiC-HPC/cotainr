@@ -79,7 +79,6 @@ path = "cotainr/__init__.py"
 include = [
     "/cotainr",
     "/doc",
-    "README.md",
     "LICENSE",
     "pyproject.toml",
     ".pre-commit-config.yaml",
