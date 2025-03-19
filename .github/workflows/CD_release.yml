@@ -57,7 +57,7 @@ jobs:
 
     - name: Test TestPyPI build
       run: |
-        uv venv
+        uv venv --python 3.12
         source .venv/bin/activate
         uv pip install cotainr==${{ github.ref_name }} --index https://test.pypi.org/simple/
         cotainr info
