@@ -89,6 +89,11 @@ exclude = [
     "/bin"
 ]
 
+[tool.hatch.build.targets.wheel]
+exclude = [
+    "/cotainr/tests"
+]
+
 [[tool.uv.index]]
 explicit=true
 name = "testpypi"
