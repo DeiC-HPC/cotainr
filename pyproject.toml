@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "cotainr"
 dynamic = ["version"]
 dependencies = []
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     {name = "Christian Schou Oxvig"},
     {name = "René Løwe Jacobsen"},
@@ -32,7 +32,6 @@ classifiers = [
     #"Topic :: Software Development :: HPC Tools",
     "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -101,7 +100,7 @@ url = "https://test.pypi.org/simple/"
 publish-url = "https://test.pypi.org/legacy/"
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 88
 
 lint.extend-select = [

@@ -13,7 +13,7 @@ __version__ = "2024.10.0"
 _minimum_dependency_version = {
     # Versions must be specified as a (major, minor, patchlevel) tuple of
     # integers
-    "python": (3, 8, 0),
+    "python": (3, 9, 0),
     "apptainer": (1, 0, 0),
     "singularity": (3, 7, 4),
     "singularity-ce": (3, 9, 2),
