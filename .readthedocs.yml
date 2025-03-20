@@ -14,6 +14,9 @@ build:
       - uv venv
     install:
       - uv pip install -r docs-requirements.txt
+    pre_build:
+      - uv run make -C doc apidoc
+      - uv run make -C doc relnotes
     build:
       html:
         - uv run sphinx-build -T -b html docs $READTHEDOCS_OUTPUT/html
