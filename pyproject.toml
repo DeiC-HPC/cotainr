@@ -40,9 +40,13 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+versioning = [ # This really should be handled as dependency groups with uv.lock handling non-direct dependencies
+    "hatch-vcs>=0.4.0",
+]
 tests = [
     "pytest-cov>=2.10",
-    "pytest>=6.0"
+    "pytest>=6.0",
+    "cotainr[versioning]",
 ]
 lint = [
     "cfgv>=3.4.0",
@@ -60,6 +64,7 @@ docs = [
     "sphinx>=7.2.5",
     "sphinx-design>=0.5.0",
     "myst-parser>=2.0.0",
+    "cotainr[versioning]",
 ]
 dev = ["cotainr[tests,lint,docs]"]
 
