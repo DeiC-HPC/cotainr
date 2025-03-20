@@ -13,21 +13,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.x'
-          cache: pip
-      - name: Install docs dependencies
+          enable-cache: false
+
+      - name: Install test dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -e .[docs]
+          uv venv --python 3 
+          uv sync --group=docs --frozen
       - name: Build documentation
         run: |
-          make -C doc apidoc
-          make -C doc relnotes
-          make -C doc html
+          uv run make -C doc apidoc
+          uv run make -C doc relnotes
+          uv run make -C doc html
       - name: Run Sphinx linkcheck on documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: make -C doc linkcheck
+        run: uv run make -C doc linkcheck
