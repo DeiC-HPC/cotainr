@@ -47,12 +47,6 @@ Repository = "https://github.com/DeiC-HPC/cotainr.git"
 "Bug Tracker" = "https://github.com/DeiC-HPC/cotainr/issues"
 Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 
-[project.optional-dependencies]
-docs = [  # Read-the-docs dependency
-     "sphinx-design>=0.5.0",
-     "myst-parser>=2.0.0",
-     "numpydoc>=1.5.0"]
-
 [dependency-groups]
 tests = [
     "pytest-cov>=2.10",
@@ -63,7 +57,9 @@ lint = [
 ]
 docs = [
     "pydata-sphinx-theme>=0.13.3",
-    "cotainr[docs]"
+    "sphinx-design>=0.5.0",
+    "myst-parser>=2.0.0",
+    "numpydoc>=1.5.0"
 ]
 dev = [{include-group = "tests"}, {include-group = "lint"}, {include-group = "docs"}]
 
