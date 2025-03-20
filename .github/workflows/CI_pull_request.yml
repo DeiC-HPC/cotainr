@@ -65,17 +65,18 @@ jobs:
         run: |
           sudo apt install ./singularity_installer.deb
           singularity --version
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
+          enable-cache: false
+
       - name: Install test dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -e .[tests]
+          uv venv --python ${{ matrix.python-version }}
+          uv sync --group=tests --frozen
+
       - name: Run test suite via pytest
-        run: pytest -vv --junitxml=pytest_junit_out.xml
+        run: uv run pytest -vv --junitxml=pytest_junit_out.xml
       - name: Archive the test results and coverage
         uses: actions/upload-artifact@v4
         with:
@@ -106,18 +107,17 @@ jobs:
           sudo apt update
           sudo apt install -y apptainer
           singularity --version
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: "**/test-requirements.txt"
+          enable-cache: false
+
       - name: Install test dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -r test-requirements.txt
+          uv venv --python ${{ matrix.python-version }}
+          uv sync --group=tests --frozen
       - name: Run test suite via pytest
-        run: pytest -vv --junitxml=pytest_junit_out.xml
+        run: uv run pytest -vv --junitxml=pytest_junit_out.xml
       - name: Archive the test results and coverage
         uses: actions/upload-artifact@v4
         with:

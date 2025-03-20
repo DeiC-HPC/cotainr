@@ -25,14 +25,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
+          enable-cache: false
+
       - name: Install test dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -e .[tests]
+          uv venv --python ${{ matrix.python-version }}
+          uv sync --group=tests --frozen
       - name: Run unittests via pytest
-        run: pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
