@@ -170,10 +170,15 @@ wheels = [
 name = "cotainr"
 source = { editable = "." }
 
-[package.dev-dependencies]
-dev = [
+[package.optional-dependencies]
+docs = [
     { name = "myst-parser", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "myst-parser", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "cotainr", extra = ["docs"] },
     { name = "numpydoc" },
     { name = "pre-commit" },
     { name = "pydata-sphinx-theme" },
@@ -182,8 +187,7 @@ dev = [
     { name = "sphinx-design" },
 ]
 docs = [
-    { name = "myst-parser", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "myst-parser", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "cotainr", extra = ["docs"] },
     { name = "numpydoc" },
     { name = "pydata-sphinx-theme" },
     { name = "sphinx-design" },
@@ -197,10 +201,11 @@ tests = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "myst-parser", marker = "extra == 'docs'", specifier = ">=2.0.0" }]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "myst-parser", specifier = ">=2.0.0" },
+    { name = "cotainr", extras = ["docs"] },
     { name = "numpydoc", specifier = ">=1.5.0" },
     { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "pydata-sphinx-theme", specifier = ">=0.13.3" },
@@ -209,7 +214,7 @@ dev = [
     { name = "sphinx-design", specifier = ">=0.5.0" },
 ]
 docs = [
-    { name = "myst-parser", specifier = ">=2.0.0" },
+    { name = "cotainr", extras = ["docs"] },
     { name = "numpydoc", specifier = ">=1.5.0" },
     { name = "pydata-sphinx-theme", specifier = ">=0.13.3" },
     { name = "sphinx-design", specifier = ">=0.5.0" },
