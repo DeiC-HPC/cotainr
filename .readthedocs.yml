@@ -19,4 +19,4 @@ build:
       - uv run make -C doc relnotes
     build:
       html:
-        - uv run sphinx-build --conf-dir doc/ --fail-on-warning -T -b html docs $READTHEDOCS_OUTPUT/html
+        - uv run sphinx-build --conf-dir doc/ --fail-on-warning -T -b html doc $READTHEDOCS_OUTPUT/html
