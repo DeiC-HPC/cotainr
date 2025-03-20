@@ -13,7 +13,7 @@ build:
       - asdf global uv latest
       - uv venv
     install:
-      - uv pip install -r docs-requirements.txt
+      - uv sync --frozen --group docs
     pre_build:
       - uv run make -C doc apidoc
       - uv run make -C doc relnotes
