@@ -8,16 +8,21 @@ Test suite & CI/CD
 The test suite
 --------------
 
-The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. The entire test suite is run from the repository root directory by issuing:
+The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. In order to run the test suite locally, first set up a developer environment and install the necessary dependencies using `uv sync`. 
 
 .. code-block:: console
 
+    $ uv sync [--group tests]
+    $ uv run pytest
+
+Here the added specification `--group tests` is optional, because the default is `--group dev` which contains `tests`. The command `uv run pytest` executes the entire test suite and it is just a shorthand implementation of using a Python Virtual Environment,
+
+.. code-block:: console
+
+    $ uv venv
+    $ source .venv/bin/activate
     $ pytest
 
-Dependencies
-~~~~~~~~~~~~
-In order to run the tests, you must have the Python packages listed in the `test` extra.
-You can use ``pip install -e .[tests]`` to install the required packages.
 
 Pytest marks
 ~~~~~~~~~~~~
@@ -61,6 +66,8 @@ Imports in test modules are based on the following conventions:
 - Sub-package specific fixtures are explicitly imported using relative imports, e.g. :code:`from ..container.data import data_cached_ubuntu_sif` in `tests/pack/test_conda_install.py`.
 - Fixtures defined in `tests/conftest.py` are not explicitly imported (they are implicitly imported by `pytest``). Thus, if a fixture is used, but not imported, in a test module, `tests/conftest.py` is the only module in which it can (or at least should) be defined.
 
+.. _continuous_integration:
+  
 Continuous Integration (CI)
 ---------------------------
 Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions. The tests run on the GitHub-hosted `ubuntu-latest <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_ runner. When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
@@ -87,6 +94,12 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
 Continuous Delivery (CD)
 ------------------------
 Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/continuous-deployment.html>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
+
+Continuous Deployment
+~~~~~~~~~~~~~~~~~~~~~
+New cotainr releases are automatically generated and deployed to both GitHub and PyPI when new tags following the :ref:`versioning scheme <version-scheme>` are committed to the main branch.
+The CD `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented in `CD_release.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CD_release.yml>`_. The release build is first published to the TestPyPI index. The build is then downloaded, installed and tested for basic functionality, after which the build is published to PyPI.
+
 
 Read the Docs continuous documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
