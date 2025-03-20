@@ -48,7 +48,9 @@ Repository = "https://github.com/DeiC-HPC/cotainr.git"
 Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 
 [project.optional-dependencies]
-docs = ["sphinx-design>=0.5.0"] # Read-the-docs dependency
+docs = [  # Read-the-docs dependency
+     "sphinx-design>=0.5.0",
+     "numpydoc>=1.5.0"]
 
 [dependency-groups]
 tests = [
@@ -59,7 +61,6 @@ lint = [
     "pre-commit>=4.1.0",
 ]
 docs = [
-    "numpydoc>=1.5.0",
     "pydata-sphinx-theme>=0.13.3",
     "myst-parser>=2.0.0",
     "cotainr[docs]"

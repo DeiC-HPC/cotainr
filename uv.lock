@@ -172,6 +172,7 @@ source = { editable = "." }
 
 [package.optional-dependencies]
 docs = [
+    { name = "numpydoc" },
     { name = "sphinx-design" },
 ]
 
@@ -180,7 +181,6 @@ dev = [
     { name = "cotainr", extra = ["docs"] },
     { name = "myst-parser", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "myst-parser", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "numpydoc" },
     { name = "pre-commit" },
     { name = "pydata-sphinx-theme" },
     { name = "pytest" },
@@ -190,7 +190,6 @@ docs = [
     { name = "cotainr", extra = ["docs"] },
     { name = "myst-parser", version = "3.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "myst-parser", version = "4.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-    { name = "numpydoc" },
     { name = "pydata-sphinx-theme" },
 ]
 lint = [
@@ -202,13 +201,15 @@ tests = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "sphinx-design", marker = "extra == 'docs'", specifier = ">=0.5.0" }]
+requires-dist = [
+    { name = "numpydoc", marker = "extra == 'docs'", specifier = ">=1.5.0" },
+    { name = "sphinx-design", marker = "extra == 'docs'", specifier = ">=0.5.0" },
+]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "cotainr", extras = ["docs"] },
     { name = "myst-parser", specifier = ">=2.0.0" },
-    { name = "numpydoc", specifier = ">=1.5.0" },
     { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "pydata-sphinx-theme", specifier = ">=0.13.3" },
     { name = "pytest", specifier = ">=6.0" },
@@ -217,7 +218,6 @@ dev = [
 docs = [
     { name = "cotainr", extras = ["docs"] },
     { name = "myst-parser", specifier = ">=2.0.0" },
-    { name = "numpydoc", specifier = ">=1.5.0" },
     { name = "pydata-sphinx-theme", specifier = ">=0.13.3" },
 ]
 lint = [{ name = "pre-commit", specifier = ">=4.1.0" }]
