@@ -50,6 +50,7 @@ Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 [project.optional-dependencies]
 docs = [  # Read-the-docs dependency
      "sphinx-design>=0.5.0",
+     "myst-parser>=2.0.0",
      "numpydoc>=1.5.0"]
 
 [dependency-groups]
@@ -62,7 +63,6 @@ lint = [
 ]
 docs = [
     "pydata-sphinx-theme>=0.13.3",
-    "myst-parser>=2.0.0",
     "cotainr[docs]"
 ]
 dev = [{include-group = "tests"}, {include-group = "lint"}, {include-group = "docs"}]
