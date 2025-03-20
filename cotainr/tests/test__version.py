@@ -23,8 +23,8 @@ class Test__get_hatch_version:
         cotainr_dev_version_pattern = (
             r"^"
             + cotainr_calver_tag_pattern  # YYYY.MM.MINOR
-            + dev_extension_pattern  # .devN+hash
-            + local_version_pattern  # .dYYYYMMDD
+            + dev_extension_pattern  # .devN+hash (optional)
+            + local_version_pattern  # .dYYYYMMDD (optional)
             + r"$"
         )
         cotainr_dev_version = cotainr._version._get_hatch_version()
