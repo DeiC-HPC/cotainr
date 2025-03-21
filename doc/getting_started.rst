@@ -13,6 +13,7 @@ Alternatively, If you are using an HPC system, you may be in luck and find `cota
 
 .. grid:: 1
     :gutter: 4
+
     .. grid-item-card:: Using `cotainr` on HPC systems where it is already installed
 
         On some HPC systems, `cotainr` is already installed. If your HPC system of choice is mentioned in the instructions list below, you may follow those instructions to get started using `cotainr` on that system.
@@ -40,6 +41,3 @@ Alternatively, If you are using an HPC system, you may be in luck and find `cota
 .. _Apptainer: https://apptainer.org/
 .. _Python: https://www.python.org/
 .. _Singularity: https://sylabs.io/singularity/
-
-.. rubric:: Footnotes
-.. [#] As of version 3.8.0, Sylabs have changed the name of their version to SingularityCE. However, we only officially support their version from 3.9.2.
