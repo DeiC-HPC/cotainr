@@ -15,7 +15,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: |
           uv lock --check
-          uv sync --python 3 --managed-python --group=lint --frozen
+          uv sync --python 3.12 --managed-python --group=lint --frozen
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
@@ -116,8 +116,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv venv --python ${{ matrix.python-version }}
-          uv sync --group=tests --frozen
+          uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run test suite via pytest
         run: uv run pytest -vv --junitxml=pytest_junit_out.xml
       - name: Archive the test results and coverage

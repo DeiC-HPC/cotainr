@@ -14,8 +14,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: |
           uv lock --check
-          uv python list --managed-python
-          uv sync --python 3 --managed-python --group=lint --frozen
+          uv sync --python 3.12 --managed-python --group=lint --frozen
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
@@ -38,7 +37,6 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv venv --python ${{ matrix.python-version }}
-          uv sync --group=tests --frozen
+          uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"

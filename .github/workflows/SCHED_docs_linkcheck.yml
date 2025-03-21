@@ -20,8 +20,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv venv --python 3
-          uv sync --group=docs --frozen
+          uv sync --python 3.12 --managed-python --group=docs --frozen
       - name: Build documentation
         run: |
           uv run make -C doc apidoc
