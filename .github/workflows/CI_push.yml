@@ -10,10 +10,6 @@ jobs:
     name: Lint and check formatting
     runs-on: ubuntu-latest
     steps:
-      - name: Dump env context
-        env:
-            GITHUB_CONTEXT: ${{ toJson(env) }}
-        run: echo "$GITHUB_CONTEXT"
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
       - run: |
@@ -22,7 +18,6 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
-          key: ${{ hashFiles('.pre-commit-config.yaml') }}
       - run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
   run-unittests:
     name: Run unittests
