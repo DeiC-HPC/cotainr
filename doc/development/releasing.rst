@@ -13,8 +13,8 @@ In order to release a new version of `cotainr`, one must:
 2. Fill in the release notes.
 3. Assert succesful :ref:`CI tests <continuous_integration>` of the branch and merge the release notes into the main branch.
 4. Tag the main branch locally as `git tag YYYY.MM.MINOR`
-5. Push the tag to the GitHub repository `git push origin tag YYYY.MM.MINOR`. This launches the :ref:`CD setup <continuous_delivery>` GitHub action.
-6. Review the `CD on release` GitHub action and approve the TestPyPI and PyPI deployment.
+5. Push the tag to the GitHub repository `git push origin tag YYYY.MM.MINOR`. This launches the :ref:`CD on release <continuous_deployment>` GitHub action.
+6. Review the :ref:`CD on release <continuous_deployment>` GitHub action and approve the TestPyPI and PyPI deployment.
 
 .. _version-scheme:
 

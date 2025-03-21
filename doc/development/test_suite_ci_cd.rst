@@ -89,11 +89,11 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
 
 
-.. _continuous_delivery:
-
 Continuous Delivery (CD)
 ------------------------
 Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/continuous-deployment.html>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
+
+.. _continuous_deployment:
 
 Continuous Deployment
 ~~~~~~~~~~~~~~~~~~~~~
