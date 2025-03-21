@@ -10,11 +10,20 @@ jobs:
     name: Lint and check formatting
     runs-on: ubuntu-latest
     steps:
+      - name: Dump env context
+        env:
+            GITHUB_CONTEXT: ${{ toJson(env) }}
+        run: echo "$GITHUB_CONTEXT"
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v5
+      - run: |
+          uv lock --check
+          uv sync --python 3 --managed-python --group=lint --frozen
+      - uses: actions/cache@v4
         with:
-          python-version: "3.x"
-      - uses: pre-commit/action@v3.0.1
+          path: ~/.cache/pre-commit
+          key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: pre-commit run --show-diff-on-failure --color=always --all-files
   run-unittests:
     name: Run unittests
     runs-on: ubuntu-latest
