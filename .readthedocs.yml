@@ -3,20 +3,20 @@
 
 version: 2
 build:
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   tools:
     python: "3"
-  jobs:
+ jobs:
     create_environment:
       - asdf plugin add uv
       - asdf install uv latest
       - asdf global uv latest
-      - uv venv
     install:
-      - uv sync --frozen --group docs
-    pre_build:
+      - UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH uv sync --frozen --group docs
+    pre-build:
       - uv run make -C doc apidoc
       - uv run make -C doc relnotes
-    build:
-      html:
-        - uv run sphinx-build --conf-dir doc/ --fail-on-warning -T -b html doc $READTHEDOCS_OUTPUT/html
+sphinx:
+  builder: html
+  configuration: doc/conf.py
+  fail_on_warning: true
