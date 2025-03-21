@@ -111,8 +111,6 @@ jobs:
           singularity --version
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: false
 
       - name: Install test dependencies
         run: |
