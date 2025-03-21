@@ -10,16 +10,21 @@ jobs:
     name: Lint and check formatting
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - run: |
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+      - name: Verify uv.lock file and install lint dependency group
+        run: |
           uv lock --check
           uv sync --python 3.12 --managed-python --group=lint --frozen
-      - uses: actions/cache@v4
+      - name: Restore pre-commit cache
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
-      - run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
+      - name: Run pre-commit on all files
+        run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
   run-unittests:
     name: Run unittests
     runs-on: ubuntu-latest
