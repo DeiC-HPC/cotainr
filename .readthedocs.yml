@@ -13,7 +13,7 @@ build:
       - asdf global uv latest
     install:
       - UV_PROJECT_ENVIRONMENT=$READTHEDOCS_VIRTUALENV_PATH uv sync --frozen --group docs
-    pre-build:
+    pre_build:
       - uv run make -C doc apidoc
       - uv run make -C doc relnotes
 sphinx:
