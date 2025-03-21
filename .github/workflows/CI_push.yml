@@ -14,10 +14,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
-      - name: Verify uv.lock file and install lint dependency group
-        run: |
-          uv lock --check
-          uv sync --python 3.12 --managed-python --group=lint --frozen
+      - name: Verify the uv.lock is up-to-date
+        run: uv lock --check
+      - name: Install linting dependencies
+        run: uv sync --python 3.12 --managed-python --group=lint --frozen
       - name: Restore pre-commit cache
         uses: actions/cache@v4
         with:
