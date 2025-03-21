@@ -8,7 +8,7 @@ Test suite & CI/CD
 The test suite
 --------------
 
-The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. In order to run the test suite locally, first set up a developer environment and install the necessary dependencies using `uv sync`. 
+The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. In order to run the test suite locally, first set up a developer environment and install the necessary dependencies using `uv sync`.
 
 .. code-block:: console
 
@@ -67,7 +67,7 @@ Imports in test modules are based on the following conventions:
 - Fixtures defined in `tests/conftest.py` are not explicitly imported (they are implicitly imported by `pytest``). Thus, if a fixture is used, but not imported, in a test module, `tests/conftest.py` is the only module in which it can (or at least should) be defined.
 
 .. _continuous_integration:
-  
+
 Continuous Integration (CI)
 ---------------------------
 Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions. The tests run on the GitHub-hosted `ubuntu-latest <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_ runner. When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
@@ -98,7 +98,11 @@ Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.git
 Continuous Deployment
 ~~~~~~~~~~~~~~~~~~~~~
 New cotainr releases are automatically generated and deployed to both GitHub and PyPI when new tags following the :ref:`versioning scheme <version-scheme>` are committed to the main branch.
-The CD `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented in `CD_release.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CD_release.yml>`_. The release build is first published to the TestPyPI index. The build is then downloaded, installed and tested for basic functionality, after which the build is published to PyPI.
+The CD `workflow <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented in `CD_release.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CD_release.yml>`_.
+
+The PyPI release process goes as following: Build the Python Wheel -> Publish to TestPyPI index -> In a clean environment, download and install from TestPyPI and run basic CLI functionality -> publish to PyPI. The testPyPI and PyPI index locations are both implemented as GitHub environments attached to the DeiC-HPC account. These environments have deployment protection rules which require review from a member of the HPC-developers team before the action is executed. This ensures protection against accidental tag pushes since removal from TestPyPI and PyPI is difficult.
+
+The GitHub release is run independently and does not have deployment protection rules. GitHub releases can easily be undone by first removing the release through the GitHub UI and then remove the tag.
 
 
 Read the Docs continuous documentation
