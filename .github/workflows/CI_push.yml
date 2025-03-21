@@ -39,7 +39,6 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Install test dependencies
-        run: |
-          uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
