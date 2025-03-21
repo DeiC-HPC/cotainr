@@ -70,8 +70,7 @@ jobs:
 
       - name: Install test dependencies
         run: |
-          uv venv --python ${{ matrix.python-version }}
-          uv sync --group=tests --frozen
+          uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
 
       - name: Run test suite via pytest
         run: uv run pytest -vv --junitxml=pytest_junit_out.xml
