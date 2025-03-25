@@ -19,8 +19,8 @@ Alternatively, you can also install the (default) `dev` group which contains the
 Once the development environment has been installed, simply run `pytest` from the repository root directory, e.g. using uv:
 
 .. code-block:: console
+
     $ uv run pytest
-    $ pytest
 
 
 Pytest marks
