@@ -8,7 +8,7 @@ Test suite & CI/CD
 The test suite
 --------------
 
-The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. In order to run the test suite locally, first set up a developer environment and install the necessary dependencies using `uv sync`.
+The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. In order to run the test suite locally, first set up a developer environment by installing the test dependencies declared in the `cotainr pyproject.toml file <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_. We recommend using `uv <https://docs.astral.sh/uv/>`_ for setting up the environment:
 
 .. code-block:: console
 
