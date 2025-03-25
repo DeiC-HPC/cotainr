@@ -5,13 +5,15 @@ Getting Started
 
 `cotainr` makes it easy to build `Singularity`_/`Apptainer`_ containers for certain :ref:`use cases <use_cases>`. If this is your first time learning about `cotainr`, we encourage you to read the :ref:`motivation for using cotainr <why_cotainr>`.
 
-In order to get started using `cotainr`, first be sure your system have the necessary :ref:`dependencies <cotainr_dependencies>` installed, then you can install `cotainr` directly using pip.
+In order to get started, you can install `cotainr` directly using pip.
 
 .. code-block:: console
 
     $ pip install cotainr
 
-Alternatively, If you are using an HPC system, you may be in luck and find `cotainr` is already installed and refer to the following instructions.
+Additionally, you need to have `Singularity`_ or `Apptainer`_ installed. More details about dependencies may be found in the :ref:`User Guide <cotainr_dependencies>`.
+
+Alternatively, if you are using an HPC system, you may be in luck that `cotainr` is already installed on the system. Refer to the instructions below for getting started in that case.
 
 .. grid:: 1
     :gutter: 4

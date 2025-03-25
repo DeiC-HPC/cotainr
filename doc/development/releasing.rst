@@ -9,12 +9,12 @@ Release process
 ---------------
 In order to release a new version of `cotainr`, one must:
 
-1. Create a new branch with release notes in the format `YYYY.MM.MINOR.md` in the folder `doc/release_notes` based on the template `doc/release_notes/release_note.md.template`.
-2. Fill in the release notes.
-3. Assert succesful :ref:`CI tests <continuous_integration>` of the branch and merge the release notes into the main branch.
-4. Tag the main branch locally as `git tag YYYY.MM.MINOR`
-5. Push the tag to the GitHub repository `git push origin tag YYYY.MM.MINOR`. This launches the :ref:`CD on release <continuous_deployment>` GitHub action.
-6. Review the :ref:`CD on release <continuous_deployment>` GitHub action and approve the TestPyPI and PyPI deployment.
+1. Update the :attr:`cotainr.__version__` string in `cotianr/__init__.py`.
+2. Update the docs version switcher list by running the `doc/create_switcher.py` script.
+3. Create a new branch with release notes in the format `YYYY.MM.MINOR.md` in the folder `doc/release_notes` based on the template `doc/release_notes/release_note.md.template` and fill in the release notes.
+4. Open a new pull request to merge the release notes into main and assert successful :ref:`CI tests <continuous_integration>` of the branch. Then merge it into the main branch.
+5. Tag the main branch locally as `git tag YYYY.MM.MINOR` and push the tag to the GitHub repository `git push origin tag YYYY.MM.MINOR`. This triggers the :ref:`CD setup <continuous_integration>` .
+6. Review that the :ref:`CD on release <continuous_integration>` GitHub action creates a GitHub release and approve and review the TestPyPI and PyPI deployments. Also review that `readthedocs` is updated correctly, i.e. assert that the `stable <https://cotainr.readthedocs.io/en/stable>`_ and `latest <https://cotainr.readthedocs.io/en/latest>`_ docs verisons points to the newly released version.
 
 .. _version-scheme:
 

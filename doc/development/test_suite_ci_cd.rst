@@ -12,15 +12,14 @@ The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>
 
 .. code-block:: console
 
-    $ uv sync [--group tests]
-    $ uv run pytest
+    $ uv sync --group tests
 
-Here the added specification `--group tests` is optional, because the default is `--group dev` which contains `tests`. The command `uv run pytest` executes the entire test suite and it is just a shorthand implementation of using a Python Virtual Environment,
+Alternatively, you can also install the (default) `dev` group which contains the full development environment, including the `tests` group. 
+
+Once the development environment has been installed, simply run `pytest` from the repository root directory, e.g. using uv:
 
 .. code-block:: console
-
-    $ uv venv
-    $ source .venv/bin/activate
+    $ uv run pytest
     $ pytest
 
 
