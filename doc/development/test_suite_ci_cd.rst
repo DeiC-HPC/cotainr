@@ -92,17 +92,22 @@ Continuous Delivery (CD)
 ------------------------
 Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/continuous-deployment.html>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
 
-.. _continuous_deployment:
+CD workflows
+~~~~~~~~~~~~
+The following CD `workflow <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented:
 
-Continuous Deployment
-~~~~~~~~~~~~~~~~~~~~~
-New cotainr releases are automatically generated and deployed to both GitHub and PyPI when new tags following the :ref:`versioning scheme <version-scheme>` are committed to the main branch.
-The CD `workflow <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented in `CD_release.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CD_release.yml>`_.
-
-The PyPI release process goes as following: Build the Python Wheel -> Publish to TestPyPI index -> In a clean environment, download and install from TestPyPI and run basic CLI functionality -> publish to PyPI. The testPyPI and PyPI index locations are both implemented as GitHub environments attached to the DeiC-HPC account. These environments have deployment protection rules which require review from a member of the HPC-developers team before the action is executed. This ensures protection against accidental tag pushes since removal from TestPyPI and PyPI is difficult.
-
-The GitHub release is run independently and does not have deployment protection rules. GitHub releases can easily be undone by first removing the release through the GitHub UI and then remove the tag.
-
+- `CD_release.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CD_release.yml>`_: Creates GitHub and PyPI releases when new tags following the :ref:`versioning scheme <version-scheme>` are committed to the main branch.
+  
+  The GitHub release job is run independently and does not have deployment protection rules as it can easily be undone by first removing the release through the GitHub UI and then remove the tag if something goes wrong.
+  
+  The PyPI release process goes as following:
+  
+  - Build the Python Wheel
+  - Publish to TestPyPI index
+  - In a clean environment, download and install from TestPyPI and run basic CLI functionality
+  - publish to PyPI.
+  
+  The testPyPI and PyPI index locations are both implemented as `GitHub environments <https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment>`_ attached to the DeiC-HPC account. These environments have deployment protection rules which require review from a member of the HPC-developers team before the action is executed. This ensures protection against accidental tag pushes which is needed since removal of releases from TestPyPI and PyPI is difficult.
 
 Read the Docs continuous documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
