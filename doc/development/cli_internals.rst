@@ -14,7 +14,7 @@ The main way to invoke the CLI (sub)commands is via the `cotainr` entrypoint,
     $ cotainr build <positional_arg> <non-positional args>
     $ cotainr info
 
-This assumes that `cotainr` is installed via :code:`pip install cotainr`. Alternatively, the CLI (sub)commands may also be executed directly via the `bin/cotainr` executable in an HPC environment by substitute ``./bin/cotainr`` instead of ``cotainr``.
+This assumes that `cotainr` is installed via :code:`pip install cotainr`. Alternatively, the CLI (sub)commands may also be executed directly via the `bin/cotainr` executable in an HPC environment by substituting ``./bin/cotainr`` instead of ``cotainr``.
 
 Implementation of command line interface
 ----------------------------------------

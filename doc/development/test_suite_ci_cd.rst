@@ -105,7 +105,7 @@ The following CD `workflow <https://docs.github.com/en/actions/using-workflows/a
   - Build the Python Wheel
   - Publish to TestPyPI index
   - In a clean environment, download and install from TestPyPI and run basic CLI functionality
-  - publish to PyPI.
+  - Publish to PyPI.
 
   The testPyPI and PyPI index locations are both implemented as `GitHub environments <https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment>`_ attached to the DeiC-HPC account. These environments have deployment protection rules which require review from a member of the HPC-developers team before the action is executed. This ensures protection against accidental tag pushes which is needed since removal of releases from TestPyPI and PyPI is difficult.
 
