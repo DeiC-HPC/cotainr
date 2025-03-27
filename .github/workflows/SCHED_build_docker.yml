@@ -82,15 +82,15 @@ jobs:
         with:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: "${{ matrix.singularity.docker_arch }}:latest"
+          tags: "${{ matrix.os.docker_arch }}:latest"
           labels: ${{ steps.meta.outputs.labels }}
-          platforms:  ${{ matrix.singularity.docker_arch }}
+          platforms:  ${{ matrix.os.docker_arch }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-                      DOCKER_DEFAULT_PLATFORM=${{ matrix.singularity.docker_arch }}
+                      DOCKER_DEFAULT_PLATFORM=${{ matrix.os.docker_arch }}
                       SINGULARITY_PROVIDER=${{ matrix.singularity.provider }}
                       SINGULARITY_VERSION=${{ matrix.singularity.version }}
-                      --platforms=${{ matrix.singularity.docker_arch }}
+                      --platforms=${{ matrix.os.docker_arch }}
 
 #                      PYTHON_VERSION=${{ matrix.python-version }}
