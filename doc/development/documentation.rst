@@ -9,7 +9,7 @@ The `cotainr` reference documentation is what you are reading right now. It cons
 
 Building the HTML version
 -------------------------
-The HTML version of the documentation can be built locally for development. First install the required dependencies specified in `pyproject.toml`. This can be done with `uv`,
+The HTML version of the documentation can be built locally for development. First install the required dependencies specified in `pyproject.toml`. This can be done with `uv <https://docs.astral.sh/uv/>`_,
 
 .. code-block:: console
 
