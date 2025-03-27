@@ -1,0 +1,33 @@
+{
+    "os": [
+      {
+        "runner": "ubuntu-24.04-arm",
+        "docker_arch": "linux/arm64"
+      },
+      {
+        "runner": "ubuntu-24.04",
+        "docker_arch": "linux/amd64"
+      }
+    ],
+  "python-version": [
+    "NA",
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12"
+  ],
+  "singularity": [
+      {
+        "provider": "apptainer",
+        "version": "1.3.4"
+      },
+      {
+        "provider": "singularity-ce",
+        "version": "4.3.0"
+      },
+      {
+        "provider": "singularity-ce",
+        "version": "4.2.1"
+      }
+  ]
+}
