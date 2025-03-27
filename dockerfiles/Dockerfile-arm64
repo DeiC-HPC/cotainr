@@ -1,22 +1,21 @@
-FROM ubuntu:latest
+FROM fedora:latest
 LABEL authors="tor, julius"
 
 ENTRYPOINT ["top", "-b"]
 
-ARG PYTHON_VERSION
-ENV PYTHON_VERSION=${PYTHON_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux ; \
-    apt -y update ;\
-    apt -y upgrade ;\
-    apt -y install wget python3-full python3-pip; \
-    apt -y install --no-install-recommends curl ca-certificates:
+    dnf upgrade --refresh -y; \
+    dnf install -y uv epel-release;\
 
 #install uv
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-RUN set -eux ;sh /uv-installer.sh && rm /uv-installer.sh
-ENV PATH="/root/.local/bin/:$PATH"
+#ADD https://astral.sh/uv/install.sh /uv-installer.sh
+#RUN set -eux ;sh /uv-installer.sh && rm /uv-installer.sh
+#ENV PATH="/root/.local/bin/:$PATH"
+
+ARG PYTHON_VERSION
+ENV PYTHON_VERSION=${PYTHON_VERSION}
 
 #setup environment and install hatchling
 RUN set -eux ; \
@@ -34,16 +33,11 @@ RUN echo $SINGULARITY_PROVIDER
 RUN echo $SINGULARITY_VERSION
 
 RUN set -eux ; \
-    if [ "$SINGULARITY_PROVIDER" = "apptainer" ]; then \
-#        echo "match apptainer" ;\
-#    Add apptainer repo
-        apt -y install software-properties-common; \
-        add-apt-repository -y ppa:apptainer/ppa; \
-        apt update; \
-        apt -y install apptainer;\
-    fi; \
-    if [ "$SINGULARITY_PROVIDER" = "singularity" ]; then \
-#Does not work - singularity in the linux-repo is a game
-        apt -y install singularity;\
-    fi;\
+#    if [ "$SINGULARITY_PROVIDER" = "apptainer" ]; then \
+    dnf install -y $SINGULARITY_PROVIDER-$SINGULARITY_VERSION;\
     singularity --version
+
+#    fi; \
+#    if [ "$SINGULARITY_PROVIDER" = "singularity" ]; then \
+#        apt -y install singularity-$SINGULARITY_VERSION ;\
+#    fi;\
