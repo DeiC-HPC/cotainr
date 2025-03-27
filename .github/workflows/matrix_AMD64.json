@@ -1,6 +1,9 @@
 {
     "os": [
-      "ubuntu-latest"
+      {
+        "runner": "ubuntu-24.04",
+        "docker_arch": "linux/amd64"
+      }
     ],
     "python-version": [
       "3.9",
