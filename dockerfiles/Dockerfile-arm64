@@ -25,7 +25,7 @@ ENV PYTHON_VERSION=${PYTHON_VERSION}
 
 ##setup environment and install hatchling
 RUN set -eux ; \
-    uv python install PYTHON_VERSION;
+    uv python install $PYTHON_VERSION
 #    uv venv test_environment --python $PYTHON_VERSION;\
 #    . test_environment/bin/activate;\
 #    uv pip install hatchling
