@@ -8,16 +8,20 @@ Test suite & CI/CD
 The test suite
 --------------
 
-The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. The entire test suite is run from the repository root directory by issuing:
+The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. In order to run the test suite locally, first set up a developer environment by installing the test dependencies declared in the `cotainr pyproject.toml file <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_. This can be done using `uv <https://docs.astral.sh/uv/>`_ for setting up the environment:
 
 .. code-block:: console
 
-    $ pytest
+    $ uv sync --group tests
 
-Dependencies
-~~~~~~~~~~~~
-In order to run the tests, you must have the Python packages listed in the `test` extra.
-You can use ``pip install -e .[tests]`` to install the required packages.
+Alternatively, you can also install the (default) `dev` group which contains the full development environment, including the `tests` group.
+
+Once the development environment has been installed, simply run `pytest` from the repository root directory, e.g. using uv:
+
+.. code-block:: console
+
+    $ uv run pytest
+
 
 Pytest marks
 ~~~~~~~~~~~~
@@ -61,6 +65,8 @@ Imports in test modules are based on the following conventions:
 - Sub-package specific fixtures are explicitly imported using relative imports, e.g. :code:`from ..container.data import data_cached_ubuntu_sif` in `tests/pack/test_conda_install.py`.
 - Fixtures defined in `tests/conftest.py` are not explicitly imported (they are implicitly imported by `pytest``). Thus, if a fixture is used, but not imported, in a test module, `tests/conftest.py` is the only module in which it can (or at least should) be defined.
 
+.. _continuous_integration:
+
 Continuous Integration (CI)
 ---------------------------
 Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions. The tests run on the GitHub-hosted `ubuntu-latest <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_ runner. When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
@@ -82,11 +88,26 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
 
 
-.. _continuous_delivery:
-
 Continuous Delivery (CD)
 ------------------------
 Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/continuous-deployment.html>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
+
+CD workflows
+~~~~~~~~~~~~
+The following CD `workflow <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented:
+
+- `CD_release.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CD_release.yml>`_: Creates GitHub and PyPI releases when new tags following the :ref:`versioning scheme <version-scheme>` are committed to the main branch.
+
+  The GitHub release job is run independently and does not have deployment protection rules as it can easily be undone by first removing the release through the GitHub UI and then remove the tag if something goes wrong.
+
+  The PyPI release process goes as following:
+
+  - Build the Python Wheel
+  - Publish to TestPyPI index
+  - In a clean environment, download and install from TestPyPI and run basic CLI functionality
+  - Publish to PyPI.
+
+  The testPyPI and PyPI index locations are both implemented as `GitHub environments <https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment>`_ attached to the DeiC-HPC account. These environments have deployment protection rules which require review from a member of the HPC-developers team before the action is executed. This ensures protection against accidental tag pushes which is needed since removal of releases from TestPyPI and PyPI is difficult.
 
 Read the Docs continuous documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,4 +129,4 @@ Currently, the following scheduled `workflows <https://docs.github.com/en/action
 
 - `SCHED_docs_linkcheck <https://github.com/DeiC-HPC/cotainr/actions/workflows/SCHED_docs_linkcheck.yml>`_: Builds the documentation and checks for any broken hyperlinks.
 
-Additionally, we currently also schedule the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow which tests the most recent point releases of Python (as provided by GitHub Actions) as well as the most recent Conda version. Ideally, this should be separated into its own workflow that also includes the *latest* versions of Python and Singularity/Apptainer in the test matrix.
+Additionally, we currently also schedule the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow which tests the most recent point release of Python in the :ref:`CI test matrix <continuous_integration>`.

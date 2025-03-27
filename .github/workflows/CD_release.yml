@@ -1,0 +1,102 @@
+name: CD on release tag
+
+on:
+  workflow_dispatch:
+  push:    # Initialize release with 'git push origin tag <tag_name>' where <tag_name> follows the YYYY.MM.MINOR version format
+    tags:  # Actual deployment to testpypi and pypi environments requires review
+      - '20[0-9][0-9].0[1-9].[0-9]+'  # Expected limits: 2000.01.0 - 2099.09.123+
+      - '20[0-9][0-9].1[0-2].[0-9]+'  # Expected limits: 2000.10.0 - 2099.12.123+
+
+jobs:
+  github-release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Create GitHub Release
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes-file "doc/release_notes/${{ github.ref_name }}.md" \
+            --verify-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    name: Build package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  publish-to-testpypi:
+    needs: build
+    name: Publish to TestPyPI
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/cotainr
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - uses: actions/checkout@v4  # Checkout because `uv publish` requires pyproject.toml
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+    - name: Publish distribution to TestPyPI
+      run: uv publish --index testpypi
+
+  test-testpypi:
+    name: Test TestPyPI Build
+    needs: publish-to-testpypi
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: false
+
+    - name: Test TestPyPI build
+      run: |
+        uv venv --python 3.12
+        source .venv/bin/activate
+        uv pip install cotainr==${{ github.ref_name }} --index https://test.pypi.org/simple/
+        cotainr info
+        cotainr build --help
+
+  publish-to-pypi:
+    needs: test-testpypi
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/p/cotainr
+
+    permissions:
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+
+    steps:
+    - uses: actions/checkout@v4  # Checkout because `uv publish` requires pyproject.toml
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+    - name: Publish distribution to PyPI
+      run: uv publish

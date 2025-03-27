@@ -16,10 +16,11 @@ authors = [
     {name = "Julius Roeder"},
 ]
 maintainers = [
-    {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
-    {name = "Joachim Sødequist", email = "joachim.soedequist@deic.dk"},
-    {name = "Tor Skovsgaard", email = "tor.skovsgaard@deic.dk"},
-    {name = "Julius Roeder", email = "julius.roeder@deic.dk"},
+    {name = "DeiC HPC"},
+    # {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
+    # {name = "Joachim Sødequist", email = "joachim.soedequist@deic.dk"},
+    # {name = "Tor Skovsgaard", email = "tor.skovsgaard@deic.dk"},
+    # {name = "Julius Roeder", email = "julius.roeder@deic.dk"},
 ]
 description = "A user space Apptainer/Singularity container builder"
 readme = "README.md"
@@ -65,6 +66,31 @@ dev = [{include-group = "tests"}, {include-group = "lint"}, {include-group = "do
 
 [tool.hatch.version]
 path = "cotainr/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/cotainr",
+    "/doc",
+    "LICENSE",
+    "pyproject.toml",
+    ".pre-commit-config.yaml",
+    ".readthedocs.yml",
+]
+exclude = [
+    "/examples",
+    "/bin"
+]
+
+[tool.hatch.build.targets.wheel]
+exclude = [
+    "/cotainr/tests"
+]
+
+[[tool.uv.index]]
+explicit=true
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
 
 [tool.ruff]
 target-version = "py39"
