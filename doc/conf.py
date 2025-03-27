@@ -108,7 +108,7 @@ html_theme_options = {
         },
         {
             "name": "PyPI",
-            "url": "https://pypi.org/project/cotainr/",
+            "url": f"https://pypi.org/project/{project}/",
             "icon": "fa-brands fa-python",
             "type": "fontawesome",
         },
