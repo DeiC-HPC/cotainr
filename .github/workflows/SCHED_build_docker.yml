@@ -82,7 +82,7 @@ jobs:
         with:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: "${{ matrix.os.docker_arch }}:latest"
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms:  ${{ matrix.os.docker_arch }}
           cache-from: type=gha
