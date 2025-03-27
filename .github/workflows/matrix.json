@@ -27,10 +27,6 @@
       },
       {
         "provider": "singularity-ce",
-        "version": "4.1.4"
-      },
-      {
-        "provider": "singularity-ce",
         "version": "4.2.1"
       }
   ]
