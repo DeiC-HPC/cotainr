@@ -10,6 +10,7 @@ on:
   push:
     paths:
       - '.github/workflows/matrix_ARM.json'
+      - 'dockerfiles/Dockerfile-arm64'
 
 env:
   # Use docker.io for Docker Hub if empty

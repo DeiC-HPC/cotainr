@@ -3,11 +3,17 @@ LABEL authors="tor, julius"
 
 ENTRYPOINT ["top", "-b"]
 
+ARG SINGULARITY_PROVIDER
+ENV SINGULARITY_PROVIDER=${SINGULARITY_PROVIDER}
+ARG SINGULARITY_VERSION
+ENV SINGULARITY_VERSION=${SINGULARITY_VERSION}
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux ; \
     dnf upgrade --refresh -y; \
-    dnf install -y uv
+    dnf install -y uv;\
+    dnf install -y $SINGULARITY_PROVIDER-$SINGULARITY_VERSION;\
+    singularity --version
 
 #install uv
 #ADD https://astral.sh/uv/install.sh /uv-installer.sh
@@ -17,25 +23,20 @@ RUN set -eux ; \
 ARG PYTHON_VERSION
 ENV PYTHON_VERSION=${PYTHON_VERSION}
 
-#setup environment and install hatchling
+##setup environment and install hatchling
 RUN set -eux ; \
-    uv venv test_environment --python $PYTHON_VERSION;\
-    . test_environment/bin/activate;\
-    uv pip install hatchling
+    uv python install PYTHON_VERSION;
+#    uv venv test_environment --python $PYTHON_VERSION;\
+#    . test_environment/bin/activate;\
+#    uv pip install hatchling
 
-ARG SINGULARITY_PROVIDER
-ENV SINGULARITY_PROVIDER=${SINGULARITY_PROVIDER}
 
-ARG SINGULARITY_VERSION
-ENV SINGULARITY_VERSION=${SINGULARITY_VERSION}
 
-RUN echo $SINGULARITY_PROVIDER
-RUN echo $SINGULARITY_VERSION
-
-RUN set -eux ; \
+#RUN echo $SINGULARITY_PROVIDER
+#RUN echo $SINGULARITY_VERSION
+#
+#RUN set -eux ; \
 #    if [ "$SINGULARITY_PROVIDER" = "apptainer" ]; then \
-    dnf install -y $SINGULARITY_PROVIDER-$SINGULARITY_VERSION;\
-    singularity --version
 
 #    fi; \
 #    if [ "$SINGULARITY_PROVIDER" = "singularity" ]; then \
