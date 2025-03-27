@@ -7,7 +7,7 @@ ENTRYPOINT ["top", "-b"]
 ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux ; \
     dnf upgrade --refresh -y; \
-    dnf install -y uv epel-release
+    dnf install -y uv
 
 #install uv
 #ADD https://astral.sh/uv/install.sh /uv-installer.sh
