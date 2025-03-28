@@ -7,9 +7,9 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
-import types
-import re
 from importlib.metadata import PackageNotFoundError
+import re
+import types
 
 import cotainr
 import cotainr._version
