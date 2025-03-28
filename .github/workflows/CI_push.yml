@@ -36,7 +36,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-tags: true  # Needed for hatch-vcs versioning
+          fetch-depth: 0  # Needed for hatch-vcs versioning
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
 
