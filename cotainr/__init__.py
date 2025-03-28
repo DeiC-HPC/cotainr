@@ -23,7 +23,7 @@ _minimum_dependency_version = {
 }
 
 # Error early on too old Python version
-if sys.version_info < _minimum_dependency_version["python"]:
+if sys.version_info < _minimum_dependency_version["python"]:  # pragma: no cover
     # Note that this is using percent formatting on purpose, so this
     # file can be executed by Python versions older than the minimum
     # for Cotainr in general; this includes being able to run with

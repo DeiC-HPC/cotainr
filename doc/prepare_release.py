@@ -17,8 +17,10 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import argparse
+import contextlib
 import datetime
 import json
+import locale
 from pathlib import Path
 import re
 import subprocess
@@ -28,9 +30,41 @@ sys.path.insert(0, f"{(Path(__file__) / '../..').resolve()}")
 
 import cotainr
 
-COTAINR_RELEASE_VERSION_FORMAT_RE = (
-    r"^20[0-9]{2}\.(0[1-9]|10|11|12)\.[0-9]+$"  # cotainr YYYY.MM.MINOR version format
-)
+COTAINR_RELEASE_VERSION_FORMAT_RE = r"^20[0-9]{2}\.(0[1-9]|10|11|12)\.(0|[1-9][0-9]*)$"  # cotainr YYYY.0M.MICRO version format
+
+
+def _format_date(date: datetime.date):
+    """
+    Format `date` as a "__Month__ __day__, __year__" string.
+
+    Parameters
+    ----------
+    date : datetime.date
+        The date to format.
+    """
+
+    @contextlib.contextmanager
+    def fixed_locale(category, locale_string):
+        """Context manager to temporarily fix the locale."""
+        current_locale = locale.getlocale(category)
+        locale.setlocale(category, locale_string)
+        yield
+        locale.setlocale(category, current_locale)
+
+    # Determine english orginal prefix
+    if date.day in [1, 21, 31]:
+        day_prefix = "st"
+    elif date.day in [2, 22]:
+        day_prefix = "nd"
+    elif date.day in [3, 23]:
+        day_prefix = "rd"
+    else:
+        day_prefix = "th"
+
+    with fixed_locale(locale.LC_TIME, "en_US.UTF-8"):
+        formatted_date = date.strftime(f"%B %-d{day_prefix}, %Y")
+
+    return formatted_date
 
 
 def create_docs_switcher(*, new_release_ver: str):
@@ -45,7 +79,7 @@ def create_docs_switcher(*, new_release_ver: str):
     Parameters
     ----------
     new_release_ver : str
-        The YYYY.MM.MINOR version tag for the new release.
+        The YYYY.0M.MICRO version tag for the new release.
     """
     assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, new_release_ver)
 
@@ -103,11 +137,12 @@ def create_release_notes(*, new_release_ver: str, release_date: datetime.date):
     Parameters
     ----------
     new_release_ver : str
-        The YYYY.MM.MINOR version tag for the new release.
+        The YYYY.0M.MICRO version tag for the new release.
     release_date : datetime.date
         The release date for the new version.
     """
     assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, new_release_ver)
+    # FIXME: Assert that the release date matches the version tag + test it
 
     release_notes = (
         (
@@ -118,7 +153,7 @@ def create_release_notes(*, new_release_ver: str, release_date: datetime.date):
         )
         .replace(
             # Insert the new version number as the title
-            "__YYYY.MM.MINOR__",
+            "__YYYY.0M.MICRO__",
             new_release_ver,
         )
         .replace(
@@ -144,29 +179,7 @@ def create_release_notes(*, new_release_ver: str, release_date: datetime.date):
     )
 
 
-def _format_date(date: datetime.date):
-    """
-    Format `date` as a "__Month__ __day__, __year__" string.
-
-    Parameters
-    ----------
-    date : datetime.date
-        The date to format.
-    """
-    # Determine english orginal prefix
-    if date.day in [1, 21, 31]:
-        day_prefix = "st"
-    elif date.day in [2, 22]:
-        day_prefix = "nd"
-    elif date.day in [3, 23]:
-        day_prefix = "rd"
-    else:
-        day_prefix = "th"
-
-    return date.strftime(f"%B %-d{day_prefix}, %Y")
-
-
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     # Parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
