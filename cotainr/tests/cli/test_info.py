@@ -14,6 +14,7 @@ import subprocess
 import pytest
 
 from cotainr.cli import CotainrCLI, Info
+
 from ..util.patches import patch_empty_system, patch_system_with_actual_file
 
 
@@ -97,7 +98,7 @@ class TestHelpMessage:
 
 class Test_check_python_dependency:
     def test_formatting(self):
-        # Check for formatting like "Running python 3.11.0 >= 3.8.0, OK"
+        # Check for formatting like "Running python 3.11.0 >= 3.9.0, OK"
         assert re.match(
             (
                 r"^Running python \d+\.\d+\.\d+ (>=)|(<) \d+\.\d+\.\d+, "
@@ -171,10 +172,10 @@ class Test_check_version:
     @pytest.mark.parametrize(
         "version,min_version,cmp_result",
         [
-            ((3, 8, 0), (3, 8, 0), ">= 3.8.0, \x1b[38;5;2mOK\x1b[0m"),
+            ((3, 9, 0), (3, 9, 0), ">= 3.9.0, \x1b[38;5;2mOK\x1b[0m"),
             ((0, 1, 12), (0, 0, 1), ">= 0.0.1, \x1b[38;5;2mOK\x1b[0m"),
-            ((3, 7, 14), (3, 8, 0), "< 3.8.0, \x1b[38;5;1mERROR\x1b[0m"),
-            ((1, 0, 0), (3, 8, 0), "< 3.8.0, \x1b[38;5;1mERROR\x1b[0m"),
+            ((3, 7, 14), (3, 9, 0), "< 3.9.0, \x1b[38;5;1mERROR\x1b[0m"),
+            ((1, 0, 0), (3, 9, 0), "< 3.9.0, \x1b[38;5;1mERROR\x1b[0m"),
         ],
     )
     def test_version_comparison(self, version, min_version, cmp_result):

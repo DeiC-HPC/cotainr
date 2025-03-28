@@ -7,15 +7,14 @@ The `cotainr` command line interface is designed around a subcommand for each ma
 
 The CLI is build using :mod:`argparse`.
 
-The main way to invoke the CLI (sub)commands in an HPC environment is via the `bin/cotainr` script, e.g.
+The main way to invoke the CLI (sub)commands is via the `cotainr` entrypoint,
 
 .. code-block:: console
 
-    $ ./bin/cotainr build <positional_arg> <non-positional args>
-    $ ./bin/cotainr info
+    $ cotainr build <positional_arg> <non-positional args>
+    $ cotainr info
 
-The CLI (sub)commands may also be executed via the `cotainr` entrypoint that is installed when installing the package;
-substitute ``cotainr`` instead of ``./bin/cotainr``.
+This assumes that `cotainr` is installed via :code:`pip install cotainr`. Alternatively, the CLI (sub)commands may also be executed directly via the `bin/cotainr` executable in an HPC environment by substituting ``./bin/cotainr`` instead of ``cotainr``.
 
 Implementation of command line interface
 ----------------------------------------

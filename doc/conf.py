@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 import time
 
-sys.path.insert(0, f'{Path("..").resolve()}')
+sys.path.insert(0, f"{Path('..').resolve()}")
 
 import cotainr
 
@@ -92,7 +92,6 @@ html_context = {
     "doc_path": "doc",
 }
 html_theme_options = {
-    "github_url": f"https://github.com/{html_context['github_user']}/{html_context['github_repo']}",
     "use_edit_page_button": True,
     "navbar_start": ["navbar-logo", "version-switcher"],
     "footer_start": ["cotainr_footer"],
@@ -100,6 +99,20 @@ html_theme_options = {
         "json_url": switcher_json,
         "version_match": switcher_version,
     },
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": f"https://github.com/{html_context['github_user']}/{html_context['github_repo']}",
+            "icon": "fa-brands fa-github",
+            "type": "fontawesome",
+        },
+        {
+            "name": "PyPI",
+            "url": f"https://pypi.org/project/{project}/",
+            "icon": "fa-brands fa-python",
+            "type": "fontawesome",
+        },
+    ],
     # We only set "navigation_with_keys = False" to explicitly remove the
     # warning introduced in pydata-sphinx-theme v0.14.2:
     # "WARNING: The default value for `navigation_with_keys` will change to
@@ -116,15 +129,12 @@ html_theme_options = {
 
 
 def add_api_headline_to_module_docs(app, what, name, obj, options, lines):
-    """
-    Event for adding a 'API reference' headline before showing API content in
-    auto modules.
-    """
+    """Add an 'API reference' headline before showing API content in auto modules."""
     if what == "module":
         lines.append("\n")
         lines.append("API reference")
         lines.append("-------------")
 
 
-def setup(app):
+def setup(app):  # noqa: D103
     app.connect("autodoc-process-docstring", add_api_headline_to_module_docs)

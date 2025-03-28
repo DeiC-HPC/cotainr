@@ -9,9 +9,9 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import builtins
 import contextlib
-import logging
 import importlib
 import io
+import logging
 import os
 from pathlib import Path
 import shlex

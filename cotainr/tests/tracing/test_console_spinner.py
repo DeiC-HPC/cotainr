@@ -13,6 +13,7 @@ import sys
 import pytest
 
 from cotainr.tracing import ConsoleSpinner, StreamWriteProxy, console_lock
+
 from .patches import patch_fix_number_of_message_spins
 from .stubs import RaiseOnEnterContext
 
