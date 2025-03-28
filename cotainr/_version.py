@@ -35,9 +35,7 @@ def _get_hatch_version():
     str or None
         The version number or `None` if hatchling is unable to determine the
         version number.
-
     """
-
     try:
         from hatchling.metadata.core import ProjectMetadata
         from hatchling.plugin.manager import PluginManager
@@ -69,7 +67,7 @@ def _get_importlib_metadata_version():
         The version number or `None` if not used from an installed package.
 
     """
-    from importlib.metadata import version, PackageNotFoundError
+    from importlib.metadata import PackageNotFoundError, version
 
     try:
         package_version = version(__package__)
