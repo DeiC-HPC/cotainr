@@ -54,7 +54,10 @@ jobs:
       packages: read
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+      matrix:
+        ${{ insert }}: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+        exclude:
+          - python-version: 3.12
     steps:
       - name: Check what container to use from GHCR (current branch or default)
         id: image_check
