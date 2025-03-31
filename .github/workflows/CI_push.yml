@@ -46,9 +46,14 @@ jobs:
 
   container_to_use:
     runs-on: ubuntu-latest
-    needs: [ get_branch_name ]
+    needs: [ read_matrix, get_branch_name ]
     outputs:
       container_name: ${{ steps.image_check.outputs.container_name }}
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     steps:
       - name: Check if image exists on GitHub Container Registry
         id: image_check
