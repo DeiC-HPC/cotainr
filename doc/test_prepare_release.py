@@ -20,7 +20,7 @@ from .prepare_release import _format_date, create_docs_switcher, create_release_
 @pytest.fixture
 def set_DK_locale():
     current_locale = locale.getlocale(locale.LC_TIME)
-    locale.setlocale(locale.LC_TIME, "da_DK.UTF-8")
+    locale.setlocale(locale.LC_TIME, "da_DK")
     yield
     locale.setlocale(locale.LC_TIME, current_locale)
 
@@ -179,6 +179,10 @@ class Test_format_date:
     def test_date_formatting_default_locale(self, iso_input, formatted_date):
         assert _format_date(datetime.date.fromisoformat(iso_input)) == formatted_date
 
+    @pytest.mark.skipif(
+        "da_dk" not in locale.locale_alias,
+        reason="Locale 'da_DK' not available on this system.",
+    )
     def test_date_formatting_dk_locale(self, iso_input, formatted_date, set_DK_locale):
-        assert locale.getlocale(locale.LC_TIME) == ("da_DK", "UTF-8")
+        assert locale.getlocale(locale.LC_TIME)[0] == "da_DK"
         assert _format_date(datetime.date.fromisoformat(iso_input)) == formatted_date

@@ -42,5 +42,9 @@ jobs:
 
       - name: Install test dependencies
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
+      - name: List available locales
+        run: |
+          echo "Available locales:"
+          locale -a
       - name: Run unittests via pytest
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"

@@ -61,7 +61,7 @@ def _format_date(date: datetime.date):
     else:
         day_prefix = "th"
 
-    with fixed_locale(locale.LC_TIME, "en_US.UTF-8"):
+    with fixed_locale(locale.LC_TIME, "C"):
         formatted_date = date.strftime(f"%B %-d{day_prefix}, %Y")
 
     return formatted_date
