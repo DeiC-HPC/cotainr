@@ -95,3 +95,11 @@ jobs:
                       SINGULARITY_VERSION=${{ matrix.singularity.version }}
 
 #                      PYTHON_VERSION=${{ matrix.python-version }}
+
+  finalize:
+    needs: [build-docker-images]
+    runs-on: ubuntu-latest
+    steps:
+      - name: finalize_docker_build
+        run: |
+             echo "Done"
