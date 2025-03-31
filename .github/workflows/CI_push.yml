@@ -98,6 +98,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Activate uv, install dependencies and run tests
         run: |
+          uv python install ${{ matrix.python-version }}
           uv sync
           pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
@@ -120,5 +121,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Activate uv, install dependencies and run tests
         run: |
+          uv python install ${{ matrix.python-version }}
           uv sync
           pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
