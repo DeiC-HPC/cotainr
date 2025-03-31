@@ -11,7 +11,7 @@ ENV SINGULARITY_VERSION=${SINGULARITY_VERSION}
 ENV DEBIAN_FRONTEND=noninteractive
 RUN set -eux ; \
     dnf upgrade --refresh -y; \
-    dnf install -y uv;\
+    dnf install -y uv python3;\
     dnf install -y $SINGULARITY_PROVIDER-$SINGULARITY_VERSION;\
     singularity --version
 
