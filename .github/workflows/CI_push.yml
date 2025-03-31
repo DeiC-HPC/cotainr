@@ -96,11 +96,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Activate uv, install dependencies and run tests
-        run: |
-          uv python install ${{ matrix.python-version }}
-          uv sync
-          pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install test dependencies
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
+      - name: Run unittests via pytest
+        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
   run-unittests-ARM:
     needs: [ read_matrix, container_to_use ]
@@ -119,8 +121,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Activate uv, install dependencies and run tests
-        run: |
-          uv python install ${{ matrix.python-version }}
-          uv sync
-          pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install test dependencies
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
+      - name: Run unittests via pytest
+        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
