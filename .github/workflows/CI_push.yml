@@ -36,16 +36,47 @@ jobs:
 
   get_branch_name:
     runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.branch-names.outputs.current_branch }}"
+      main_name: ${{ steps.branch-names.outputs.default_branch }}"
     steps:
       - name: Get branch names
         id: branch-names
         uses: tj-actions/branch-names@v8
-      - name: Display Current Branch Name
-        run: | 
-             echo "Current Branch: ${{ steps.branch-names.outputs.current_branch }}"
+
+  container_to_use:
+    runs-on: ubuntu-latest
+    needs: [ get_branch_name ]
+    outputs:
+      container_name: ${{ steps.image_check.outputs.container_name }}
+    steps:
+      - name: Check if image exists on GitHub Container Registry
+        id: image_check
+        run: |
+          ENCODED_TOKEN=$(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)
+          TAGS=$(curl -s -H "Authorization: Bearer ${ENCODED_TOKEN}" \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}/tags/list)
+          echo "TAGS: $TAGS"
+
+          ## Check if TAGS is empty or null
+          if [[ -z "$TAGS" || "$TAGS" == "null" ]]; then
+            echo "No tags found. Stopping."
+            exit 1
+          else
+            ## Check if the specific tag already exists
+            if echo "$TAGS" | jq -e --arg TAG "${{ needs.get_branch_name.outputs.branch_name }}" '.tags | index($TAG)'; then
+              echo "Image with tag ${{ needs.get_branch_name.outputs.branch_name }} exists."
+              echo "container_name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.get_branch_name.outputs.branch_name }}" >> $GITHUB_OUTPUT
+            else
+              echo "Image with tag ${{ needs.get_branch_name.outputs.branch_name }} not found. Defaulting to main image."
+              echo "container_name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.get_branch_name.outputs.main_name }}" >> $GITHUB_OUTPUT
+            fi
+          fi
+  
+
 
   run-unittests-AMD:
-    needs: [ read_matrix, get_branch_name ]
+    needs: [ read_matrix, container_to_use ]
     runs-on: ubuntu-latest
     name: Run unittests
     permissions:
@@ -54,7 +85,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ steps.branch-names.outputs.current_branch }}"
+      image: ${{ needs.cotainer_to_use.outputs.container_name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -76,7 +107,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ steps.branch-names.outputs.current_branch }}"
+      image: ${{ needs.cotainer_to_use.outputs.container_name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
