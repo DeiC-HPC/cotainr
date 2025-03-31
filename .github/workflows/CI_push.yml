@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ steps.branch-names.outputs.current_branch }}"
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -76,7 +76,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ steps.branch-names.outputs.current_branch }}"
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
