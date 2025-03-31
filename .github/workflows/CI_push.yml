@@ -101,37 +101,35 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
-      - name: DEBUG
-        run: uv python list --managed-python
-      - name: DEBUG2
+      - name: Install python
         run: uv python install ${{ matrix.python-version }}
-      - name: DEBUG3
-        run: uv python list --managed-python
       - name: Install test dependencies
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
-#  run-unittests-ARM:
-#    needs: [ read_matrix, container_to_use ]
-#    runs-on: ubuntu-latest-arm
-#    name: Run unittests
-#    permissions:
-#      packages: read
-#    strategy:
-#      fail-fast: false
-#      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
-#    container:
-#      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.container_to_use.outputs.container_tag }}
-#      credentials:
-#        username: ${{ github.actor }}
-#        password: ${{ secrets.GITHUB_TOKEN }}
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#      - name: Set up uv
-#        uses: astral-sh/setup-uv@v5
-#      - name: Install test dependencies
-#        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
-#      - name: Run unittests via pytest
-#        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+  run-unittests-ARM:
+    needs: [ read_matrix, container_to_use ]
+    runs-on: ubuntu-latest-arm
+    name: Run unittests
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+    container:
+      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.container_to_use.outputs.container_tag }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install python
+        run: uv python install ${{ matrix.python-version }}
+      - name: Install test dependencies
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
+      - name: Run unittests via pytest
+        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
