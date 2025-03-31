@@ -37,8 +37,8 @@ jobs:
   get_branch_name:
     runs-on: ubuntu-latest
     outputs:
-      branch_name: ${{ steps.branch-names.outputs.current_branch }}"
-      main_name: ${{ steps.branch-names.outputs.default_branch }}"
+      branch_name: ${{ steps.branch-names.outputs.current_branch }}
+      main_name: ${{ steps.branch-names.outputs.default_branch }}
     steps:
       - name: Get branch names
         id: branch-names
@@ -85,7 +85,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ${{ needs.cotainer_to_use.outputs.container_name }}
+      image: ${{ needs.container_to_use.outputs.container_name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -98,7 +98,7 @@ jobs:
           pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
   run-unittests-ARM:
-    needs: [ read_matrix, get_branch_name ]
+    needs: [ read_matrix, container_to_use ]
     runs-on: ubuntu-latest-arm
     name: Run unittests
     permissions:
@@ -107,7 +107,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ${{ needs.cotainer_to_use.outputs.container_name }}
+      image: ${{ needs.container_to_use.outputs.container_name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
