@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "cotainr"
 dynamic = ["version"]
 dependencies = []
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     {name = "Christian Schou Oxvig"},
     {name = "René Løwe Jacobsen"},
@@ -16,10 +16,11 @@ authors = [
     {name = "Julius Roeder"},
 ]
 maintainers = [
-    {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
-    {name = "Joachim Sødequist", email = "joachim.soedequist@deic.dk"},
-    {name = "Tor Skovsgaard", email = "tor.skovsgaard@deic.dk"},
-    {name = "Julius Roeder", email = "julius.roeder@deic.dk"},
+    {name = "DeiC HPC"},
+    # {name = "Christian Schou Oxvig", email = "christian.oxvig@deic.dk"},
+    # {name = "Joachim Sødequist", email = "joachim.soedequist@deic.dk"},
+    # {name = "Tor Skovsgaard", email = "tor.skovsgaard@deic.dk"},
+    # {name = "Julius Roeder", email = "julius.roeder@deic.dk"},
 ]
 description = "A user space Apptainer/Singularity container builder"
 readme = "README.md"
@@ -32,36 +33,11 @@ classifiers = [
     #"Topic :: Software Development :: HPC Tools",
     "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-
-[project.optional-dependencies]
-tests = [
-    "pytest-cov>=2.10",
-    "pytest>=6.0"
-]
-lint = [
-    "cfgv>=3.4.0",
-    "distlib>=0.3.9",
-    "filelock>=3.17.0",
-    "identify>=2.6.6",
-    "nodeenv>=1.9.1",
-    "platformdirs>=4.3.6",
-    "pre-commit>=4.1.0",
-    "virtualenv>=20.29.1",
-]
-docs = [
-    "numpydoc>=1.5.0",
-    "pydata-sphinx-theme>=0.13.3",
-    "sphinx>=7.2.5",
-    "sphinx-design>=0.5.0",
-    "myst-parser>=2.0.0",
-]
-dev = ["cotainr[tests,lint,docs]"]
 
 [project.scripts]
 cotainr = "cotainr.cli:main"
@@ -72,11 +48,52 @@ Repository = "https://github.com/DeiC-HPC/cotainr.git"
 "Bug Tracker" = "https://github.com/DeiC-HPC/cotainr/issues"
 Changelog = "https://cotainr.readthedocs.io/en/stable/release_notes/index.html"
 
+[dependency-groups]
+tests = [
+    "pytest-cov>=2.10",
+    "pytest>=6.0"
+]
+lint = [
+    "pre-commit>=4.1.0",
+]
+docs = [
+    "pydata-sphinx-theme>=0.13.3",
+    "sphinx-design>=0.5.0",
+    "myst-parser>=2.0.0",
+    "numpydoc>=1.5.0"
+]
+dev = [{include-group = "tests"}, {include-group = "lint"}, {include-group = "docs"}]
+
 [tool.hatch.version]
 path = "cotainr/__init__.py"
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "/cotainr",
+    "/doc",
+    "LICENSE",
+    "pyproject.toml",
+    ".pre-commit-config.yaml",
+    ".readthedocs.yml",
+]
+exclude = [
+    "/examples",
+    "/bin"
+]
+
+[tool.hatch.build.targets.wheel]
+exclude = [
+    "/cotainr/tests"
+]
+
+[[tool.uv.index]]
+explicit=true
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 88
 
 lint.extend-select = [
