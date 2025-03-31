@@ -1,14 +1,4 @@
 {
-    "os": [
-      {
-        "runner": "ubuntu-24.04-arm",
-        "docker_arch": "linux/arm64"
-      },
-      {
-        "runner": "ubuntu-24.04",
-        "docker_arch": "linux/amd64"
-      }
-    ],
   "python-version": [
     "3.9",
     "3.12"
