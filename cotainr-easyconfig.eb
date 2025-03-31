@@ -1,7 +1,7 @@
 easyblock = 'PythonPackage'
 
 name = 'cotainr'
-version = '2025.3.0'
+version = 'YYYY.MM.MINOR'
 
 homepage = 'https://github.com/DeiC-HPC/container-builder'
 description = 'cotainr is a tool that helps making Singularity/Apptainer containers.'
@@ -14,10 +14,10 @@ sanity_pip_check = True
 
 local_systems = """{
   "lumi-g": {
-    "base-image": "docker://rocm/dev-ubuntu-22.04:5.5.1-complete"
+    "base-image": "docker://rocm/dev-ubuntu-24.04:6.2.4-complete"
   },
   "lumi-c": {
-    "base-image": "docker://ubuntu:22.04"
+    "base-image": "docker://ubuntu:24.04"
   }
 }"""
 
