@@ -51,17 +51,17 @@ jobs:
       container_tag: ${{ steps.image_check.outputs.container_tag }}
     permissions:
       contents: read
-      packages: write
+      packages: read
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     steps:
-      - name: Check if image exists on GitHub Container Registry
+      - name: Check what container to use from GHCR (current branch or default)
         id: image_check
         run: |
           ENCODED_TOKEN=$(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)
           TAGS=$(curl -s -H "Authorization: Bearer ${ENCODED_TOKEN}" \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}/tags/list)
+            https://ghcr.io/v2/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}/tags/list)
           echo "TAGS: $TAGS"
 
           ## Check if TAGS is empty or null
