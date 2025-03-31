@@ -6,7 +6,6 @@ name: Build Docker and Deploy Images to GHCR
 # documentation.
 
 on:
-  workflow_dispatch:
   push:
     paths:
       - '.github/workflows/matrix.json'
