@@ -34,8 +34,19 @@ jobs:
         id: set-matrix
         run: echo "matrix=$(jq -c . < .github/workflows/matrix_limited.json)" >> $GITHUB_OUTPUT
 
-  run-unittests:
-    needs: [ read_matrix ]
+  get_branch_name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get branch names
+        id: branch-names
+        uses: tj-actions/branch-names@v8
+      - name: Display Current Branch Name
+        run: | 
+             echo "Current Branch: ${{ steps.branch-names.outputs.current_branch }}"
+
+  run-unittests-AMD:
+    needs: [ read_matrix, get_branch_name ]
+    runs-on: ubuntu-latest
     name: Run unittests
     permissions:
       packages: read
@@ -43,19 +54,36 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}/${{ matrix.python-version }}:docker_dev_env
+      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Activate uv, install dependencies and run tests
         run: |
-          . /test_environment/bin/activate
-          python3 --version
-          which python3
-          uv pip install -e .[tests]
-          pip list
+          uv sync
+          pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+
+  run-unittests-ARM:
+    needs: [ read_matrix, get_branch_name ]
+    runs-on: ubuntu-latest-arm
+    name: Run unittests
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+    container:
+      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Activate uv, install dependencies and run tests
+        run: |
+          uv sync
           pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
