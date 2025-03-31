@@ -48,9 +48,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ read_matrix, get_branch_name ]
     outputs:
-      container_name: ${{ steps.image_check.outputs.container_name }}
+      container_tag: ${{ steps.image_check.outputs.container_tag }}
     permissions:
-      packages: read
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
@@ -71,14 +72,12 @@ jobs:
             ## Check if the specific tag already exists
             if echo "$TAGS" | jq -e --arg TAG "${{ needs.get_branch_name.outputs.branch_name }}" '.tags | index($TAG)'; then
               echo "Image with tag ${{ needs.get_branch_name.outputs.branch_name }} exists."
-              echo "container_name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.get_branch_name.outputs.branch_name }}" >> $GITHUB_OUTPUT
+              echo "container_tag=${{ needs.get_branch_name.outputs.branch_name }}" >> $GITHUB_OUTPUT
             else
               echo "Image with tag ${{ needs.get_branch_name.outputs.branch_name }} not found. Defaulting to main image."
-              echo "container_name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.get_branch_name.outputs.main_name }}" >> $GITHUB_OUTPUT
+              echo "container_tag=${{ needs.get_branch_name.outputs.main_name }}" >> $GITHUB_OUTPUT
             fi
           fi
-  
-
 
   run-unittests-AMD:
     needs: [ read_matrix, container_to_use ]
@@ -90,7 +89,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ${{ needs.container_to_use.outputs.container_name }}
+      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.container_to_use.outputs.container_tag }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -112,7 +111,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ${{ needs.container_to_use.outputs.container_name }}
+      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.container_to_use.outputs.container_tag }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
