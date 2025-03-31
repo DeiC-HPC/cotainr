@@ -96,7 +96,7 @@ jobs:
 
 #                      PYTHON_VERSION=${{ matrix.python-version }}
 
-  finalize:
+  finalize_docker_build:
     needs: [build-docker-images]
     runs-on: ubuntu-latest
     steps:
