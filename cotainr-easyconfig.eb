@@ -21,11 +21,11 @@ local_systems = """{
   }
 }"""
 
-postinstallcmds = ['cd %(installdir)s/ ; cat >systems.json <<EOF\n' + local_systems + '\nEOF\n']
+postinstallcmds = ['cd %(installdir)s/lib/python%(pyshortver)s/site-packages/cotainr/ ; cat >systems.json <<EOF\n' + local_systems + '\nEOF\n']
 
 sanity_check_paths = {
     'files': ['bin/cotainr'],
-    'dirs': ['lib64/python3.11/site-packages/cotainr'],
+    'dirs': ['lib/python%(pyshortver)s/site-packages/cotainr'],
 }
 
 sanity_check_commands = ['cotainr']
