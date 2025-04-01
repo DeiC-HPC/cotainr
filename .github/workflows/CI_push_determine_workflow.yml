@@ -60,7 +60,7 @@ jobs:
         if: steps.changed-files-docker-build.outputs.any_changed == 'false'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          repository: username/my-repo
+          repository: ${{ github.repository }}
           event-type: test_push
           client-payload: |
             {
