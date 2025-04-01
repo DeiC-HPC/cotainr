@@ -41,8 +41,8 @@ jobs:
                 .github/workflows/SCHED_build_docker.yml
       # Run if files changed
       - name: Run if file(s) changed
-        if: steps.changed-files-docker-build.outputs.any_changed == 'true'
         uses: peter-evans/repository-dispatch@v3
+        if: steps.changed-files-docker-build.outputs.any_changed == 'true'
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -56,12 +56,18 @@ jobs:
             }
 
       # Run if files did NOT change
-#      - name: Run if no file(s) changed
-#        uses: peter-evans/repository-dispatch@v3
-#        if: steps.changed-files-docker-build.outputs.any_changed == 'false'
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#          repository: username/my-repo
-#          event-type: test_push
-#          client-payload:
+      - name: Run if no file(s) changed
+        uses: peter-evans/repository-dispatch@v3
+        if: steps.changed-files-docker-build.outputs.any_changed == 'false'
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: username/my-repo
+          event-type: test_push
+          client-payload: |
+            {
+              "repo": {
+                "name": "${{ github.repository }}",
+                "branch": "${{ needs.get_branch_name.outputs.branch_name }}"
+              }
+            }
 
