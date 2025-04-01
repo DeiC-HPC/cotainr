@@ -18,14 +18,6 @@ from .prepare_release import _format_date, create_docs_switcher, create_release_
 
 
 @pytest.fixture
-def set_DK_locale():
-    current_locale = locale.getlocale(locale.LC_TIME)
-    locale.setlocale(locale.LC_TIME, "da_DK")
-    yield
-    locale.setlocale(locale.LC_TIME, current_locale)
-
-
-@pytest.fixture
 def capture_file_write_text(monkeypatch):
     captured_text = []
 
@@ -40,7 +32,7 @@ class Test_create_docs_switcher:
     def test_correctly_formatted_switcher(self, monkeypatch, capture_file_write_text):
         def mock_subprocess_run(*args, **kwargs):
             return CompletedProcess(
-                args="", returncode=0, stdout="2023.01.0\n2023.02.0\n2023.11.0\n"
+                args="", returncode=0, stdout="2023.1.0\n2023.2.0\n2023.11.0\n"
             )
 
         monkeypatch.setattr("subprocess.run", mock_subprocess_run)
@@ -55,7 +47,7 @@ class Test_create_docs_switcher:
                 "url": "https://cotainr.readthedocs.io/en/latest/"
               },
               {
-                "name": "2025.01.0 (stable)",
+                "name": "2025.1.0 (stable)",
                 "version": "stable",
                 "url": "https://cotainr.readthedocs.io/en/stable/"
               },
@@ -65,12 +57,12 @@ class Test_create_docs_switcher:
                 "url": "https://cotainr.readthedocs.io/en/2023.11.0/"
               },
               {
-                "name": "2023.02.0",
+                "name": "2023.2.0",
                 "version": "2023.02.0",
                 "url": "https://cotainr.readthedocs.io/en/2023.02.0/"
               },
               {
-                "name": "2023.01.0",
+                "name": "2023.1.0",
                 "version": "2023.01.0",
                 "url": "https://cotainr.readthedocs.io/en/2023.01.0/"
               }
@@ -81,7 +73,7 @@ class Test_create_docs_switcher:
         assert capture_file_write_text[0] == expected_switcher
 
     @pytest.mark.parametrize(
-        "invalid_version_number", ["2025.1.0", "1900.02.0", "2025.32.1", "2025.02.01"]
+        "invalid_version_number", ["2025.01.0", "1900.2.0", "2025.32.1", "2025.2.01"]
     )
     def test_invalid_version_number(
         self, invalid_version_number, capture_file_write_text
@@ -95,12 +87,12 @@ class Test_create_docs_switcher:
 class Test_create_release_notes:
     def test_correctly_formatted_output(self, capture_file_write_text):
         create_release_notes(
-            new_release_ver="2025.01.0", release_date=datetime.date(2025, 1, 1)
+            new_release_ver="2025.1.0", release_date=datetime.date(2025, 1, 1)
         )
         expected_release_notes = (
             inspect.cleandoc(  # Remove leading whitespace
                 """
-            # 2025.01.0
+            # 2025.1.0
 
             **Released on January 1st, 2025**
 
@@ -179,10 +171,7 @@ class Test_format_date:
     def test_date_formatting_default_locale(self, iso_input, formatted_date):
         assert _format_date(datetime.date.fromisoformat(iso_input)) == formatted_date
 
-    @pytest.mark.skipif(
-        "da_dk" not in locale.locale_alias,
-        reason="Locale 'da_DK' not available on this system.",
-    )
-    def test_date_formatting_dk_locale(self, iso_input, formatted_date, set_DK_locale):
-        assert locale.getlocale(locale.LC_TIME)[0] == "da_DK"
-        assert _format_date(datetime.date.fromisoformat(iso_input)) == formatted_date
+    def test_error_on_dk_locale(self, iso_input, formatted_date, monkeypatch):
+        monkeypatch.setattr(locale, "getlocale", lambda: ("da_DK", "UTF-8"))
+        with pytest.raises(RuntimeError, match="Your locale is set to"):
+            _format_date(datetime.date.fromisoformat(iso_input))

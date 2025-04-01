@@ -17,7 +17,6 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import argparse
-import contextlib
 import datetime
 import json
 import locale
@@ -42,15 +41,6 @@ def _format_date(date: datetime.date):
     date : datetime.date
         The date to format.
     """
-
-    @contextlib.contextmanager
-    def fixed_locale(category, locale_string):
-        """Context manager to temporarily fix the locale."""
-        current_locale = locale.getlocale(category)
-        locale.setlocale(category, locale_string)
-        yield
-        locale.setlocale(category, current_locale)
-
     # Determine english orginal prefix
     if date.day in [1, 21, 31]:
         day_prefix = "st"
@@ -61,8 +51,15 @@ def _format_date(date: datetime.date):
     else:
         day_prefix = "th"
 
-    with fixed_locale(locale.LC_TIME, "C"):
-        formatted_date = date.strftime(f"%B %-d{day_prefix}, %Y")
+    current_locale = locale.getlocale()
+    if current_locale[0] not in ["C", "en_US", "en_GB"]:
+        raise RuntimeError(
+            f"Your locale is set to {current_locale}. "
+            "Please set it to an English locale (C, en_US, or en_GB) "
+            "via e.g. the LANG environment variable before running this script."
+        )
+
+    formatted_date = date.strftime(f"%B %-d{day_prefix}, %Y")
 
     return formatted_date
 
