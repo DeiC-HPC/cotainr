@@ -62,11 +62,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           event-type: test_push
-          client-payload: |
-            {
-              "repo": {
-                "name": "${{ github.repository }}",
-                "branch": "${{ needs.get_branch_name.outputs.branch_name }}"
-              }
-            }
+#          client-payload: |
+#            {
+#              "repo": {
+#                "name": "${{ github.repository }}",
+#                "branch": "${{ needs.get_branch_name.outputs.branch_name }}"
+#              }
+#            }
 
