@@ -24,8 +24,7 @@ jobs:
     name: Test changed-files
     needs: [get_branch_name]
     permissions:
-      contents: read
-      packages: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
