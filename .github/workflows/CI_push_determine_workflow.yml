@@ -23,6 +23,9 @@ jobs:
     runs-on: ubuntu-latest  # windows-latest || macos-latest
     name: Test changed-files
     needs: [get_branch_name]
+    permissions:
+      contents: read
+      packages: read
     steps:
       - uses: actions/checkout@v4
 
