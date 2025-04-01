@@ -64,13 +64,6 @@ jobs:
         exclude:
           - python-version: 3.12
     steps:
-      - name: Wait for containers to build if needed
-        uses: lewagon/wait-on-check-action@v1.3.4
-        with:
-          ref: ${{ needs.get_branch_name.outputs.branch_name }}
-          check-name: 'finalize_docker_build'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 30
       - name: Check what container to use from GHCR (current branch or default)
         id: image_check
         run: |
