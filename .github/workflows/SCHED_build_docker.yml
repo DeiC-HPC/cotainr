@@ -6,11 +6,8 @@ name: Build Docker and Deploy Images to GHCR
 # documentation.
 
 on:
-  push:
-    paths:
-      - '.github/workflows/matrix.json'
-      - 'dockerfiles/Dockerfile'
-      - '.github/workflows/SCHED_build_docker.yml'
+  repository_dispatch:
+    types: [ rebuild ]
 
 env:
   # Use docker.io for Docker Hub if empty

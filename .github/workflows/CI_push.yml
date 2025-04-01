@@ -1,11 +1,7 @@
 name: CI on push to branch
 on:
-  push:
-    branches:
-      - "**"
-    tags-ignore:
-      - "**"
-
+  repository_dispatch:
+    types: [ test_push ]
 env:
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
