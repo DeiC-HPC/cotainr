@@ -20,13 +20,12 @@ jobs:
         with:
           # Avoid using single or double quotes for multiline patterns
           files: |
-            container:
-                - '.github/workflows/matrix.json'
-                - 'dockerfiles/Dockerfile'
-                - '.github/workflows/SCHED_build_docker.yml'
+                .github/workflows/matrix.json
+                 dockerfiles/Dockerfile
+                .github/workflows/SCHED_build_docker.yml
       # Run if files changed
       - name: Run if file(s) changed
-        if: steps.changed-files-docker-build.outputs.container_any_changed == 'true'
+        if: steps.changed-files-docker-build.outputs.any_changed == 'true'
         run: |
           echo "files changed"
 #        uses: peter-evans/repository-dispatch@v3
@@ -43,7 +42,7 @@ jobs:
       # Run if files did NOT change
       - name: Run if no file(s) changed
 #        uses: peter-evans/repository-dispatch@v3
-        if: steps.changed-files-docker-build.outputs.container_any_changed == 'false'
+        if: steps.changed-files-docker-build.outputs.any_changed == 'false'
         run: |
           echo "files didnt change"
 #        with:
