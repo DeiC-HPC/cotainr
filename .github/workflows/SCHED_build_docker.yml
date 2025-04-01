@@ -127,7 +127,7 @@ jobs:
 
   dispatch-test-with-build:
     runs-on: ubuntu-latest
-    needs: [changed-files, get_branch_name, build-docker-image]
+    needs: [changed-files, get_branch_name, build-docker-images]
     if: needs.changed-files.outputs.files_changed == 'true'
     permissions: write-all
     steps:
