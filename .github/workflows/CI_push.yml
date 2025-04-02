@@ -65,6 +65,8 @@ jobs:
         exclude:
           - python-version: 3.12
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
       - name: Check what container to use from GHCR (current branch or default)
         id: image_check
         env:
