@@ -28,6 +28,7 @@ jobs:
           key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit on all files
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
+
   read_matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -66,26 +67,12 @@ jobs:
     steps:
       - name: Check what container to use from GHCR (current branch or default)
         id: image_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ENCODED_TOKEN=$(echo -n "${{ secrets.GITHUB_TOKEN }}" | base64)
-          TAGS=$(curl -s -H "Authorization: Bearer ${ENCODED_TOKEN}" \
-            https://ghcr.io/v2/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}/tags/list)
-          echo "TAGS: $TAGS"
-
-          ## Check if TAGS is empty or null
-          if [[ -z "$TAGS" || "$TAGS" == "null" ]]; then
-            echo "No tags found. Stopping."
-            exit 1
-          else
-            ## Check if the specific tag already exists
-            if echo "$TAGS" | jq -e --arg TAG "${{ needs.get_branch_name.outputs.branch_name }}" '.tags | index($TAG)'; then
-              echo "Image with tag ${{ needs.get_branch_name.outputs.branch_name }} exists."
-              echo "container_tag=${{ needs.get_branch_name.outputs.branch_name }}" >> $GITHUB_OUTPUT
-            else
-              echo "Image with tag ${{ needs.get_branch_name.outputs.branch_name }} not found. Defaulting to main image."
-              echo "container_tag=${{ needs.get_branch_name.outputs.main_name }}" >> $GITHUB_OUTPUT
-            fi
-          fi
+          chmod +x .github/workflows/get_container_to_use.sh 
+          .github/workflows/get_container_to_use.sh ${{ matrix.singularity.provider }} ${{ matrix.singularity.version }} ${{ needs.get_branch_name.outputs.branch_name }}
+        shell: bash
 
   run-unittests-AMD:
     needs: [ read_matrix, container_to_use ]
