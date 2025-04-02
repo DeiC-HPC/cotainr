@@ -30,7 +30,7 @@ jobs:
         id: changed-files-docker-build
         uses: tj-actions/changed-files@823fcebdb31bb35fdf2229d9f769b400309430d0 # v46
         with:
-          # Avoid using single or double quotes for multiline patterns
+          # checks the following files if we need to rebuild the dockers
           files: |
             .github/workflows/matrix.json
              dockerfiles/Dockerfile
@@ -71,6 +71,7 @@ jobs:
     strategy:
         matrix:
           ${{ insert }}: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+          #We do not want to build different containers for different python images. So we need to exclude them from the matrix.
           exclude:
             - python-version: 3.9
             - python-version: 3.10

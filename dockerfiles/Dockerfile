@@ -14,10 +14,3 @@ RUN set -eux ; \
     dnf install -y uv;\
     dnf install -y $SINGULARITY_PROVIDER-$SINGULARITY_VERSION;\
     singularity --version
-
-#ARG PYTHON_VERSION
-#ENV PYTHON_VERSION=${PYTHON_VERSION}
-#
-#RUN set -eux ; \
-#    uv python install $PYTHON_VERSION
-
