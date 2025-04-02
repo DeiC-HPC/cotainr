@@ -24,47 +24,16 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from typing import Optional
 
 sys.path.insert(0, f"{(Path(__file__) / '../..').resolve()}")
 
 import cotainr
 
-COTAINR_RELEASE_VERSION_FORMAT_RE = r"^20[0-9]{2}\.(0[1-9]|10|11|12)\.(0|[1-9][0-9]*)$"  # cotainr YYYY.0M.MICRO version format
+COTAINR_RELEASE_VERSION_FORMAT_RE = r"^20[0-9]{2}\.([1-9]|10|11|12)\.(0|[1-9][0-9]*)$"  # cotainr YYYY.MM.MICRO version format
 
 
-def _format_date(date: datetime.date):
-    """
-    Format `date` as a "__Month__ __day__, __year__" string.
-
-    Parameters
-    ----------
-    date : datetime.date
-        The date to format.
-    """
-    # Determine english orginal prefix
-    if date.day in [1, 21, 31]:
-        day_prefix = "st"
-    elif date.day in [2, 22]:
-        day_prefix = "nd"
-    elif date.day in [3, 23]:
-        day_prefix = "rd"
-    else:
-        day_prefix = "th"
-
-    current_locale = locale.getlocale()
-    if current_locale[0] not in ["C", "en_US", "en_GB"]:
-        raise RuntimeError(
-            f"Your locale is set to {current_locale}. "
-            "Please set it to an English locale (C, en_US, or en_GB) "
-            "via e.g. the LANG environment variable before running this script."
-        )
-
-    formatted_date = date.strftime(f"%B %-d{day_prefix}, %Y")
-
-    return formatted_date
-
-
-def create_docs_switcher(*, new_release_ver: str):
+def create_docs_switcher(*, formatted_release_version: str):
     """
     Create the version switcher for the documentation.
 
@@ -75,10 +44,10 @@ def create_docs_switcher(*, new_release_ver: str):
 
     Parameters
     ----------
-    new_release_ver : str
-        The YYYY.0M.MICRO version tag for the new release.
+    formatted_release_version : str
+        The YYYY.MM.MICRO version tag for the new release.
     """
-    assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, new_release_ver)
+    assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, formatted_release_version)
 
     # Create base switcher with the latest and stable versions
     switcher = [
@@ -88,7 +57,7 @@ def create_docs_switcher(*, new_release_ver: str):
             "url": "https://cotainr.readthedocs.io/en/latest/",
         },
         {
-            "name": f"{new_release_ver} (stable)",
+            "name": f"{formatted_release_version} (stable)",
             "version": "stable",
             "url": "https://cotainr.readthedocs.io/en/stable/",
         },
@@ -124,7 +93,9 @@ def create_docs_switcher(*, new_release_ver: str):
     )
 
 
-def create_release_notes(*, new_release_ver: str, release_date: datetime.date):
+def create_release_notes(
+    *, formatted_release_version: str, formatted_release_date: str
+):
     """
     Create the release notes for the new version.
 
@@ -133,13 +104,12 @@ def create_release_notes(*, new_release_ver: str, release_date: datetime.date):
 
     Parameters
     ----------
-    new_release_ver : str
-        The YYYY.0M.MICRO version tag for the new release.
-    release_date : datetime.date
-        The release date for the new version.
+    formatted_release_version : str
+        The YYYY.MM.MICRO version tag for the new release.
+    formatted_release_date : str
+        The release date formatted as "__Month__ __day__, __year__".
     """
-    assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, new_release_ver)
-    # FIXME: Assert that the release date matches the version tag + test it
+    assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, formatted_release_version)
 
     release_notes = (
         (
@@ -150,24 +120,24 @@ def create_release_notes(*, new_release_ver: str, release_date: datetime.date):
         )
         .replace(
             # Insert the new version number as the title
-            "__YYYY.0M.MICRO__",
-            new_release_ver,
+            "__YYYY.MM.MICRO__",
+            formatted_release_version,
         )
         .replace(
             # Insert the release date
             "__Month__ __day__, __year__",
-            f"{_format_date(release_date)}",
+            f"{formatted_release_date}",
         )
         .replace(
             # Insert version tag for RTD link
             "__version__tag__",
-            new_release_ver,
+            formatted_release_version,
         )
     )
 
     # Write the release note to a new file
     release_notes_file = (
-        Path(__file__) / f"../release_notes/{new_release_ver}.md"
+        Path(__file__) / f"../release_notes/{formatted_release_version}.md"
     ).resolve()
     release_notes_file.write_text(release_notes)
     print(
@@ -176,23 +146,112 @@ def create_release_notes(*, new_release_ver: str, release_date: datetime.date):
     )
 
 
+def format_release_version_and_date(*, release_date: Optional[str] = None):
+    """
+    Get the release date and version from the command line arguments.
+
+    Parameters
+    ----------
+    release_date : str or None
+        The release date for the new version in ISO 8601 format, e.g. YYYY-MM-DD. If None,
+        the current date is used.
+
+    Returns
+    -------
+    formatted_release_ver : str
+        The new version number in YYYY.MM.MICRO format.
+    formatted_release_date : str
+        The release date formatted as "__Month__ __day__, __year__".
+    """
+    if release_date is None:
+        date_release = datetime.datetime.today().date()
+    else:
+        date_release = datetime.date.fromisoformat(release_date)
+
+    # Determine the new version number
+    try:
+        yyyy, mm, micro = cotainr.__version__.split(".")[:3]
+    except ValueError as e:
+        raise ValueError(
+            f"Current release version {cotainr.__version__} is not in the expected format."
+        ) from e
+    assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, f"{yyyy}.{mm}.{micro}")
+    if date_release.year < int(yyyy) or (
+        date_release.year == int(yyyy) and date_release.month < int(mm)
+    ):
+        raise ValueError(
+            f"New release date {date_release} is before the current version {cotainr.__version__}."
+        )
+    elif date_release.year > int(yyyy) or date_release.month > int(mm):
+        # New year or month since last release, set MICRO to 0
+        micro_release_ver = 0
+    else:
+        # Same year/month as last release, set MICRO += 1
+        micro_release_ver = int(micro) + 1
+
+    formatted_release_ver = (
+        f"{date_release.year}.{date_release.month}.{micro_release_ver}"
+    )
+
+    # Format the release date for the release notes
+    formatted_release_date = _format_release_notes_date(date_release)
+
+    return formatted_release_ver, formatted_release_date
+
+
+def _format_release_notes_date(date: datetime.date):
+    """
+    Format `date` as a "__Month__ __day__, __year__" string.
+
+    Parameters
+    ----------
+    date : datetime.date
+        The date to format.
+    """
+    # Determine english orginal prefix
+    if date.day in [1, 21, 31]:
+        day_prefix = "st"
+    elif date.day in [2, 22]:
+        day_prefix = "nd"
+    elif date.day in [3, 23]:
+        day_prefix = "rd"
+    else:
+        day_prefix = "th"
+
+    current_locale = locale.getlocale()
+    if current_locale[0] not in ["C", "en_US", "en_GB"]:
+        raise RuntimeError(
+            f"Your locale is set to {current_locale}. "
+            "Please set it to an English locale (C, en_US, or en_GB) "
+            "via e.g. the LANG environment variable before running this script."
+        )
+
+    formatted_date = date.strftime(f"%B %-d{day_prefix}, %Y")
+
+    return formatted_date
+
+
 if __name__ == "__main__":  # pragma: no cover
     # Parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--release_date",
         type=str,
-        help="The release date for the new version in YYYY.MM.DD format. The default is the current date.",
+        help=(
+            "The release date for the new version in YYYY.MM.DD format. "
+            "The default is the current date."
+        ),
     )
     args = parser.parse_args()
 
-    if args.release_date is None:
-        release_date = datetime.datetime.today().date()
-    else:
-        release_date = datetime.datetime.strptime(args.release_date, "%Y.%m.%d").date()
-
-    new_release_ver = cotainr.__version__.split(".dev")[0]
+    # Format the release version number and release notes date
+    formatted_release_version, formatted_release_date = format_release_version_and_date(
+        release_date=args.release_date
+    )
 
     # Create the version switcher for the documentation
-    create_docs_switcher(new_release_ver=new_release_ver)
-    create_release_notes(new_release_ver=new_release_ver, release_date=release_date)
+    create_docs_switcher(formatted_release_version=formatted_release_version)
+    create_release_notes(
+        formatted_release_version=formatted_release_version,
+        formatted_release_date=formatted_release_date,
+    )

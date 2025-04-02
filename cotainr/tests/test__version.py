@@ -17,12 +17,12 @@ import cotainr._version
 
 class Test__get_hatch_version:
     def test_correct_dev_version_number(self):
-        cotainr_calver_tag_pattern = r"20[0-9]{2}\.(0[1-9]|10|11|12)\.(0|[1-9][0-9]*)"
+        cotainr_calver_tag_pattern = r"20[0-9]{2}\.([1-9]|10|11|12)\.(0|[1-9][0-9]*))"
         dev_extension_pattern = r"(\.dev[0-9]+\+[a-z0-9]{8})?"
         local_version_pattern = r"(\.d20[0-9]{2}(0[1-9]|10|11|12)[0-9]{2})?"
         cotainr_dev_version_pattern = (
             r"^"
-            + cotainr_calver_tag_pattern  # YYYY.0M.MICRO
+            + cotainr_calver_tag_pattern  # YYYY.MM.MICRO
             + dev_extension_pattern  # .devN+hash (optional)
             + local_version_pattern  # .dYYYYMMDD (optional)
             + r"$"
