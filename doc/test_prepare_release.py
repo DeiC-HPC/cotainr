@@ -37,7 +37,7 @@ class Test_create_docs_switcher:
     def test_correctly_formatted_switcher(self, monkeypatch, capture_file_write_text):
         def mock_subprocess_run(*args, **kwargs):
             return CompletedProcess(
-                args="", returncode=0, stdout="2022.1.0\n2022.2.0\n2022.11.0\n"
+                args="", returncode=0, stdout="2022.1.0\n2022.02.0\n2022.11.0\n"
             )
 
         monkeypatch.setattr("subprocess.run", mock_subprocess_run)
@@ -62,9 +62,9 @@ class Test_create_docs_switcher:
                 "url": "https://cotainr.readthedocs.io/en/2022.11.0/"
               },
               {
-                "name": "2022.2.0",
-                "version": "2022.2.0",
-                "url": "https://cotainr.readthedocs.io/en/2022.2.0/"
+                "name": "2022.02.0",
+                "version": "2022.02.0",
+                "url": "https://cotainr.readthedocs.io/en/2022.02.0/"
               },
               {
                 "name": "2022.1.0",
