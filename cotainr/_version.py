@@ -21,7 +21,10 @@ _get_importlib_metadata_version()
     Get the version number for an installed cotainr package.
 """
 
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def _determine_cotainr_version():
