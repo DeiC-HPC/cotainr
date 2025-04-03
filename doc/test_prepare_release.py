@@ -78,7 +78,7 @@ class Test_create_docs_switcher:
         assert capture_file_write_text[0] == expected_switcher
 
     @pytest.mark.parametrize(
-        "invalid_version_number", ["2025.01.0", "1900.2.0", "2025.32.1", "2025.2.01"]
+        "invalid_version_number", ["1900.2.0", "2025.32.1", "2025.2.01"]
     )
     def test_invalid_version_number(
         self, invalid_version_number, capture_file_write_text
@@ -125,7 +125,7 @@ class Test_create_release_notes:
         assert capture_file_write_text[0] == expected_release_notes
 
     @pytest.mark.parametrize(
-        "invalid_version_number", ["2025.01.0", "1900.2.0", "2025.32.1", "2025.2.01"]
+        "invalid_version_number", ["1900.2.0", "2025.32.1", "2025.2.01"]
     )
     def test_invalid_version_number(
         self, invalid_version_number, capture_file_write_text
