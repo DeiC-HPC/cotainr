@@ -10,6 +10,9 @@ on:
 jobs:
   github-release:
     name: GitHub Release
+    permissions:
+      contents: write
+      actions: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
