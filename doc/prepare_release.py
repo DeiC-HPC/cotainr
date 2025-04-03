@@ -1,18 +1,15 @@
 """
 cotainr - a user space Apptainer/Singularity container builder.
 
-Copyright DeiC, deic.dk
-Licensed under the European Union Public License (EUPL) 1.2
-- see the LICENSE file for details.
+Copyright DeiC, deic.dk Licensed under the European Union Public License (EUPL)
+1.2 - see the LICENSE file for details.
 
-
- This should be run before
-    making a tag for the latest version. More information about releasing can
-    befound here:
-    https://cotainr.readthedocs.io/en/latest/development/releasing.html
-
-
-
+This script is used to prepare the release notes and version switcher for the
+documentation for a new release of cotainr. It automatically generates the
+version switcher for the documentation and creates a skeleton for the release
+notes. The script should be run before making a tag for the latest version.
+More information about releasing can be found here:
+https://cotainr.readthedocs.io/en/latest/development/releasing.html
 
 """
 
@@ -168,7 +165,7 @@ def format_release_version_and_date(*, release_date: Optional[str] = None):
     else:
         date_release = datetime.date.fromisoformat(release_date)
 
-    # Determine the new version number
+    # Extract the current version number from the cotainr module
     try:
         yyyy, mm, micro = cotainr.__version__.split(".")[:3]
     except ValueError as e:
@@ -176,6 +173,8 @@ def format_release_version_and_date(*, release_date: Optional[str] = None):
             f"Current release version {cotainr.__version__} is not in the expected format."
         ) from e
     assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, f"{yyyy}.{mm}.{micro}")
+
+    # Determine the MICRO version number
     if date_release.year < int(yyyy) or (
         date_release.year == int(yyyy) and date_release.month < int(mm)
     ):
@@ -189,6 +188,7 @@ def format_release_version_and_date(*, release_date: Optional[str] = None):
         # Same year/month as last release, set MICRO += 1
         micro_release_ver = int(micro) + 1
 
+    # Format the full new version number
     formatted_release_ver = (
         f"{date_release.year}.{date_release.month}.{micro_release_ver}"
     )
@@ -207,6 +207,11 @@ def _format_release_notes_date(date: datetime.date):
     ----------
     date : datetime.date
         The date to format.
+
+    Returns
+    -------
+    formatted_date : str
+        The formatted date string.
     """
     # Determine english orginal prefix
     if date.day in [1, 21, 31]:
@@ -238,8 +243,8 @@ if __name__ == "__main__":  # pragma: no cover
         "--release_date",
         type=str,
         help=(
-            "The release date for the new version in YYYY.MM.DD format. "
-            "The default is the current date."
+            "The release date for the new version in ISO 8601 format, e.g. YYYY-MM-DD. "
+            "If not provided, the current date is used."
         ),
     )
     args = parser.parse_args()

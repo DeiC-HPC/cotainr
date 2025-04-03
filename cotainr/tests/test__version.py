@@ -13,11 +13,63 @@ import types
 
 import cotainr
 import cotainr._version
+from cotainr._version import (
+    _determine_cotainr_version,
+    _get_hatch_version,
+    _get_importlib_metadata_version,
+)
+
+
+class Test__determine_cotainr_version:
+    def test_hatch_vcs_based_version(self, monkeypatch):
+        def mock_get_hatch_version():
+            return "test_version_6021"
+
+        monkeypatch.setattr(
+            cotainr._version, "_get_hatch_version", mock_get_hatch_version
+        )
+        assert _determine_cotainr_version() == "test_version_6021"
+
+    def test_importlib_metadata_based_version(self, monkeypatch):
+        def mock_get_hatch_version():
+            return None
+
+        def mock_get_importlib_metadata_version():
+            return "test_version_6021"
+
+        monkeypatch.setattr(
+            cotainr._version, "_get_hatch_version", mock_get_hatch_version
+        )
+        monkeypatch.setattr(
+            cotainr._version,
+            "_get_importlib_metadata_version",
+            mock_get_importlib_metadata_version,
+        )
+
+        assert _determine_cotainr_version() == "test_version_6021"
+
+    def test_unknown_version(self, monkeypatch):
+        def mock_get_hatch_version():
+            return None
+
+        def mock_get_importlib_metadata_version():
+            return None
+
+        monkeypatch.setattr(
+            cotainr._version, "_get_hatch_version", mock_get_hatch_version
+        )
+        monkeypatch.setattr(
+            cotainr._version,
+            "_get_importlib_metadata_version",
+            mock_get_importlib_metadata_version,
+        )
+
+        assert _determine_cotainr_version() == "<unknown version>"
 
 
 class Test__get_hatch_version:
     def test_correct_dev_version_number(self):
-        cotainr_calver_tag_pattern = r"20[0-9]{2}\.([1-9]|10|11|12)\.(0|[1-9][0-9]*))"
+        cotainr_calver_tag_pattern = r"20[0-9]{2}\.([1-9]|10|11|12)\.(0|[1-9][0-9]*)"
         dev_extension_pattern = r"(\.dev[0-9]+\+[a-z0-9]{8})?"
         local_version_pattern = r"(\.d20[0-9]{2}(0[1-9]|10|11|12)[0-9]{2})?"
         cotainr_dev_version_pattern = (
@@ -27,19 +79,21 @@ class Test__get_hatch_version:
             + local_version_pattern  # .dYYYYMMDD (optional)
             + r"$"
         )
-        cotainr_dev_version = cotainr._version._get_hatch_version()
+        cotainr_dev_version = _get_hatch_version()
         assert re.match(cotainr_dev_version_pattern, cotainr_dev_version)
         assert (
-            # If a hatch version is available, it should be the same as the cotainr version
+            # If the hatch based version is available (which it should be when
+            # running these tests), that version should be the same as the
+            # cotainr version
             cotainr.__version__ == cotainr._version.__version__ == cotainr_dev_version
         )
 
     def test_hatchling_not_installed(self, context_importerror):
         with context_importerror("hatchling.metadata.core"):
-            assert cotainr._version._get_hatch_version() is None
+            assert _get_hatch_version() is None
 
         with context_importerror("hatchling.plugin.manager"):
-            assert cotainr._version._get_hatch_version() is None
+            assert _get_hatch_version() is None
 
     def test_no_vcs_version(self, monkeypatch):
         class StubDummyProjectMetadata:
@@ -49,7 +103,7 @@ class Test__get_hatch_version:
         monkeypatch.setattr(
             "hatchling.metadata.core.ProjectMetadata", StubDummyProjectMetadata
         )
-        assert cotainr._version._get_hatch_version() is None
+        assert _get_hatch_version() is None
 
 
 class Test__get_importlib_metadata_version:
@@ -58,11 +112,11 @@ class Test__get_importlib_metadata_version:
             return "test_version_6021"
 
         monkeypatch.setattr("importlib.metadata.version", mock_version)
-        assert cotainr._version._get_importlib_metadata_version() == "test_version_6021"
+        assert _get_importlib_metadata_version() == "test_version_6021"
 
     def test_not_installed(self, monkeypatch):
         def mock_version(package):
             raise PackageNotFoundError
 
         monkeypatch.setattr("importlib.metadata.version", mock_version)
-        assert cotainr._version._get_importlib_metadata_version() is None
+        assert _get_importlib_metadata_version() is None

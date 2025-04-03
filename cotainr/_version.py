@@ -24,6 +24,29 @@ _get_importlib_metadata_version()
 from pathlib import Path
 
 
+def _determine_cotainr_version():
+    """
+    Determine the version number for cotainr.
+
+    If the git history is available, the hatch-vcs package is used to determine
+    the version number based on the latest git release tag and any commits
+    since then.
+    If the git history is not available, the version number is
+    extracted from package metadata.
+    If neither is available, the version is reported as "<unknown version>".
+
+    Returns
+    -------
+    cotainr_version : str
+        The cotainr version number.
+    """
+    cotainr_version = (
+        _get_hatch_version() or _get_importlib_metadata_version() or "<unknown version>"
+    )
+
+    return cotainr_version
+
+
 def _get_hatch_version():
     """
     Compute the version number in a development environment.
@@ -77,8 +100,4 @@ def _get_importlib_metadata_version():
     return package_version
 
 
-# The cotainr version based on git history or the installed package version. If
-# neither is available, the reported version is "<unknown version>".
-__version__ = (
-    _get_hatch_version() or _get_importlib_metadata_version() or "<unknown version>"
-)
+__version__ = _determine_cotainr_version()

@@ -152,6 +152,7 @@ class Test_format_release_version_and_date:
             ("2025.1.2", "2025-03-17", "2025.3.0"),
             ("2025.12.2", "2025-12-22", "2025.12.3"),
             ("2025.12.3", "2026-01-23", "2026.1.0"),
+            ("2025.1.0", "2026-11-20", "2026.11.0"),
         ],
     )
     def test_correctly_formatted_version(
@@ -168,13 +169,26 @@ class Test_format_release_version_and_date:
 
         assert formatted_release_version == new_formatted_release_version
 
-    def test_invalid_release_date(self, monkeypatch):
-        monkeypatch.setattr("cotainr.__version__", "2025.1.0")
+    @pytest.mark.parametrize(
+        ["current_release_version", "release_date"],
+        [
+            ("2025.1.0", "2024-01-01"),
+            ("2025.2.0", "2025-01-31"),
+            ("2025.2.0", "2024-01-10"),
+        ],
+    )
+    def test_invalid_release_date(
+        self, current_release_version, release_date, monkeypatch
+    ):
+        monkeypatch.setattr("cotainr.__version__", current_release_version)
         with pytest.raises(
             ValueError,
-            match="New release date 2024-01-01 is before the current version 2025.1.0.",
+            match=(
+                f"New release date {release_date} is before the current version "
+                f"{current_release_version}."
+            ),
         ):
-            format_release_version_and_date(release_date="2024-01-01")
+            format_release_version_and_date(release_date=release_date)
 
     def test_release_today(self, monkeypatch):
         class MockedDatetime(datetime.datetime):
