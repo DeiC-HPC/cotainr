@@ -16,6 +16,6 @@ else
     echo "container_tag=$3" >> $GITHUB_OUTPUT
   else
     echo "Image with tag $3 not found. Defaulting to main image."
-    echo "container_tag=$3" >> $GITHUB_OUTPUT
+    echo "container_tag=main" >> $GITHUB_OUTPUT
   fi
 fi
