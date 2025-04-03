@@ -27,8 +27,7 @@ sys.path.insert(0, f"{(Path(__file__) / '../..').resolve()}")
 
 import cotainr
 
-COTAINR_RELEASE_VERSION_FORMAT_RE = r"^20[0-9]{2}\.([1-9]|10|11|12)\.(0|[1-9][0-9]*)$"  # cotainr YYYY.MM.MICRO version format
-COTAINR_WRONG_PRACTICE_VERSION_FORMAT_RE = r"^20[0-9]{2}\.(0[1-9]|10|11|12)\.(0|[1-9][0-9]*)$"  # wrong YYYY.0M.MICRO version format
+COTAINR_RELEASE_VERSION_FORMAT_RE = r"^20[0-9]{2}\.(0*[1-9]|10|11|12)\.(0|[1-9][0-9]*)$"  # cotainr YYYY.MM.MICRO version format (as well as wrong YYYY.0M.MICRO format)
 
 
 def create_docs_switcher(*, formatted_release_version: str):
@@ -70,10 +69,7 @@ def create_docs_switcher(*, formatted_release_version: str):
                 ["git", "--no-pager", "tag"], capture_output=True, text=True
             ).stdout.splitlines()
         )
-        if (
-            re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, tag)
-            or re.match(COTAINR_WRONG_PRACTICE_VERSION_FORMAT_RE, tag)
-        )
+        if re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, tag)
     ]
     tags.reverse()
     for tag in tags[0:3]:
