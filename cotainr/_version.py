@@ -15,10 +15,17 @@ Adapted from the hatch-vcs-footgun-example, see
 
 Functions
 ---------
+_determine_cotainr_version()
+    Determine the version number for cotainr.
 _get_hatch_version()
     Compute the version number in a development environment.
 _get_importlib_metadata_version()
     Get the version number for an installed cotainr package.
+
+Attributes
+----------
+__version__
+    The cotainr version number.
 """
 
 import logging
