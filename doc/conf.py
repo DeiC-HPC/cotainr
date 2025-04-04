@@ -14,11 +14,11 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import importlib.metadata
 import os
 from pathlib import Path
 import sys
 import time
-import importlib.metadata
 
 sys.path.insert(0, f"{Path('..').resolve()}")
 

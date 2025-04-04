@@ -8,8 +8,9 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import sys
+
 try:
-    from ._version import version as __version__ #noqa: F401
+    from ._version import version as __version__  # noqa: F401
 except ModuleNotFoundError:
     __version__ = "<unknown version>"
 
