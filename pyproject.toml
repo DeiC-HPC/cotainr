@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
@@ -65,7 +65,10 @@ docs = [
 dev = [{include-group = "tests"}, {include-group = "lint"}, {include-group = "docs"}]
 
 [tool.hatch.version]
-path = "cotainr/__init__.py"
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file="cotainr/_version.py"
 
 [tool.hatch.build.targets.sdist]
 include = [

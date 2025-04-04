@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 import sys
 import time
+import importlib.metadata
 
 sys.path.insert(0, f"{Path('..').resolve()}")
 
@@ -26,7 +27,7 @@ import cotainr
 project = cotainr.__name__
 author = "DeiC"
 copyright = f"2022-{time.strftime('%Y')}, {author}"
-version = cotainr.__version__
+version = importlib.metadata.version("cotainr")
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

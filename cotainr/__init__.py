@@ -8,8 +8,11 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import sys
+try:
+    from ._version import version as __version__ #noqa: F401
+except ModuleNotFoundError:
+    __version__ = "<unknown version>"
 
-__version__ = "2025.03.0"
 _minimum_dependency_version = {
     # Versions must be specified as a (major, minor, patchlevel) tuple of
     # integers

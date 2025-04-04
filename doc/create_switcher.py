@@ -20,7 +20,7 @@ import sys
 
 sys.path.insert(0, f"{(Path(__file__) / '../..').resolve()}")
 
-import cotainr
+from cotainr._version import version as __version__
 
 tags = [
     tag
@@ -41,7 +41,7 @@ switcher = [
         "url": "https://cotainr.readthedocs.io/en/latest/",
     },
     {
-        "name": f"{cotainr.__version__} (stable)",
+        "name": f"{__version__} (stable)",
         "version": "stable",
         "url": "https://cotainr.readthedocs.io/en/stable/",
     },
