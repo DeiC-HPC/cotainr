@@ -11,9 +11,6 @@ on:
       - '!dockerfiles/Dockerfile'
       - '!.github/workflows/SCHED_build_docker.yml'
   workflow_call:
-    secrets:
-      token:
-        required: true
 
 env:
   # Use docker.io for Docker Hub if empty
