@@ -5,6 +5,8 @@ on:
       - "**"
     tags-ignore:
       - "**"
+  workflow_dispatch:
+
 jobs:
   debug-dump:
     runs-on: ubuntu-latest
