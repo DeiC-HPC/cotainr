@@ -6,7 +6,7 @@ on:
       - "**"
     tags-ignore:
       - "**"
-    paths-ignore: # If other changes to other files are added concurrently, this workflow can still run
+    paths-ignore: # this workflow still runs If other file changes are added concurrently to these.
       - '.github/workflows/matrix.json'
       - 'dockerfiles/Dockerfile'
       - '.github/workflows/SCHED_build_docker.yml'
