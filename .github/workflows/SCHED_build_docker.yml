@@ -38,6 +38,7 @@ jobs:
        run: echo "matrix=$(jq -c . < .github/workflows/matrix.json)" >> $GITHUB_OUTPUT
 
   build-docker-images:
+    needs: read_matrix
     runs-on: ubuntu-latest
     permissions:
       contents: read
