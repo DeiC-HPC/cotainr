@@ -1,11 +1,22 @@
 name: CI on push to branch
+
 on:
   push:
     branches:
       - "**"
     tags-ignore:
       - "**"
-  workflow_dispatch:
+    paths:
+      - '!.github/workflows/matrix.json'
+      - '!dockerfiles/Dockerfile'
+      - '!.github/workflows/SCHED_build_docker.yml'
+  workflow_call:
+
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   debug-dump:
@@ -62,19 +73,65 @@ jobs:
           key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit on all files
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
-  run-unittests:
-    name: Run unittests
+
+  read_matrix:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout to repository
+        uses: actions/checkout@v4
+      - name: Set matrix data
+        id: set-matrix
+        run: echo "matrix=$(jq -c . < .github/workflows/matrix_limited.json)" >> $GITHUB_OUTPUT
+
+  run-unittests-AMD:
+    needs: read_matrix
+    runs-on: ubuntu-latest
+    name: Run unittests
+    permissions:
+      packages: read
     strategy:
       fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.12"]
+      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+    container:
+      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
+      - name: Install python
+        run: uv python install ${{ matrix.python-version }}
+      - name: Install test dependencies
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
+      - name: Run unittests via pytest
+        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
+  run-unittests-ARM:
+    needs: read_matrix
+    runs-on: ubuntu-24.04-arm
+    name: Run unittests
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+    container:
+      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+      - name: Install python
+        run: uv python install ${{ matrix.python-version }}
       - name: Install test dependencies
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
