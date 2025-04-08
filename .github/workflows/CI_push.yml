@@ -12,12 +12,6 @@ on:
       - '.github/workflows/SCHED_build_docker.yml'
   workflow_call:
 
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   lint-and-format:
     name: Lint and check formatting
@@ -60,7 +54,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -86,7 +80,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
