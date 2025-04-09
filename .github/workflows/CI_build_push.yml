@@ -15,7 +15,7 @@ on:
     paths:
       - '.github/workflows/matrix.json'
       - 'dockerfiles/Dockerfile'
-      - '.github/workflows/SCHED_build_docker.yml'
+      - '.github/workflows/CI_build_push.yml'
   workflow_dispatch:
 
 env:

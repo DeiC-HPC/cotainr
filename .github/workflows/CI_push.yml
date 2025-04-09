@@ -9,7 +9,7 @@ on:
     paths-ignore: # this workflow still runs If other file changes are added concurrently to these.
       - '.github/workflows/matrix.json'
       - 'dockerfiles/Dockerfile'
-      - '.github/workflows/SCHED_build_docker.yml'
+      - '.github/workflows/CI_build_push.yml'
   workflow_call:
     inputs:
       branch:
