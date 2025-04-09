@@ -11,6 +11,10 @@ on:
       - 'dockerfiles/Dockerfile'
       - '.github/workflows/SCHED_build_docker.yml'
   workflow_call:
+    inputs:
+      branch:
+        required: false
+        type: string
 
 jobs:
   lint-and-format:
@@ -44,8 +48,15 @@ jobs:
         id: set-matrix
         run: echo "matrix=$(jq -c . < .github/workflows/matrix_limited.json)" >> $GITHUB_OUTPUT
 
+  lowercase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: lowercase github.repository
+            run: |
+              echo "REPO=${GITHUB_REPOSITORY@L}" >>${GITHUB_ENV}
+
   run-unittests-AMD:
-    needs: read_matrix
+    needs: [read_matrix, lowercase]
     runs-on: ubuntu-latest
     name: Run unittests
     permissions:
@@ -54,7 +65,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+      image: ghcr.io/${{ REPO }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +82,7 @@ jobs:
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
   run-unittests-ARM:
-    needs: read_matrix
+    needs: [read_matrix, lowercase]
     runs-on: ubuntu-24.04-arm
     name: Run unittests
     permissions:
@@ -80,7 +91,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+      image: ghcr.io/${{ REPO }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
