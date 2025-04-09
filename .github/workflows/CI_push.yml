@@ -52,8 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: lowercase github.repository
-            run: |
-              echo "REPO=${GITHUB_REPOSITORY@L}" >>${GITHUB_ENV}
+        run: echo "REPO=${GITHUB_REPOSITORY@L}" >>${GITHUB_ENV}
 
   run-unittests-AMD:
     needs: [read_matrix, lowercase]
