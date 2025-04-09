@@ -1,12 +1,16 @@
 name: CI on push to branch
-on:
-  workflow_dispatch:
 
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
+on:
+  push:
+    branches:
+      - "**"
+    tags-ignore:
+      - "**"
+    paths-ignore: # this workflow still runs If other file changes are added concurrently to these.
+      - '.github/workflows/matrix.json'
+      - 'dockerfiles/Dockerfile'
+      - '.github/workflows/SCHED_build_docker.yml'
+  workflow_call:
 
 jobs:
   lint-and-format:
@@ -40,44 +44,8 @@ jobs:
         id: set-matrix
         run: echo "matrix=$(jq -c . < .github/workflows/matrix_limited.json)" >> $GITHUB_OUTPUT
 
-  get_branch_name:
-    runs-on: ubuntu-latest
-    outputs:
-      branch_name: ${{ steps.branch-names.outputs.current_branch }}
-      main_name: ${{ steps.branch-names.outputs.default_branch }}
-    steps:
-      - name: Get branch names
-        id: branch-names
-        uses: tj-actions/branch-names@v8
-
-  container_to_use:
-    runs-on: ubuntu-latest
-    needs: [ read_matrix, get_branch_name ]
-    outputs:
-      container_tag: ${{ steps.image_check.outputs.container_tag }}
-    permissions:
-      contents: read
-      packages: read
-    strategy:
-      fail-fast: false
-      matrix:
-        ${{ insert }}: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
-        exclude:
-          - python-version: 3.12
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Check what container to use from GHCR (current branch or default)
-        id: image_check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          chmod +x .github/workflows/get_container_to_use.sh
-          .github/workflows/get_container_to_use.sh ${{ matrix.singularity.provider }} ${{ matrix.singularity.version }} ${{ needs.get_branch_name.outputs.branch_name }}
-        shell: bash
-
   run-unittests-AMD:
-    needs: [ read_matrix, container_to_use ]
+    needs: read_matrix
     runs-on: ubuntu-latest
     name: Run unittests
     permissions:
@@ -86,7 +54,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.container_to_use.outputs.container_tag }}
+      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -103,7 +71,7 @@ jobs:
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
   run-unittests-ARM:
-    needs: [ read_matrix, container_to_use ]
+    needs: read_matrix
     runs-on: ubuntu-24.04-arm
     name: Run unittests
     permissions:
@@ -112,7 +80,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/deic-hpc/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.container_to_use.outputs.container_tag }}
+      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
