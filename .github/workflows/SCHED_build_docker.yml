@@ -104,3 +104,5 @@ jobs:
   dispatch-test-with-build:
     needs: build-docker-images
     uses: ./.github/workflows/CI_push.yml
+    with:
+      branch: ${{ github.ref_name }}

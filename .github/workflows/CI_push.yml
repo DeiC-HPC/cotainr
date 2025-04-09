@@ -11,6 +11,10 @@ on:
       - 'dockerfiles/Dockerfile'
       - '.github/workflows/SCHED_build_docker.yml'
   workflow_call:
+    inputs:
+      branch:
+        required: false
+        type: string
 
 jobs:
   lint-and-format:
@@ -54,7 +58,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -80,7 +84,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+      image: ghcr.io/${{ github.repository }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
