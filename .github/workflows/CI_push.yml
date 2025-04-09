@@ -64,7 +64,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/${{ REPO }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
+      image: ghcr.io/${{ env.REPO }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -90,7 +90,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     container:
-      image: ghcr.io/${{ REPO }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
+      image: ghcr.io/${{ env.REPO }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
