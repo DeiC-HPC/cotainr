@@ -53,9 +53,14 @@ jobs:
     outputs:
       lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
     steps:
+      - name:
+        id: string
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ github.ref_name }}
       - name: lowercase github.repository
         id: lowercase
-        run: echo "lowercase_repo=${GITHUB_REPOSITORY@L}" >>${GITHUB_OUTPUT}
+        run: echo "${{ steps.string.outputs.lowercase }}" >>${GITHUB_OUTPUT}
 
   run-unittests-AMD:
     needs: [read_matrix, lowercase]
