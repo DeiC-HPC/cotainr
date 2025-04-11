@@ -38,3 +38,4 @@ If you would like to contribute changes to the `cotainr` codebase or documentati
     tracing_logging
     releasing
     systems
+    docker_dev_env_vsc
