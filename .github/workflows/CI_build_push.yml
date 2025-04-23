@@ -92,7 +92,7 @@ jobs:
         with:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }} # ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
+          tags: ${{ env.REGISTRY }}/deic/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:test
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/arm64,linux/amd64
           cache-from: type=gha
@@ -105,4 +105,4 @@ jobs:
     needs: build-docker-images
     uses: ./.github/workflows/CI_push.yml
     with:
-      branch: ${{ github.ref_name }}
+      branch: test
