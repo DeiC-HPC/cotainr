@@ -54,7 +54,7 @@ jobs:
   sha:
     runs-on: ubuntu-latest
     outputs:
-        sha_env_files: ${{ steps.lowercase.outputs.sha256 }}
+        sha256: ${{ steps.lowercase.outputs.sha256 }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -123,7 +123,7 @@ jobs:
         with:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha_env_files }}
+          tags: ${{ env.REGISTRY }}/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha256 }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
