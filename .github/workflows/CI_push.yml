@@ -57,6 +57,7 @@ jobs:
       - name: lowercase github.repository
         id: lowercase
         run: echo "lowercase_repo=${{ steps.string.outputs.lowercase }}" >> ${GITHUB_OUTPUT}
+  
   sha:
     runs-on: ubuntu-latest
     outputs:
@@ -64,6 +65,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
       - uses: seepine/hash-files@v1
         id: get-hash
         with:
