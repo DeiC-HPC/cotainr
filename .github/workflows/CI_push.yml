@@ -11,10 +11,6 @@ on:
       - 'dockerfiles/Dockerfile'
       - '.github/workflows/CI_build_push.yml'
   workflow_call:
-    inputs:
-      branch:
-        required: false
-        type: string
 
 jobs:
   lint-and-format:
@@ -61,18 +57,37 @@ jobs:
       - name: lowercase github.repository
         id: lowercase
         run: echo "lowercase_repo=${{ steps.string.outputs.lowercase }}" >> ${GITHUB_OUTPUT}
-
-  run-unittests-AMD:
-    needs: [read_matrix, lowercase]
+  sha:
     runs-on: ubuntu-latest
+    outputs:
+        sha_env_files: ${{ steps.lowercase.outputs.sha256 }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.24'
+      - uses: actions/go-hashfiles@v0.0.1
+        id: get-hash
+        with:
+          patterns: |-
+            '.github/workflows/matrix.json'
+            'dockerfiles/Dockerfile'
+            '.github/workflows/CI_build_push.yml'
+      - name: Echo hash
+        run: echo "sha256=${{ steps.get-hash.outputs.hash }}" >> ${GITHUB_OUTPUT}
+    
+  run-unittests:
+    needs: [read_matrix, lowercase, sha]
     name: Run unittests
     permissions:
       packages: read
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+    runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
+      image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha_env_files }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -88,28 +103,28 @@ jobs:
       - name: Run unittests via pytest
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
-  run-unittests-ARM:
-    needs: [read_matrix, lowercase]
-    runs-on: ubuntu-24.04-arm
-    name: Run unittests
-    permissions:
-      packages: read
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
-    container:
-      image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-      - name: Install python
-        run: uv python install ${{ matrix.python-version }}
-      - name: Install test dependencies
-        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
-      - name: Run unittests via pytest
-        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+  # run-unittests-ARM:
+  #   needs: [read_matrix, lowercase, sha]
+  #   runs-on: ubuntu-24.04-arm
+  #   name: Run unittests
+  #   permissions:
+  #     packages: read
+  #   strategy:
+  #     fail-fast: false
+  #     matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+  #   container:
+  #     image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha_env_files }}
+  #     credentials:
+  #       username: ${{ github.actor }}
+  #       password: ${{ secrets.GITHUB_TOKEN }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     - name: Set up uv
+  #       uses: astral-sh/setup-uv@v5
+  #     - name: Install python
+  #       run: uv python install ${{ matrix.python-version }}
+  #     - name: Install test dependencies
+  #       run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
+  #     - name: Run unittests via pytest
+  #       run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"

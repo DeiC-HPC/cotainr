@@ -37,9 +37,43 @@ jobs:
        id: set-matrix
        run: echo "matrix=$(jq -c . < .github/workflows/matrix.json)" >> $GITHUB_OUTPUT
 
-  build-docker-images:
-    needs: read_matrix
+  lowercase:
+      runs-on: ubuntu-latest
+      outputs:
+        lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
+      steps:
+        - name:
+          id: string
+          uses: Entepotenz/change-string-case-action-min-dependencies@v1
+          with:
+            string: ${{ github.repository }}
+        - name: lowercase github.repository
+          id: lowercase
+          run: echo "lowercase_repo=${{ steps.string.outputs.lowercase }}" >> ${GITHUB_OUTPUT}
+
+  sha:
     runs-on: ubuntu-latest
+    outputs:
+        sha_env_files: ${{ steps.lowercase.outputs.sha256 }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.24'
+      - uses: actions/go-hashfiles@v0.0.1
+        id: get-hash
+        with:
+          patterns: |-
+            '.github/workflows/matrix.json'
+            'dockerfiles/Dockerfile'
+            '.github/workflows/CI_build_push.yml'
+      - name: Echo hash
+        run: echo "sha256=${{ steps.get-hash.outputs.hash }}" >> ${GITHUB_OUTPUT}
+
+  build-docker-images:
+    needs: [read_matrix, lowercase, sha]
+    
     permissions:
       contents: read
       packages: write
@@ -55,7 +89,7 @@ jobs:
             - python-version: 3.10
             - python-version: 3.11
             - python-version: 3.12
-
+    runs-on: ${{ matrix.os }}
     steps:
     #Set up QEMU for ARM support
       - name: Set up QEMU
@@ -92,7 +126,7 @@ jobs:
         with:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.REGISTRY }}/deic/cotainr/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:test
+          tags: ${{ env.REGISTRY }}/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha_env_files }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/arm64,linux/amd64
           cache-from: type=gha
@@ -104,5 +138,3 @@ jobs:
   dispatch-test-with-build:
     needs: build-docker-images
     uses: ./.github/workflows/CI_push.yml
-    with:
-      branch: test
