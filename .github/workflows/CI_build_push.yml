@@ -87,11 +87,12 @@ jobs:
             - python-version: 3.10
             - python-version: 3.11
             - python-version: 3.12
+            - os: ubuntu-24.04-arm
     runs-on: ${{ matrix.os }}
     steps:
-    # #Set up QEMU for ARM support
-    #   - name: Set up QEMU
-    #     uses: docker/setup-qemu-action@v3
+    #Set up QEMU for ARM support
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
         # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -126,6 +127,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha256 }}
           labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/arm64,linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
