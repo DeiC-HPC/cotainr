@@ -61,15 +61,10 @@ jobs:
   sha:
     runs-on: ubuntu-latest
     outputs:
-        sha_env_files: ${{ steps.lowercase.outputs.sha256 }}
+        sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
-          ls ${{ github.workspace }}/dockerfiles
-          ls ${{ github.workspace }}/.github/workflows
       - uses: seepine/hash-files@v1
         id: get-hash
         with:
@@ -78,8 +73,9 @@ jobs:
             **/Dockerfile
             **/CI_build_push.yml
       - name: Echo hash
+        id: setoutput
         run: echo "sha256=${{ steps.get-hash.outputs.hash }}" >> ${GITHUB_OUTPUT}
-    
+
   run-unittests:
     needs: [read_matrix, lowercase, sha]
     name: Run unittests
@@ -90,7 +86,7 @@ jobs:
       matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha_env_files }}
+      image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha256 }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -116,7 +112,7 @@ jobs:
   #     fail-fast: false
   #     matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
   #   container:
-  #     image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha_env_files }}
+  #     image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha256 }}
   #     credentials:
   #       username: ${{ github.actor }}
   #       password: ${{ secrets.GITHUB_TOKEN }}
