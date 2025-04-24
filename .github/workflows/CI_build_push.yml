@@ -54,7 +54,7 @@ jobs:
   sha:
     runs-on: ubuntu-latest
     outputs:
-        sha256: ${{ steps.lowercase.outputs.sha256 }}
+        sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -66,6 +66,7 @@ jobs:
             **/Dockerfile
             **/CI_build_push.yml
       - name: Echo hash
+        id: setoutput
         run: echo "sha256=${{ steps.get-hash.outputs.hash }}" >> ${GITHUB_OUTPUT}
 
   build-docker-images:
@@ -88,9 +89,9 @@ jobs:
             - python-version: 3.12
     runs-on: ${{ matrix.os }}
     steps:
-    #Set up QEMU for ARM support
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+    # #Set up QEMU for ARM support
+    #   - name: Set up QEMU
+    #     uses: docker/setup-qemu-action@v3
 
         # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
