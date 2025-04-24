@@ -81,13 +81,6 @@ jobs:
     strategy:
         matrix:
           ${{ insert }}: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
-          #We do not want to build different containers for different python images. So we need to exclude them from the matrix.
-          exclude:
-            - python-version: 3.9
-            - python-version: 3.10
-            - python-version: 3.11
-            - python-version: 3.12
-            - os: ubuntu-24.04-arm
     
     # only runs on ubuntu-latest with qemu. Using different runners for arm and amd64 results in different images on ghcr. So we need slow qemu.  
     runs-on: ${{ matrix.os }}
