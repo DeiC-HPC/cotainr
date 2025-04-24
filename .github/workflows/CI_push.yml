@@ -64,10 +64,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - uses: actions/setup-go@v3
-        with:
-          go-version: '1.24'
-      - uses: actions/go-hashfiles@v0.0.1
+      - uses: seepine/hash-files@v1
         id: get-hash
         with:
           patterns: |-
