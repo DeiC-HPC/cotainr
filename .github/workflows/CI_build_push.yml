@@ -71,7 +71,7 @@ jobs:
 
   build-docker-images:
     needs: [read_matrix, lowercase, sha]
-    # only runs on ubuntu-latest with qemu. Using different runners for arm and amd64 results in different images on ghcr. So we need slow qemu.  
+    # only runs on ubuntu-latest with qemu. Using different runners for arm and amd64 results in different images on ghcr. So we need slow qemu.
     runs-on: ubuntu-latest
     permissions:
       contents: read

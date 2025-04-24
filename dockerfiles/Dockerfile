@@ -35,7 +35,7 @@ RUN set -eux ; \
         squashfs-tools \
         squashfs-tools-ng \
         zlib1g-dev\
-        libglib2.0-dev        
+        libglib2.0-dev
 
 # Download apptainer/singularity
 RUN set -eux ; \
@@ -46,10 +46,10 @@ RUN set -eux ; \
         wget -O singularity_installer.tar.gz https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-ce-${SINGULARITY_VERSION}.tar.gz;\
     fi
 
-# just hardcoded the goversion for now to the latest. the script below extracts the min required go version from the mconfig file. 
+# just hardcoded the goversion for now to the latest. the script below extracts the min required go version from the mconfig file.
 # However, singularity-ce ommits the minor version in the mconfig file so the download fails.
 # export GOVERSION=$(grep -re 'hstgo_version=' mconfig | sed 's/.*"\(.*\)".*/\1/');\
-# Todo: the if for the arch is a bit questionable atm. 
+# Todo: the if for the arch is a bit questionable atm.
 RUN set -eux;\
     export OS=linux;\
     export GOVERSION=1.24.0;\
