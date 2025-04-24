@@ -67,10 +67,10 @@ jobs:
       - uses: seepine/hash-files@v1
         id: get-hash
         with:
-          patterns: |-
-            '.github/workflows/matrix.json'
-            'dockerfiles/Dockerfile'
-            '.github/workflows/CI_build_push.yml'
+          patterns: |
+            '**/matrix.json'
+            '**/Dockerfile'
+            '**/CI_build_push.yml'
       - name: Echo hash
         run: echo "sha256=${{ steps.get-hash.outputs.hash }}" >> ${GITHUB_OUTPUT}
     
