@@ -69,9 +69,9 @@ jobs:
         id: get-hash
         with:
           patterns: |
-            **/matrix.json
-            **/Dockerfile
-            **/CI_build_push.yml
+            .github/workflows/matrix.json
+            dockerfiles/Dockerfile
+            .github/workflows/CI_build_push.yml
       - name: Echo hash
         id: setoutput
         run: echo "sha256=${{ steps.get-hash.outputs.hash }}" >> ${GITHUB_OUTPUT}
