@@ -68,6 +68,8 @@ jobs:
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
+          ls ${{ github.workspace }}/dockerfiles
+          ls ${{ github.workspace }}/.github/workflows
       - uses: seepine/hash-files@v1
         id: get-hash
         with:
