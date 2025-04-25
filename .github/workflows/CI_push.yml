@@ -36,13 +36,24 @@ jobs:
   read_matrix:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix: ${{ steps.set-output.outputs.matrix }}
     steps:
       - name: Checkout to repository
         uses: actions/checkout@v4
       - name: Set matrix data
         id: set-matrix
-        run: echo "matrix=$(jq '{"python-version:" [ ."python-version" | first, last ],"singularity:" [ .singularity | group_by(.provider) | map(first, last) | unique]}' .github/workflows/matrix.json)" >> $GITHUB_OUTPUT
+        uses: sergeysova/jq-action@v2
+        with:
+          cmd: | 
+            jq -c '
+              {
+                "python-version": [ ."python-version" | first, last ],
+                "singularity": [ .singularity | group_by(.provider) | map(first, last) | unique]
+              }
+            ' .github/workflows/matrix.json
+      - name: Set outputs
+        id: set-output
+        run: echo "matrix=${{steps.set-matrix.outputs.value}}" >> $GITHUB_OUTPUT
 
   lowercase:
     runs-on: ubuntu-latest
