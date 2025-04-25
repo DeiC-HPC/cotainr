@@ -44,7 +44,7 @@ jobs:
         id: set-matrix
         uses: sergeysova/jq-action@v2
         with:
-          cmd: | 
+          cmd: |
             jq -c '
               {
                 "python-version": [ ."python-version" | first, last ],
