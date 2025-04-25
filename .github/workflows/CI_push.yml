@@ -48,7 +48,8 @@ jobs:
             jq -c '
               {
                 "python-version": [ ."python-version" | first, last ],
-                "singularity": [ .singularity | group_by(.provider) | map(first, last) | unique]
+                singularity,
+                os
               }
             ' .github/workflows/matrix.json
       - name: Set outputs
