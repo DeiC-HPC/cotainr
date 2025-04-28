@@ -26,53 +26,30 @@ env:
 
 jobs:
 
-  read_matrix:
+  preparation:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
+      sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
      - name: Checkout to repository
        uses: actions/checkout@v4
      - name: Set matrix data
        id: set-matrix
        run: echo "matrix=$(jq 'pick(.singularity)' -c .github/workflows/matrix.json)" >> $GITHUB_OUTPUT
-
-  lowercase:
-      runs-on: ubuntu-latest
-      outputs:
-        lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
-      steps:
-        - name:
-          id: lowercase
-          run: |
-              lowercase_repo="${{ github.repository }}" 
-              lowercase_repo="${lowercase_repo,,}"
-              echo "lowercase_repo=$lowercase_repo" >> $GITHUB_OUTPUT
-          # run: echo "lowercase_repo=$(echo '${{ github.repository }}' | jq -R 'ascii_downcase')" >> $GITHUB_OUTPUT
-        # - name: lowercase github.repository
-        #   id: lowercase
-        #   run: echo "lowercase_repo=${{ steps.string.outputs.value }}" >> ${GITHUB_OUTPUT}
-
-  sha:
-    runs-on: ubuntu-latest
-    outputs:
-        sha256: ${{ steps.setoutput.outputs.sha256 }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      # - uses: seepine/hash-files@v1
-      #   id: get-hash
-      #   with:
-      #     patterns: |
-      #       .github/workflows/matrix.json
-      #       dockerfiles/Dockerfile
-      #       .github/workflows/CI_build_push.yml
-      - name: Echo hash
-        id: setoutput
-        run: echo "sha256=${{ hashFiles('.github/workflows/matrix.json', 'dockerfiles/Dockerfile', '.github/workflows/CI_build_push.yml') }}" >> $GITHUB_OUTPUT
+     - name:
+       id: lowercase
+       run: |
+            lowercase_repo="${{ github.repository }}" 
+            lowercase_repo="${lowercase_repo,,}"
+            echo "lowercase_repo=$lowercase_repo" >> $GITHUB_OUTPUT
+     - name: Echo hash
+       id: setoutput
+       run: echo "sha256=${{ hashFiles('.github/workflows/matrix.json', 'dockerfiles/Dockerfile', '.github/workflows/CI_build_push.yml') }}" >> $GITHUB_OUTPUT
 
   build-docker-images:
-    needs: [read_matrix, lowercase, sha]
+    needs: [preparation]
     # only runs on ubuntu-latest with qemu. Using different runners for arm and amd64 results in different images on ghcr. So we need slow qemu.
     runs-on: ubuntu-latest
     permissions:
@@ -83,7 +60,7 @@ jobs:
       id-token: write
     strategy:
         matrix:
-          ${{ insert }}: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+          ${{ insert }}: ${{ fromJson(needs.preparation.outputs.matrix) }}
 
     steps:
     #Set up QEMU for ARM support
@@ -122,7 +99,7 @@ jobs:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.REGISTRY }}/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha256 }}
+            ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.preparation.outputs.sha256 }}
             ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/arm64,linux/amd64
