@@ -46,17 +46,18 @@ jobs:
         id: set-matrix
         run: |
             matrix=$(jq -c '
-              {
-                "python-version": [ (."python-version" | first), (."python-version" | last) ],
-                "singularity": (.singularity | group_by(.provider) | map([first, last]) | unique),
-                "os": .os
-              }
+            {
+              "python-version": (."python-version" | [ .[0], .[-1] ]),
+              "singularity": (.singularity | group_by(.provider) | map([.[0], .[-1]]) | unique),
+              "os": .os
+            }
             ' .github/workflows/matrix.json)
+            echo "$matrix"
             echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: lowercase github.repository
         id: lowercase
         run: |
-              lowercase_repo="${{ github.repository }}" 
+              lowercase_repo="${{ github.repository }}"
               lowercase_repo="${lowercase_repo,,}"
               echo "lowercase_repo=$lowercase_repo" >> $GITHUB_OUTPUT
       - name: Echo hash
@@ -86,4 +87,3 @@ jobs:
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
-
