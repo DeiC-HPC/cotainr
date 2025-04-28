@@ -36,7 +36,7 @@ jobs:
   preparation:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-output.outputs.matrix }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
       lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
       sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
@@ -44,19 +44,15 @@ jobs:
         uses: actions/checkout@v4
       - name: Set matrix data
         id: set-matrix
-        uses: sergeysova/jq-action@v2
-        with:
-          cmd: |
-            jq -c '
+        run: |
+            matrix=jq -c '
               {
                 "python-version": [ ."python-version" | first, last ],
                 "singularity": .singularity | group_by(.provider) | map(first, last) | unique,
                 os
               }
             ' .github/workflows/matrix.json
-      - name: Set outputs
-        id: set-output
-        run: echo 'matrix=${{steps.set-matrix.outputs.value}}' >> $GITHUB_OUTPUT
+            echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: lowercase github.repository
         id: lowercase
         run: |
@@ -84,8 +80,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      # - name: Set up uv
-      #   uses: astral-sh/setup-uv@v5
       - name: Install python
         run: uv python install ${{ matrix.python-version }}
       - name: Install test dependencies
