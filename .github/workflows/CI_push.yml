@@ -33,10 +33,12 @@ jobs:
       - name: Run pre-commit on all files
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
 
-  read_matrix:
+  preparation:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-output.outputs.matrix }}
+      lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
+      sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
       - name: Checkout to repository
         uses: actions/checkout@v4
@@ -55,58 +57,35 @@ jobs:
       - name: Set outputs
         id: set-output
         run: echo 'matrix=${{steps.set-matrix.outputs.value}}' >> $GITHUB_OUTPUT
-
-  lowercase:
-    runs-on: ubuntu-latest
-    outputs:
-      lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
-    steps:
-      - name:
-        id: string
-        uses: Entepotenz/change-string-case-action-min-dependencies@v1
-        with:
-          string: ${{ github.repository }}
       - name: lowercase github.repository
         id: lowercase
-        run: echo "lowercase_repo=${{ steps.string.outputs.lowercase }}" >> ${GITHUB_OUTPUT}
-
-  sha:
-    runs-on: ubuntu-latest
-    outputs:
-        sha256: ${{ steps.setoutput.outputs.sha256 }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - uses: seepine/hash-files@v1
-        id: get-hash
-        with:
-          patterns: |
-            .github/workflows/matrix.json
-            dockerfiles/Dockerfile
-            .github/workflows/CI_build_push.yml
+        run: |
+              lowercase_repo="${{ github.repository }}" 
+              lowercase_repo="${lowercase_repo,,}"
+              echo "lowercase_repo=$lowercase_repo" >> $GITHUB_OUTPUT
       - name: Echo hash
         id: setoutput
-        run: echo "sha256=${{ steps.get-hash.outputs.hash }}" >> ${GITHUB_OUTPUT}
+        run: echo "sha256=${{ hashFiles('.github/workflows/matrix.json', 'dockerfiles/Dockerfile', '.github/workflows/CI_build_push.yml') }}" >> $GITHUB_OUTPUT
 
   run-unittests:
-    needs: [read_matrix, lowercase, sha]
+    needs: [preparation]
     name: Run unittests
     permissions:
       packages: read
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.preparation.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha256 }}
+      image: ghcr.io/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.preparation.outputs.sha256 }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
+      # - name: Set up uv
+      #   uses: astral-sh/setup-uv@v5
       - name: Install python
         run: uv python install ${{ matrix.python-version }}
       - name: Install test dependencies
@@ -114,28 +93,3 @@ jobs:
       - name: Run unittests via pytest
         run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
 
-  # run-unittests-ARM:
-  #   needs: [read_matrix, lowercase, sha]
-  #   runs-on: ubuntu-24.04-arm
-  #   name: Run unittests
-  #   permissions:
-  #     packages: read
-  #   strategy:
-  #     fail-fast: false
-  #     matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
-  #   container:
-  #     image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.sha.outputs.sha256 }}
-  #     credentials:
-  #       username: ${{ github.actor }}
-  #       password: ${{ secrets.GITHUB_TOKEN }}
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #     - name: Set up uv
-  #       uses: astral-sh/setup-uv@v5
-  #     - name: Install python
-  #       run: uv python install ${{ matrix.python-version }}
-  #     - name: Install test dependencies
-  #       run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
-  #     - name: Run unittests via pytest
-  #       run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
