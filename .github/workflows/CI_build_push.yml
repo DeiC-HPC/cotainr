@@ -44,7 +44,7 @@ jobs:
       steps:
         - name:
           id: lowercase
-          run: echo "lowercase_repo='${{ github.repository }}' | jq -R 'ascii_downcase'" >> $GITHUB_OUTPUT
+          run: echo "lowercase_repo=$('${{ github.repository }}' | jq -R 'ascii_downcase')" >> $GITHUB_OUTPUT
         # - name: lowercase github.repository
         #   id: lowercase
         #   run: echo "lowercase_repo=${{ steps.string.outputs.value }}" >> ${GITHUB_OUTPUT}
