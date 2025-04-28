@@ -60,16 +60,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - uses: seepine/hash-files@v1
-        id: get-hash
-        with:
-          patterns: |
-            .github/workflows/matrix.json
-            dockerfiles/Dockerfile
-            .github/workflows/CI_build_push.yml
+      # - uses: seepine/hash-files@v1
+      #   id: get-hash
+      #   with:
+      #     patterns: |
+      #       .github/workflows/matrix.json
+      #       dockerfiles/Dockerfile
+      #       .github/workflows/CI_build_push.yml
       - name: Echo hash
         id: setoutput
-        run: echo "sha256=${{ steps.get-hash.outputs.hash }}" >> ${GITHUB_OUTPUT}
+        run: | 
+          sha=hashFiles('.github/workflows/matrix.json', 'dockerfiles/Dockerfile', '.github/workflows/CI_build_push.yml')
+          echo "sha256=$sha" >> ${GITHUB_OUTPUT}
 
   build-docker-images:
     needs: [read_matrix, lowercase, sha]
