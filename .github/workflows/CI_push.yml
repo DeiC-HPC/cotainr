@@ -47,9 +47,9 @@ jobs:
         run: |
             matrix=$(jq -c '
               {
-                "python-version": [ ."python-version" | first, last ],
-                "singularity": .singularity | group_by(.provider) | map(first, last) | unique,
-                os
+                "python-version": [ (."python-version" | first), (."python-version" | last) ],
+                "singularity": (.singularity | group_by(.provider) | map([first, last]) | unique),
+                "os": .os
               }
             ' .github/workflows/matrix.json)
             echo "matrix=$matrix" >> $GITHUB_OUTPUT
