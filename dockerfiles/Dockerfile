@@ -77,9 +77,8 @@ RUN set -eux;\
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 
 # Run the installer then remove it
-RUN set -eux;\ 
+RUN set -eux;\
     sh /uv-installer.sh && rm /uv-installer.sh
 
 # Ensure the installed binary is on the `PATH`
 ENV PATH="/root/.local/bin/:$PATH"
- 

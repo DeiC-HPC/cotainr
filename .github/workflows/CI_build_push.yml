@@ -41,7 +41,7 @@ jobs:
      - name:
        id: lowercase
        run: |
-            lowercase_repo="${{ github.repository }}" 
+            lowercase_repo="${{ github.repository }}"
             lowercase_repo="${lowercase_repo,,}"
             echo "lowercase_repo=$lowercase_repo" >> $GITHUB_OUTPUT
      - name: Echo hash
