@@ -36,7 +36,7 @@ jobs:
   preparation:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix: ${{ steps.set-output.outputs.matrix }}
       lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
       sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
@@ -45,13 +45,13 @@ jobs:
       - name: Set matrix data
         id: set-matrix
         run: |
-            matrix=jq -c '\
-              {\
-                "python-version": [ ."python-version" | first, last ],\
-                "singularity": .singularity | group_by(.provider) | map(first, last) | unique,\
-                os\
-              }\
-            ' .github/workflows/matrix.json
+            matrix=$(jq -c '
+              {
+                "python-version": [ ."python-version" | first, last ],
+                "singularity": .singularity | group_by(.provider) | map(first, last) | unique,
+                os
+              }
+            ' .github/workflows/matrix.json)
             echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: lowercase github.repository
         id: lowercase
