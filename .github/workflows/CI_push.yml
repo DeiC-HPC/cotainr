@@ -45,12 +45,12 @@ jobs:
       - name: Set matrix data
         id: set-matrix
         run: |
-            matrix=jq -c '
-              {
-                "python-version": [ ."python-version" | first, last ],
-                "singularity": .singularity | group_by(.provider) | map(first, last) | unique,
-                os
-              }
+            matrix=jq -c '\
+              {\
+                "python-version": [ ."python-version" | first, last ],\
+                "singularity": .singularity | group_by(.provider) | map(first, last) | unique,\
+                os\
+              }\
             ' .github/workflows/matrix.json
             echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: lowercase github.repository
