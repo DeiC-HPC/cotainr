@@ -72,3 +72,6 @@ RUN set -eux;\
 
 RUN set -eux;\
     singularity --version
+
+RUN set -eux;\
+    wget -qO- https://astral.sh/uv/install.sh | sh
