@@ -43,11 +43,11 @@ jobs:
         lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
       steps:
         - name:
-          id: string
-          run: echo '${{ github.repository }}' | jq -R 'ascii_downcase'
-        - name: lowercase github.repository
           id: lowercase
-          run: echo "lowercase_repo=${{ steps.string.outputs.value }}" >> ${GITHUB_OUTPUT}
+          run: echo "lowercase_repo='${{ github.repository }}' | jq -R 'ascii_downcase'" >> $GITHUB_OUTPUT
+        # - name: lowercase github.repository
+        #   id: lowercase
+        #   run: echo "lowercase_repo=${{ steps.string.outputs.value }}" >> ${GITHUB_OUTPUT}
 
   sha:
     runs-on: ubuntu-latest
