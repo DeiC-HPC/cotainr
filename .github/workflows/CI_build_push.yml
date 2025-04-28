@@ -69,9 +69,7 @@ jobs:
       #       .github/workflows/CI_build_push.yml
       - name: Echo hash
         id: setoutput
-        run: | 
-          sha=hashFiles('.github/workflows/matrix.json', 'dockerfiles/Dockerfile', '.github/workflows/CI_build_push.yml')
-          echo "sha256=$sha" >> ${GITHUB_OUTPUT}
+        run: echo "sha256=${{ hashFiles('.github/workflows/matrix.json', 'dockerfiles/Dockerfile', '.github/workflows/CI_build_push.yml') }}" >> $GITHUB_OUTPUT
 
   build-docker-images:
     needs: [read_matrix, lowercase, sha]
