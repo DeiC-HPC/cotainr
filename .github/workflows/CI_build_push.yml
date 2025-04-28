@@ -44,12 +44,10 @@ jobs:
       steps:
         - name:
           id: string
-          uses: Entepotenz/change-string-case-action-min-dependencies@v1
-          with:
-            string: ${{ github.repository }}
+          run: '${{ github.repository }}' | jq -R 'ascii_downcase'
         - name: lowercase github.repository
           id: lowercase
-          run: echo "lowercase_repo=${{ steps.string.outputs.lowercase }}" >> ${GITHUB_OUTPUT}
+          run: echo "lowercase_repo=${{ steps.string.outputs.value }}" >> ${GITHUB_OUTPUT}
 
   sha:
     runs-on: ubuntu-latest
