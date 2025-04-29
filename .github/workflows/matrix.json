@@ -22,11 +22,13 @@
   "os":[
     {
      "runs_on": "ubuntu-latest",
-      "tag": "amd64"
+      "tag": "amd64",
+      "platform": "linux/amd64"
     },
     {
      "runs_on":  "ubuntu-24.04-arm",
-     "tag": "arm"
+     "tag": "arm",
+     "platform": "linux/arm64"
     }
   ]
 }

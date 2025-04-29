@@ -122,6 +122,8 @@ jobs:
           # labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          platforms: ${{ matrix.os.platform }}
+          provenance: false
           build-args: |
                       SINGULARITY_PROVIDER=${{ matrix.singularity.provider }}
                       SINGULARITY_VERSION=${{ matrix.singularity.version }}
