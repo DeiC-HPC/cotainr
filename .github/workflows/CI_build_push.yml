@@ -165,7 +165,7 @@ jobs:
             $IMAGE:x86-${{ needs.preparation.outputs.sha256 }} \
             $IMAGE:arm-${{ needs.preparation.outputs.sha256 }}
 
-          docker manifest annotate $IMAGE:${{ needs.preparation.outputs.sha256 }}  ${{ steps.meta.outputs.tags }}
+          docker manifest annotate $IMAGE:${{ needs.preparation.outputs.sha256 }} ${{ steps.meta.outputs.tags }}
 
           for TAG in $IMAGE:${{ needs.preparation.outputs.sha256 }} ${{ steps.meta.outputs.tags }}; do
             docker manifest push $TAG
