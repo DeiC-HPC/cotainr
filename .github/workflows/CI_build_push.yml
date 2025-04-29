@@ -29,15 +29,34 @@ jobs:
   preparation:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix_with_os: ${{ steps.set-matrix-with-os.outputs.matrix_with_os }}
+      matrix_without_os: ${{ steps.set-matrix-without-os.outputs.matrix_without_os }}
       lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
       sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
      - name: Checkout to repository
        uses: actions/checkout@v4
      - name: Set matrix data
-       id: set-matrix
-       run: echo "matrix=$(jq 'pick(.singularity)' -c .github/workflows/matrix.json)" >> $GITHUB_OUTPUT
+       id: set-matrix-with-os
+       run: |
+            matrix=$(jq -c '
+            {
+              "singularity": .singularity,
+              "os": .os
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix_with_os=$matrix" >> $GITHUB_OUTPUT
+     - name: Set matrix data without os
+       id: set-matrix-without-os
+       run: |
+            matrix=$(jq -c '
+            {
+              "singularity": .singularity,
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix_without_os=$matrix" >> $GITHUB_OUTPUT
      - name:
        id: lowercase
        run: |
@@ -51,7 +70,7 @@ jobs:
   build-docker-images:
     needs: [preparation]
     # only runs on ubuntu-latest with qemu. Using different runners for arm and amd64 results in different images on ghcr. So we need slow qemu.
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os.runs_on }}
     permissions:
       contents: read
       packages: write
@@ -60,12 +79,12 @@ jobs:
       id-token: write
     strategy:
         matrix:
-          ${{ insert }}: ${{ fromJson(needs.preparation.outputs.matrix) }}
+          ${{ insert }}: ${{ fromJson(needs.preparation.outputs.matrix_with_os) }}
 
     steps:
     #Set up QEMU for ARM support
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
 
         # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -99,8 +118,7 @@ jobs:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.preparation.outputs.sha256 }}
-            ${{ steps.meta.outputs.tags }}
+            ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ matrix.os.tag }}-${{ needs.preparation.outputs.sha256 }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/arm64,linux/amd64
           cache-from: type=gha
@@ -109,6 +127,50 @@ jobs:
                       SINGULARITY_PROVIDER=${{ matrix.singularity.provider }}
                       SINGULARITY_VERSION=${{ matrix.singularity.version }}
 
+  create-manifest:
+    name: Create Multi-Arch Manifest
+    needs: [build-docker-images]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+    strategy:
+        matrix:
+          ${{ insert }}: ${{ fromJson(needs.preparation.outputs.matrix_without_os) }}
+
+    steps:
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and Push Manifest
+        run: |
+          IMAGE=${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+          docker manifest create $IMAGE:${{ needs.preparation.outputs.sha256 }} \
+            $IMAGE:x86-${{ needs.preparation.outputs.sha256 }} \
+            $IMAGE:arm-${{ needs.preparation.outputs.sha256 }}
+
+          docker manifest annotate $IMAGE:${{ needs.preparation.outputs.sha256 }}  ${{ steps.meta.outputs.tags }}
+
+          for TAG in $IMAGE:${{ needs.preparation.outputs.sha256 }} ${{ steps.meta.outputs.tags }}; do
+            docker manifest push $TAG
+          done
+
   dispatch-test-with-build:
-    needs: build-docker-images
+    needs: create-manifest
     uses: ./.github/workflows/CI_push.yml

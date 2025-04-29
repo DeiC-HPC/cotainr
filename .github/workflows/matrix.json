@@ -20,7 +20,13 @@
       }
   ],
   "os":[
-    "ubuntu-latest",
-    "ubuntu-24.04-arm"
+    {
+     "runs_on": "ubuntu-latest",
+      "tag_name": "x86"
+    },
+    {
+     "runs_on":  "ubuntu-24.04-arm",
+     "tag_name": "arm"
+    }
   ]
 }
