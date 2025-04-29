@@ -164,7 +164,7 @@ jobs:
           IMAGE=${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
           docker manifest create $IMAGE:${{ needs.preparation.outputs.sha256 }} \
             $IMAGE:amd64-${{ needs.preparation.outputs.sha256 }} \
-            $IMAGE:arm-${{ needs.preparation.outputs.sha256 }}
+            $IMAGE:arm64-${{ needs.preparation.outputs.sha256 }}
 
           docker manifest annotate $IMAGE:${{ needs.preparation.outputs.sha256 }} $IMAGE:amd64-${{ needs.preparation.outputs.sha256 }} --arch amd64
           docker manifest annotate $IMAGE:${{ needs.preparation.outputs.sha256 }} $IMAGE:arm64-${{ needs.preparation.outputs.sha256 }} --arch arm64
