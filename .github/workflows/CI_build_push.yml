@@ -169,7 +169,7 @@ jobs:
           docker manifest annotate $IMAGE:${{ needs.preparation.outputs.sha256 }} $IMAGE:amd64-${{ needs.preparation.outputs.sha256 }} --arch amd64
           docker manifest annotate $IMAGE:${{ needs.preparation.outputs.sha256 }} $IMAGE:arm64-${{ needs.preparation.outputs.sha256 }} --arch arm64
 
-          docker manifest push $IMAGE:$HASH
+          docker manifest push $IMAGE:${{ needs.preparation.outputs.sha256 }}
 
 
   dispatch-test-with-build:
