@@ -22,7 +22,7 @@
   "os":[
     {
      "runs_on": "ubuntu-latest",
-      "tag": "x86"
+      "tag": "amd64"
     },
     {
      "runs_on":  "ubuntu-24.04-arm",
