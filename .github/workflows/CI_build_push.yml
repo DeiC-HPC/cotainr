@@ -120,7 +120,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ matrix.os.tag }}-${{ needs.preparation.outputs.sha256 }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/arm64,linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
