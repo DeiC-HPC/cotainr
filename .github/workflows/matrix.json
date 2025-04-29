@@ -1,6 +1,5 @@
 {
   "python-version": [
-    "NA",
     "3.9",
     "3.10",
     "3.11",
@@ -19,5 +18,17 @@
         "provider": "singularity-ce",
         "version": "4.2.1"
       }
+  ],
+  "os":[
+    {
+     "runs_on": "ubuntu-latest",
+      "tag": "amd64",
+      "platform": "linux/amd64"
+    },
+    {
+     "runs_on":  "ubuntu-24.04-arm",
+     "tag": "arm64",
+     "platform": "linux/arm64"
+    }
   ]
 }

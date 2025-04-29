@@ -26,20 +26,51 @@ env:
 
 jobs:
 
-  read_matrix:
+  preparation:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix_with_os: ${{ steps.set-matrix-with-os.outputs.matrix_with_os }}
+      matrix_without_os: ${{ steps.set-matrix-without-os.outputs.matrix_without_os }}
+      lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
+      sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
      - name: Checkout to repository
        uses: actions/checkout@v4
      - name: Set matrix data
-       id: set-matrix
-       run: echo "matrix=$(jq -c . < .github/workflows/matrix.json)" >> $GITHUB_OUTPUT
+       id: set-matrix-with-os
+       run: |
+            matrix=$(jq -c '
+            {
+              "singularity": .singularity,
+              "os": .os
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix_with_os=$matrix" >> $GITHUB_OUTPUT
+     - name: Set matrix data without os
+       id: set-matrix-without-os
+       run: |
+            matrix=$(jq -c '
+            {
+              "singularity": .singularity,
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix_without_os=$matrix" >> $GITHUB_OUTPUT
+     - name:
+       id: lowercase
+       run: |
+            lowercase_repo="${{ github.repository }}"
+            lowercase_repo="${lowercase_repo,,}"
+            echo "lowercase_repo=$lowercase_repo" >> $GITHUB_OUTPUT
+     - name: Echo hash
+       id: setoutput
+       run: echo "sha256=${{ hashFiles('.github/workflows/matrix.json', 'dockerfiles/Dockerfile', '.github/workflows/CI_build_push.yml') }}" >> $GITHUB_OUTPUT
 
   build-docker-images:
-    needs: read_matrix
-    runs-on: ubuntu-latest
+    needs: [preparation]
+    # only runs on ubuntu-latest with qemu. Using different runners for arm and amd64 results in different images on ghcr. So we need slow qemu.
+    runs-on: ${{ matrix.os.runs_on }}
     permissions:
       contents: read
       packages: write
@@ -48,18 +79,12 @@ jobs:
       id-token: write
     strategy:
         matrix:
-          ${{ insert }}: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
-          #We do not want to build different containers for different python images. So we need to exclude them from the matrix.
-          exclude:
-            - python-version: 3.9
-            - python-version: 3.10
-            - python-version: 3.11
-            - python-version: 3.12
+          ${{ insert }}: ${{ fromJson(needs.preparation.outputs.matrix_with_os) }}
 
     steps:
     #Set up QEMU for ARM support
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      # - name: Set up QEMU
+      #   uses: docker/setup-qemu-action@v3
 
         # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
@@ -83,6 +108,7 @@ jobs:
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+          labels: org.opencontainers.image.description=${{ matrix.os.platform }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -92,17 +118,59 @@ jobs:
         with:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }} # ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ github.ref_name }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/arm64,linux/amd64
+          tags: |
+            ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ matrix.os.tag }}-${{ needs.preparation.outputs.sha256 }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          platforms: ${{ matrix.os.platform }}
+          provenance: false
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
                       SINGULARITY_PROVIDER=${{ matrix.singularity.provider }}
                       SINGULARITY_VERSION=${{ matrix.singularity.version }}
 
+  create-manifest:
+    name: Create Multi-Arch Manifest
+    needs: [preparation, build-docker-images]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      # This is used to complete the identity challenge
+      # with sigstore/fulcio when running outside of PRs.
+      id-token: write
+    strategy:
+        matrix:
+          ${{ insert }}: ${{ fromJson(needs.preparation.outputs.matrix_without_os) }}
+
+    steps:
+
+      # Extract metadata (tags, labels) for Docker
+      # https://github.com/docker/metadata-action
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Combine and Tag Manifest with Buildx
+        run: |
+          IMAGE=${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+          HASH=${{ needs.preparation.outputs.sha256 }}
+
+          docker buildx imagetools create \
+            --tag $IMAGE:$HASH \
+            --tag ${{ steps.meta.outputs.tags }} \
+            $IMAGE:amd64-$HASH \
+            $IMAGE:arm64-$HASH
+
   dispatch-test-with-build:
-    needs: build-docker-images
+    needs: create-manifest
     uses: ./.github/workflows/CI_push.yml
-    with:
-      branch: ${{ github.ref_name }}

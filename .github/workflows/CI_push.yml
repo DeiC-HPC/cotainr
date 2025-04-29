@@ -11,10 +11,6 @@ on:
       - 'dockerfiles/Dockerfile'
       - '.github/workflows/CI_build_push.yml'
   workflow_call:
-    inputs:
-      branch:
-        required: false
-        type: string
 
 jobs:
   lint-and-format:
@@ -37,76 +33,55 @@ jobs:
       - name: Run pre-commit on all files
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
 
-  read_matrix:
+  preparation:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
+      sha256: ${{ steps.setoutput.outputs.sha256 }}
     steps:
       - name: Checkout to repository
         uses: actions/checkout@v4
       - name: Set matrix data
         id: set-matrix
-        run: echo "matrix=$(jq -c . < .github/workflows/matrix_limited.json)" >> $GITHUB_OUTPUT
-
-  lowercase:
-    runs-on: ubuntu-latest
-    outputs:
-      lowercase_repo: ${{ steps.lowercase.outputs.lowercase_repo }}
-    steps:
-      - name:
-        id: string
-        uses: Entepotenz/change-string-case-action-min-dependencies@v1
-        with:
-          string: ${{ github.repository }}
+        # First generate a limited matrix. Echo the matrix for debugging purposes. Last set the output properly.
+        run: |
+            matrix=$(jq -c '
+            {
+              "python-version": [ ."python-version" | first, last ],
+              "singularity": .singularity | group_by(.provider) | map(first, last) | unique,
+              "os": .os
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: lowercase github.repository
         id: lowercase
-        run: echo "lowercase_repo=${{ steps.string.outputs.lowercase }}" >> ${GITHUB_OUTPUT}
+        run: |
+              lowercase_repo="${{ github.repository }}"
+              lowercase_repo="${lowercase_repo,,}"
+              echo "lowercase_repo=$lowercase_repo" >> $GITHUB_OUTPUT
+      - name: Echo hash
+        id: setoutput
+        run: echo "sha256=${{ hashFiles('.github/workflows/matrix.json', 'dockerfiles/Dockerfile', '.github/workflows/CI_build_push.yml') }}" >> $GITHUB_OUTPUT
 
-  run-unittests-AMD:
-    needs: [read_matrix, lowercase]
-    runs-on: ubuntu-latest
+  run-unittests:
+    needs: [preparation]
     name: Run unittests
     permissions:
       packages: read
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.preparation.outputs.matrix) }}
+    runs-on: ${{ matrix.os.runs_on }}
     container:
-      image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
+      image: ghcr.io/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.preparation.outputs.sha256 }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-      - name: Install python
-        run: uv python install ${{ matrix.python-version }}
-      - name: Install test dependencies
-        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
-      - name: Run unittests via pytest
-        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
-
-  run-unittests-ARM:
-    needs: [read_matrix, lowercase]
-    runs-on: ubuntu-24.04-arm
-    name: Run unittests
-    permissions:
-      packages: read
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.read_matrix.outputs.matrix) }}
-    container:
-      image: ghcr.io/${{ needs.lowercase.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ inputs.branch || 'main' }}
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
       - name: Install python
         run: uv python install ${{ matrix.python-version }}
       - name: Install test dependencies
