@@ -124,6 +124,7 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: ${{ matrix.os.platform }}
           provenance: false
+          labels: ${{ steps.meta.outputs.labels }} 
           build-args: |
                       SINGULARITY_PROVIDER=${{ matrix.singularity.provider }}
                       SINGULARITY_VERSION=${{ matrix.singularity.version }}
@@ -165,7 +166,7 @@ jobs:
           HASH=${{ needs.preparation.outputs.sha256 }}
 
           docker buildx imagetools create \
-            --tag $IMAGE:HASH \
+            --tag $IMAGE:$HASH \
             --tag ${{ steps.meta.outputs.tags }} \
             $IMAGE:amd64-$HASH \
             $IMAGE:arm64-$HASH
