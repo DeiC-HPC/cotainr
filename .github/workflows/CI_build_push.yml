@@ -128,7 +128,7 @@ jobs:
 
   create-manifest:
     name: Create Multi-Arch Manifest
-    needs: [build-docker-images]
+    needs: [preparation, build-docker-images]
     runs-on: ubuntu-latest
     permissions:
       contents: read
