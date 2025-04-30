@@ -1,6 +1,7 @@
 FROM ubuntu:latest
 LABEL authors="julius"
 
+# get build-arg inputs to set the singularity provider and versions
 ARG SINGULARITY_PROVIDER
 ENV SINGULARITY_PROVIDER=${SINGULARITY_PROVIDER}
 ARG SINGULARITY_VERSION
@@ -10,7 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 SHELL ["/bin/bash", "-c"]
 
-#everything after golang is needed by singularity-ce
+#everything after line 25 is needed by singularity-ce
 RUN set -eux ; \
     apt-get update;\
     apt-get install -y \
@@ -59,6 +60,7 @@ RUN set -eux;\
 
 ENV PATH=$PATH:/usr/local/go/bin
 
+# Install singularity
 RUN set -eux;\
     mkdir singularity;\
     tar -xzf singularity_installer.tar.gz --strip-components=1 -C /singularity;\
@@ -71,7 +73,7 @@ RUN set -eux;\
 RUN set -eux;\
     singularity --version
 
-    # Download the latest installer
+# Download the latest uv installer
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
 
 # Run the installer then remove it
