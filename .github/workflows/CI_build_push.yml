@@ -107,7 +107,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+          images: ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
           labels: org.opencontainers.image.description=${{ matrix.os.platform }}
 
       # Build and push Docker image with Buildx (don't push on PR)
@@ -119,7 +119,7 @@ jobs:
           file: ./dockerfiles/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: |
-            ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ matrix.os.tag }}-${{ needs.preparation.outputs.sha256 }}
+            ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ matrix.os.tag }}-${{ needs.preparation.outputs.sha256 }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: ${{ matrix.os.platform }}
@@ -151,7 +151,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+          images: ${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -162,7 +162,7 @@ jobs:
 
       - name: Combine and Tag Manifest with Buildx
         run: |
-          IMAGE=${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}
+          IMAGE=${{ env.REGISTRY }}/${{ needs.preparation.outputs.lowercase_repo }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
           HASH=${{ needs.preparation.outputs.sha256 }}
 
           docker buildx imagetools create \

@@ -75,7 +75,7 @@ jobs:
       matrix: ${{ fromJson(needs.preparation.outputs.matrix) }}
     runs-on: ${{ matrix.os.runs_on }}
     container:
-      image: ghcr.io/${{ needs.preparation.outputs.lowercase_repo }}/${{ matrix.singularity.provider }}/${{ matrix.singularity.version }}:${{ needs.preparation.outputs.sha256 }}
+      image: ghcr.io/${{ needs.preparation.outputs.lowercase_repo }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.preparation.outputs.sha256 }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
