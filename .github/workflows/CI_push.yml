@@ -1,5 +1,14 @@
 name: CI on push to branch
 
+# This workflow runs a limited number of tests on every push.
+# The tests are defined by the 'Set matrix data' step in the preparation job.
+# The tests are run on the docker images build by the CI_build_push action/pipeline.
+# This action does NOT run if ONLY the files in the paths-ignore are changed. However, it will run if other files are also changed
+
+# NOTE:
+# If both ignored and non-ignored files are changed the CI_push pipeline will FAIL.
+# This is expected behaviour as the image with the right tag (SHA256) is not yet available.
+
 on:
   push:
     branches:
@@ -56,6 +65,7 @@ jobs:
             echo "$matrix"
             echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: lowercase github.repository
+        # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
         id: lowercase
         run: |
               lowercase_repo="${{ github.repository }}"
