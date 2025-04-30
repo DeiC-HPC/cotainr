@@ -147,7 +147,6 @@ jobs:
           ${{ insert }}: ${{ fromJson(needs.preparation.outputs.matrix_without_os) }}
 
     steps:
-
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
