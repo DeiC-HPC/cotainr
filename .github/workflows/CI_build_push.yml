@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
 
 env:
-  # Use docker.io for Docker Hub if empty
+  # Use GHCR instead of the default DockerHub
   REGISTRY: ghcr.io
 
 jobs:
