@@ -15,6 +15,7 @@ from subprocess import CompletedProcess
 import pytest
 
 from .prepare_release import (
+    _check_release_version_format,
     _format_release_notes_date,
     create_docs_switcher,
     create_release_notes,
@@ -22,27 +23,41 @@ from .prepare_release import (
 )
 
 
-@pytest.fixture
-def capture_file_write_text(monkeypatch):
-    captured_text = []
+class Test__check_release_version_format:
+    def test_acceptable_YYYY_0M_MICRO_format(self):
+        assert _check_release_version_format(release_version="2025.03.1")
 
-    def mock_write_text(self, data, encoding=None, errors=None, newline=None):
-        captured_text.append(data)
+    def test_unacceptable_YYYY_0M_MICRO_format(self):
+        with pytest.raises(ValueError):
+            _check_release_version_format(release_version="2025.04.0")
 
-    monkeypatch.setattr("pathlib.Path.write_text", mock_write_text)
-    return captured_text
+    @pytest.mark.parametrize(
+        "valid_version_number", ["2023.12.0", "2025.1.0", "2025.2.0"]
+    )
+    def test_correct_YYYY_MM_MICRO_format(self, valid_version_number):
+        assert _check_release_version_format(release_version=valid_version_number)
+
+    @pytest.mark.parametrize(
+        "invalid_version_number", ["1900.2.0", "2025.32.1", "2025.2.01"]
+    )
+    def test_wrong_format(self, invalid_version_number):
+        with pytest.raises(ValueError):
+            _check_release_version_format(release_version=invalid_version_number)
+
+    def test_not_raising_error(self):
+        assert not _check_release_version_format(
+            release_version="1999.1.0", raise_error=False
+        )
 
 
 class Test_create_docs_switcher:
-    def test_correctly_formatted_switcher(self, monkeypatch, capture_file_write_text):
+    def test_correctly_formatted_switcher(self, monkeypatch):
         def mock_subprocess_run(*args, **kwargs):
             return CompletedProcess(
                 args="", returncode=0, stdout="2022.1.0\n2022.02.0\n2022.11.0\n"
             )
 
         monkeypatch.setattr("subprocess.run", mock_subprocess_run)
-
-        create_docs_switcher(formatted_release_version="2025.1.0")
         expected_switcher = inspect.cleandoc(  # Remove leading whitespace
             """
             [
@@ -74,27 +89,16 @@ class Test_create_docs_switcher:
             ]
             """
         )
-        assert len(capture_file_write_text) == 1  # Only one file written
-        assert capture_file_write_text[0] == expected_switcher
+        switcher = create_docs_switcher(formatted_release_version="2025.1.0")
+        assert switcher == expected_switcher
 
-    @pytest.mark.parametrize(
-        "invalid_version_number", ["1900.2.0", "2025.32.1", "2025.2.01"]
-    )
-    def test_invalid_version_number(
-        self, invalid_version_number, capture_file_write_text
-    ):
-        with pytest.raises(AssertionError):
-            create_docs_switcher(
-                formatted_release_version=invalid_version_number,
-            )
+    def test_invalid_version_number(self):
+        with pytest.raises(ValueError):
+            create_docs_switcher(formatted_release_version="hello 6021!")
 
 
 class Test_create_release_notes:
-    def test_correctly_formatted_output(self, capture_file_write_text):
-        create_release_notes(
-            formatted_release_version="2025.1.0",
-            formatted_release_date="January 1st, 2025",
-        )
+    def test_correctly_formatted_output(self):
         expected_release_notes = (
             inspect.cleandoc(  # Remove leading whitespace
                 """
@@ -121,18 +125,16 @@ class Test_create_release_notes:
             )
             + "\n"  # Newline at the end of the file
         )
-        assert len(capture_file_write_text) == 1  # Only one file written
-        assert capture_file_write_text[0] == expected_release_notes
+        release_notes = create_release_notes(
+            formatted_release_version="2025.1.0",
+            formatted_release_date="January 1st, 2025",
+        )
+        assert release_notes == expected_release_notes
 
-    @pytest.mark.parametrize(
-        "invalid_version_number", ["1900.2.0", "2025.32.1", "2025.2.01"]
-    )
-    def test_invalid_version_number(
-        self, invalid_version_number, capture_file_write_text
-    ):
-        with pytest.raises(AssertionError):
+    def test_invalid_version_number(self):
+        with pytest.raises(ValueError):
             create_release_notes(
-                formatted_release_version=invalid_version_number,
+                formatted_release_version="hello 6021!",
                 formatted_release_date="invalid date",
             )
 

@@ -28,7 +28,7 @@ A `CalVer <https://calver.org/>`_ versioning scheme is used for `cotainr`, more 
 with:
 
 - :code:`YYYY` - full year - 2022, 2023, ...
-- :code:`0M` - zero-padded month - 1, 2 ... 11, 12
+- :code:`MM` - short month - 1, 2 ... 11, 12
 - :code:`MICRO` - zero-indexed counter specific to :code:`YYYY.MM` - 0, 1, ... - incremented for each version released in a given year/month.
 
 

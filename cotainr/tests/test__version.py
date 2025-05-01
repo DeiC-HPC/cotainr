@@ -8,8 +8,11 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 from importlib.metadata import PackageNotFoundError
+from pathlib import Path
 import re
 import types
+
+import tomllib
 
 import cotainr
 import cotainr._version
@@ -69,15 +72,19 @@ class Test__determine_cotainr_version:
 
 class Test__get_hatch_version:
     def test_correct_dev_version_number(self):
-        cotainr_calver_tag_pattern = r"20[0-9]{2}\.([1-9]|10|11|12)\.(0|[1-9][0-9]*)"
-        dev_extension_pattern = r"(\.dev[0-9]+\+[a-z0-9]{8})?"
+        pyproject_toml = (
+            (Path(__file__) / "../../../pyproject.toml").resolve().read_text()
+        )
+        cotainr_calver_tag_pattern = (
+            rf"{tomllib.loads(pyproject_toml)['tool']['hatch']['version']['tag-pattern']}"
+        )[:-2]  # Remove training "$)"
+        dev_extension_pattern = r"(\.dev[0-9]+\+g[a-z0-9]{7})?"
         local_version_pattern = r"(\.d20[0-9]{2}(0[1-9]|10|11|12)[0-9]{2})?"
         cotainr_dev_version_pattern = (
-            r"^"
-            + cotainr_calver_tag_pattern  # YYYY.MM.MICRO
-            + dev_extension_pattern  # .devN+hash (optional)
+            cotainr_calver_tag_pattern  # YYYY.MM.MICRO
+            + dev_extension_pattern  # .devN+ghash (optional)
             + local_version_pattern  # .dYYYYMMDD (optional)
-            + r"$"
+            + r"$)"  # Add in trailing "$)" again
         )
         cotainr_dev_version = _get_hatch_version()
         assert re.match(cotainr_dev_version_pattern, cotainr_dev_version)

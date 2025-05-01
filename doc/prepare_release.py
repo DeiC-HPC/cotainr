@@ -23,11 +23,65 @@ import subprocess
 import sys
 from typing import Optional
 
+import tomllib
+
 sys.path.insert(0, f"{(Path(__file__) / '../..').resolve()}")
 
 import cotainr
 
-COTAINR_RELEASE_VERSION_FORMAT_RE = r"^20[0-9]{2}\.(0*[1-9]|10|11|12)\.(0|[1-9][0-9]*)$"  # cotainr YYYY.MM.MICRO version format (as well as wrong YYYY.0M.MICRO format)
+
+def _check_release_version_format(*, release_version: str, raise_error: bool = True):
+    """
+    Check if the release version is in the correct YYYY.MM.MICRO format.
+
+    For releases before April 2025, the version YYYY.0M.MICRO is also accepted
+    as we had incorrectly used this format up until then.
+
+    Parameters
+    ----------
+    release_version : str
+        The version for the new release.
+    raise_error : bool
+        If True, raise a ValueError if the version is not in the correct
+        format.
+
+    Returns
+    -------
+    acceptable_format : bool
+        True if the version is in the correct format, False otherwise.
+
+    Raises
+    ------
+    ValueError
+        If the release version is not in the correct format and raise_error is
+        True.
+    """
+    pyproject_toml = (Path(__file__) / "../../pyproject.toml").resolve().read_text()
+    correct_YYYY_MM_MICRO_version_format_re = (
+        rf"{tomllib.loads(pyproject_toml)['tool']['hatch']['version']['tag-pattern']}"
+    )
+    wrong_YYYY_0M_MICRO_version_format_re = r"^20[0-9]{2}\.(0[1-9])\.(0|[1-9][0-9]*)$"
+
+    if re.match(wrong_YYYY_0M_MICRO_version_format_re, release_version):
+        # If the version is in the wrong YYYY.0M.MICRO format, accept it only
+        # if the release date is before April 2025.
+        year, month, _ = map(int, release_version.split("."))
+        if datetime.date(year, month, 1) < datetime.date(2025, 4, 1):
+            acceptable_format = True
+        else:
+            acceptable_format = False
+    elif re.match(correct_YYYY_MM_MICRO_version_format_re, release_version):
+        # If the version is not in the correct YYYY.MM.MICRO format, accept it
+        acceptable_format = True
+    else:
+        acceptable_format = False
+
+    if not acceptable_format and raise_error:
+        raise ValueError(
+            f"Release version {release_version} is not in the expected YYYY.MM.MICRO format."
+        )
+
+    return acceptable_format
 
 
 def create_docs_switcher(*, formatted_release_version: str):
@@ -43,8 +97,14 @@ def create_docs_switcher(*, formatted_release_version: str):
     ----------
     formatted_release_version : str
         The YYYY.MM.MICRO version tag for the new release.
+
+    Returns
+    -------
+    switcher : str
+        The pretty formatted JSON string representation of the version switcher
+        configuration for the documentation.
     """
-    assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, formatted_release_version)
+    _check_release_version_format(release_version=formatted_release_version)
 
     # Create base switcher with the latest and stable versions
     switcher = [
@@ -69,7 +129,7 @@ def create_docs_switcher(*, formatted_release_version: str):
                 ["git", "--no-pager", "tag"], capture_output=True, text=True
             ).stdout.splitlines()
         )
-        if re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, tag)
+        if _check_release_version_format(release_version=tag, raise_error=False)
     ]
     tags.reverse()
     for tag in tags[0:3]:
@@ -81,13 +141,7 @@ def create_docs_switcher(*, formatted_release_version: str):
             }
         )
 
-    # Write the switcher to a static JSON file
-    version_switcher_file = (Path(__file__) / "../_static/switcher.json").resolve()
-    version_switcher_file.write_text(json.dumps(switcher, indent="  "))
-    print(
-        f"Version switcher written to {version_switcher_file}. "
-        "Please check its contents and commit it."
-    )
+    return json.dumps(switcher, indent="  ")
 
 
 def create_release_notes(
@@ -105,8 +159,13 @@ def create_release_notes(
         The YYYY.MM.MICRO version tag for the new release.
     formatted_release_date : str
         The release date formatted as "__Month__ __day__, __year__".
+
+    Returns
+    -------
+    release_notes : str
+        The release notes skeleton for the new version.
     """
-    assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, formatted_release_version)
+    _check_release_version_format(release_version=formatted_release_version)
 
     release_notes = (
         (
@@ -132,15 +191,7 @@ def create_release_notes(
         )
     )
 
-    # Write the release note to a new file
-    release_notes_file = (
-        Path(__file__) / f"../release_notes/{formatted_release_version}.md"
-    ).resolve()
-    release_notes_file.write_text(release_notes)
-    print(
-        f"Release notes skeleton written to {release_notes_file}. "
-        "Please fill in the release notes and commit it."
-    )
+    return release_notes
 
 
 def format_release_version_and_date(*, release_date: Optional[str] = None):
@@ -172,7 +223,8 @@ def format_release_version_and_date(*, release_date: Optional[str] = None):
         raise ValueError(
             f"Current release version {cotainr.__version__} is not in the expected format."
         ) from e
-    assert re.match(COTAINR_RELEASE_VERSION_FORMAT_RE, f"{yyyy}.{mm}.{micro}")
+
+    _check_release_version_format(release_version=f"{yyyy}.{mm}.{micro}")
 
     # Determine the MICRO version number
     if date_release.year < int(yyyy) or (
@@ -228,7 +280,9 @@ def _format_release_notes_date(date: datetime.date):
         raise RuntimeError(
             f"Your locale is set to {current_locale}. "
             "Please set it to an English locale (C, en_US, or en_GB) "
-            "via e.g. the LANG environment variable before running this script."
+            "via e.g. the LANG environment variable before running this "
+            "script to ensure the release date in the release notes is "
+            "formatted correctly."
         )
 
     formatted_date = date.strftime(f"%B %-d{day_prefix}, %Y")
@@ -254,9 +308,27 @@ if __name__ == "__main__":  # pragma: no cover
         release_date=args.release_date
     )
 
-    # Create the version switcher for the documentation
-    create_docs_switcher(formatted_release_version=formatted_release_version)
-    create_release_notes(
+    # Create the new version switcher and write it to a static file
+    version_switcher = create_docs_switcher(
+        formatted_release_version=formatted_release_version
+    )
+    version_switcher_file = (Path(__file__) / "../_static/switcher.json").resolve()
+    version_switcher_file.write_text(version_switcher)
+    print(
+        f"Version switcher written to {version_switcher_file}. "
+        "Please check its contents and commit it."
+    )
+
+    # Create the release notes skeleton and write it to a new file
+    release_notes = create_release_notes(
         formatted_release_version=formatted_release_version,
         formatted_release_date=formatted_release_date,
+    )
+    release_notes_file = (
+        Path(__file__) / f"../release_notes/{formatted_release_version}.md"
+    ).resolve()
+    release_notes_file.write_text(release_notes)
+    print(
+        f"Release notes skeleton written to {release_notes_file}. "
+        "Please fill in the release notes and commit it."
     )
