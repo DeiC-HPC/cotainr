@@ -1,10 +1,27 @@
 name: CI on push to branch
+
+# This workflow runs a limited number of tests on every push.
+# The tests are defined by the 'Set matrix data' step in the prepare-for-build job.
+# The tests are run on the docker images build by the CI_build_docker_images action/pipeline.
+# This action does NOT run if ONLY the files in the paths-ignore are changed. However, it will run if other files are also changed
+
+# NOTE:
+# If both ignored and non-ignored files are changed the CI_push pipeline will FAIL.
+# This is expected behaviour as the image with the right tag (sha256) is not yet available.
+# However, the tests get triggered again by the CI_build_docker_images pipeline. So the 2nd set of tests should work.
+
 on:
   push:
     branches:
       - "**"
     tags-ignore:
       - "**"
+    paths-ignore: # this workflow still runs If other file changes are added concurrently to these.
+      - '.github/workflows/matrix.json'
+      - '.github/workflows/dockerfiles/Dockerfile'
+      - '.github/workflows/CI_build_docker_images.yml'
+  workflow_call:
+
 jobs:
   lint-and-format:
     name: Lint and check formatting
@@ -25,19 +42,59 @@ jobs:
           key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit on all files
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
-  run-unittests:
-    name: Run unittests
+
+  prepare-for-build:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      lowercase_repo_name: ${{ steps.lowercase.outputs.lowercase_repo_name }}
+      input_trigger_files_sha256: ${{ steps.setoutput.outputs.input_trigger_files_sha256 }}
+    steps:
+      - name: Checkout to repository
+        uses: actions/checkout@v4
+      - name: Set matrix data
+        id: set-matrix
+        # First generate a limited matrix. Echo the matrix for debugging purposes. Last set the output properly.
+        # The long jq query filters our matrix. We only pick 2 python versions. We pick two versions for each apptainer provider (i.e. two versions of apptainer and singularity).
+        # And we use all versions of the os, which is more about the underlying architecture than the actual OS.
+        run: |
+            matrix=$(jq -c '
+            {
+              "python-version": [ ."python-version" | first, last ],
+              "singularity": .singularity | group_by(.provider) | map(first, last) | unique,
+              "os": .os
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix=$matrix" >> $GITHUB_OUTPUT
+      - name: lowercase github.repository
+        # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
+        id: lowercase
+        run: |
+              lowercase_repo_name="${{ github.repository }}"
+              lowercase_repo_name="${lowercase_repo_name,,}"
+              echo "lowercase_repo_name=$lowercase_repo_name" >> $GITHUB_OUTPUT
+      - name: Set sha256 of the input trigger files
+        id: setoutput
+        run: echo "input_trigger_files_sha256=${{ hashFiles('.github/workflows/matrix.json', '.github/workflows/dockerfiles/Dockerfile', '.github/workflows/CI_build_docker_images.yml') }}" >> $GITHUB_OUTPUT
+
+  run-unittests:
+    needs: [prepare-for-build]
+    name: Run unittests
+    permissions:
+      packages: read
     strategy:
       fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.12"]
+      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix) }}
+    runs-on: ${{ matrix.os.runs-on }}
+    container:
+      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-
       - name: Install test dependencies
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
