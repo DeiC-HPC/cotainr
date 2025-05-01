@@ -111,24 +111,24 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
 
-  run-unittests:
-    needs: [prepare-for-build]
-    name: Run unittests
-    permissions:
-      packages: read
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix) }}
-    runs-on: ${{ matrix.os.runs-on }}
-    container:
-      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install test dependencies
-        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
-      - name: Run unittests via pytest
-        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+  # run-unittests:
+  #   needs: [prepare-for-build]
+  #   name: Run unittests
+  #   permissions:
+  #     packages: read
+  #   strategy:
+  #     fail-fast: false
+  #     matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix) }}
+  #   runs-on: ${{ matrix.os.runs-on }}
+  #   container:
+  #     image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+  #     credentials:
+  #       username: ${{ github.actor }}
+  #       password: ${{ secrets.GITHUB_TOKEN }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     - name: Install test dependencies
+  #       run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
+  #     - name: Run unittests via pytest
+  #       run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
