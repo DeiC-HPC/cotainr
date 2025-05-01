@@ -97,6 +97,13 @@ jobs:
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Check git installation
+        run: git --version
+      - name: Check Git repo status
+        run: |
+          echo "Current directory: $(pwd)"
+          ls -la
+          git rev-parse --is-inside-work-tree || echo "Not in a git repo!"
       - name: Run pre-commit on all files
         working-directory: ${{ github.workspace }}
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
