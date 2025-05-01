@@ -126,9 +126,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: ${{ matrix.os.platform }}
-          # The provenance attestation describes how an image was built and what it contains. This would be a nice to have. 
+          # The provenance attestation describes how an image was built and what it contains. This would be a nice to have.
           # However, it impacts if the final output of the build process is a manifest or an image. Enabling this means that the ghcr gets quite cluttered.
-          # With attestation we go from 3 entries into the GHCR to at least 5 entries. 
+          # With attestation we go from 3 entries into the GHCR to at least 5 entries.
           provenance: false
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |

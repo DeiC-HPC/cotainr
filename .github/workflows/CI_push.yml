@@ -56,7 +56,7 @@ jobs:
         id: set-matrix
         # First generate a limited matrix. Echo the matrix for debugging purposes. Last set the output properly.
         # The long jq query filters our matrix. We only pick 2 python versions. We pick two versions for each apptainer provider (i.e. two versions of apptainer and singularity).
-        # And we use all versions of the os, which is more about the underlying architecture than the actual OS. 
+        # And we use all versions of the os, which is more about the underlying architecture than the actual OS.
         run: |
             matrix=$(jq -c '
             {
@@ -88,7 +88,7 @@ jobs:
       matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix) }}
     runs-on: ${{ matrix.os.runs-on }}
     container:
-      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.lowercase_repo_name }}
+      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
