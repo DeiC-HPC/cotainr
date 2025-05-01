@@ -1,4 +1,4 @@
-name: Build Docker and Deploy Images to GHCR
+name: Build and deploy dev env docker images to GHCR
 
 # This workflow builds docker images that contain the development environment for the cotainr tool.
 # NOTE: this workflow only runs on the main branch and branches starting with 'docker_dev_env'.
