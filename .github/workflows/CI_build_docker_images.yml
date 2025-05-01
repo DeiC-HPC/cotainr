@@ -84,8 +84,7 @@ jobs:
       packages: write
       id-token: write
     strategy:
-        matrix:
-          ${{ insert }}: ${{ fromJson(needs.prepare-for-build.outputs.matrix_with_os) }}
+        matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_with_os) }}
 
     steps:
       # Set up BuildKit Docker container builder to be able to build
@@ -145,8 +144,7 @@ jobs:
       packages: write
       id-token: write
     strategy:
-        matrix:
-          ${{ insert }}: ${{ fromJson(needs.prepare-for-build.outputs.matrix_without_os) }}
+        matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_without_os) }}
 
     steps:
       # Extract metadata (tags, labels) for Docker
