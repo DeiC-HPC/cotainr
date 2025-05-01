@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-      matrix_for_linting: ${{ steps.set-matrix-for-linting.outputs.matrix }}
+      matrix_for_linting: ${{ steps.set-matrix-for-linting.outputs.matrix_for_linting }}
       lowercase_repo_name: ${{ steps.lowercase.outputs.lowercase_repo_name }}
       input_trigger_files_sha256: ${{ steps.setoutput.outputs.input_trigger_files_sha256 }}
     steps:
