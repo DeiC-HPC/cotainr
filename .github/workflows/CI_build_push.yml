@@ -41,7 +41,7 @@ jobs:
      - name: Checkout to repository
        uses: actions/checkout@v4
     # Build matrix with the architecture, to build the image for both arm64 and amd64.
-     - name: Set matrix data
+     - name: Set matrix data with os
        id: set-matrix-with-os
        run: |
             matrix=$(jq -c '
