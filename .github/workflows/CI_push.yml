@@ -23,30 +23,11 @@ on:
   workflow_call:
 
 jobs:
-  lint-and-format:
-    name: Lint and check formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-      - name: Verify the uv.lock is up-to-date
-        run: uv lock --check
-      - name: Install linting dependencies
-        run: uv sync --python 3.12 --managed-python --group=lint --frozen
-      - name: Restore pre-commit cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Run pre-commit on all files
-        run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
-
   prepare-for-build:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix_for_linting: ${{ steps.set-matrix-for-linting.outputs.matrix }}
       lowercase_repo_name: ${{ steps.lowercase.outputs.lowercase_repo_name }}
       input_trigger_files_sha256: ${{ steps.setoutput.outputs.input_trigger_files_sha256 }}
     steps:
@@ -67,6 +48,18 @@ jobs:
             ' .github/workflows/matrix.json)
             echo "$matrix"
             echo "matrix=$matrix" >> $GITHUB_OUTPUT
+      - name: Set matrix data
+        id: set-matrix-for-linting
+        # Generate a limited matrix for the linting step. The linting only needs to be run once for one python version and one singularity/apptainer version.
+        run: |
+            matrix=$(jq -c '
+            {
+              "python-version": [ ."python-version" | first ],
+              "singularity": [ ."singularity" | first ]
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix_for_linting=$matrix" >> $GITHUB_OUTPUT
       - name: lowercase github.repository
         # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
         id: lowercase
@@ -77,6 +70,35 @@ jobs:
       - name: Set sha256 of the input trigger files
         id: setoutput
         run: echo "input_trigger_files_sha256=${{ hashFiles('.github/workflows/matrix.json', '.github/workflows/dockerfiles/Dockerfile', '.github/workflows/CI_build_docker_images.yml') }}" >> $GITHUB_OUTPUT
+
+  lint-and-format:
+    needs: [prepare-for-build]
+    name: Lint and check formatting
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_for_linting) }}
+    container:
+      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Verify the uv.lock is up-to-date
+        run: uv lock --check
+      - name: Install linting dependencies
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=lint --frozen
+      - name: Restore pre-commit cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Run pre-commit on all files
+        run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
 
   run-unittests:
     needs: [prepare-for-build]
