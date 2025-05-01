@@ -57,6 +57,8 @@ linkcheck_ignore = [
     # We do have quite a lot of links to our own github repo
     # For now, let's avoid checking these
     "https://github.com/DeiC-HPC/cotainr",
+    # Also ignore everything on the gnu domain via regex.
+    r'https://.*\.gnu\.org/.*'
 ]
 linkcheck_anchors_ignore_for_url = [
     # Ignore GitHub issue comment anchors that apparently fails
