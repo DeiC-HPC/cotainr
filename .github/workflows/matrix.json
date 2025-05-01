@@ -3,7 +3,9 @@
     "3.9",
     "3.10",
     "3.11",
-    "3.12"
+    "3.12",
+    "3.13",
+    "3.14",
   ],
   "singularity": [
       {
@@ -11,12 +13,20 @@
         "version": "1.3.4"
       },
       {
+        "provider": "apptainer",
+        "version": "1.4.0"
+      },
+      {
         "provider": "singularity-ce",
-        "version": "4.3.0"
+        "version": "4.1.3"
       },
       {
         "provider": "singularity-ce",
         "version": "4.2.1"
+      },
+      {
+        "provider": "singularity-ce",
+        "version": "4.3.0"
       }
   ],
   "os":[
