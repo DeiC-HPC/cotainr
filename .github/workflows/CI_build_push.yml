@@ -29,7 +29,7 @@ env:
 jobs:
 
   # Prepares the test matrix inputs, generates a lowercase version of the repo name, calculates sha256 of the input trigger paths.
-  # Two different test matrices are needed. One that includes the singularity & OS/architecture and one with only the singularity version.
+  # Two different built matrices are needed. One that includes the Apptainer/Singularity & OS/architecture and one with only the Apptainer/Singularity version.
   preparation:
     runs-on: ubuntu-latest
     outputs:
