@@ -23,8 +23,6 @@ import subprocess
 import sys
 from typing import Optional
 
-import tomllib
-
 sys.path.insert(0, f"{(Path(__file__) / '../..').resolve()}")
 
 import cotainr
@@ -56,9 +54,8 @@ def _check_release_version_format(*, release_version: str, raise_error: bool = T
         If the release version is not in the correct format and raise_error is
         True.
     """
-    pyproject_toml = (Path(__file__) / "../../pyproject.toml").resolve().read_text()
     correct_YYYY_MM_MICRO_version_format_re = (
-        rf"{tomllib.loads(pyproject_toml)['tool']['hatch']['version']['tag-pattern']}"
+        cotainr._version._get_cotainr_calver_tag_pattern()
     )
     wrong_YYYY_0M_MICRO_version_format_re = r"^20[0-9]{2}\.(0[1-9])\.(0|[1-9][0-9]*)$"
 
@@ -312,7 +309,7 @@ if __name__ == "__main__":  # pragma: no cover
     version_switcher = create_docs_switcher(
         formatted_release_version=formatted_release_version
     )
-    version_switcher_file = (Path(__file__) / "../_static/switcher.json").resolve()
+    version_switcher_file = Path(__file__).resolve().parent / "_static/switcher.json"
     version_switcher_file.write_text(version_switcher)
     print(
         f"Version switcher written to {version_switcher_file}. "
@@ -325,8 +322,9 @@ if __name__ == "__main__":  # pragma: no cover
         formatted_release_date=formatted_release_date,
     )
     release_notes_file = (
-        Path(__file__) / f"../release_notes/{formatted_release_version}.md"
-    ).resolve()
+        Path(__file__).resolve().parent
+        / f"release_notes/{formatted_release_version}.md"
+    )
     release_notes_file.write_text(release_notes)
     print(
         f"Release notes skeleton written to {release_notes_file}. "

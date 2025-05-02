@@ -7,17 +7,17 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
+import contextlib
 from importlib.metadata import PackageNotFoundError
-from pathlib import Path
 import re
 import types
 
-import tomllib
+import pytest
 
-import cotainr
 import cotainr._version
 from cotainr._version import (
     _determine_cotainr_version,
+    _get_cotainr_calver_tag_pattern,
     _get_hatch_version,
     _get_importlib_metadata_version,
 )
@@ -70,21 +70,70 @@ class Test__determine_cotainr_version:
         assert _determine_cotainr_version() == "<unknown version>"
 
 
+class Test__get_cotainr_calver_tag_pattern:
+    def test_extract_tag_pattern(self, monkeypatch):
+        @contextlib.contextmanager
+        def mock_open(*args, **kwargs):
+            yield ["tag-pattern = test_pattern_6021"]
+
+        monkeypatch.setattr("builtins.open", mock_open)
+        assert _get_cotainr_calver_tag_pattern() == "test_pattern_6021"
+
+    @pytest.mark.parametrize(
+        ["tag_line", "tag_pattern"],
+        [
+            ("tag-pattern = test_pattern_6021 # comment", "test_pattern_6021"),
+            ("tag-pattern = test_pattern_6021# comment", "test_pattern_6021"),
+            ("tag-pattern = test_pattern_6021 #comment", "test_pattern_6021"),
+            ("tag-pattern = test_pattern_6021#comment", "test_pattern_6021"),
+        ],
+    )
+    def test_remove_comments(self, tag_line, tag_pattern, monkeypatch):
+        @contextlib.contextmanager
+        def mock_open(*args, **kwargs):
+            yield [tag_line]
+
+        monkeypatch.setattr("builtins.open", mock_open)
+        assert _get_cotainr_calver_tag_pattern() == tag_pattern
+
+    def test_strip_whitespace(self, monkeypatch):
+        @contextlib.contextmanager
+        def mock_open(*args, **kwargs):
+            yield ["tag-pattern =    test_pattern_6021   "]
+
+        monkeypatch.setattr("builtins.open", mock_open)
+        assert _get_cotainr_calver_tag_pattern() == "test_pattern_6021"
+
+    def test_remove_single_quotes(self, monkeypatch):
+        @contextlib.contextmanager
+        def mock_open(*args, **kwargs):
+            yield ["tag-pattern = 'test_pattern_6021'"]
+
+        monkeypatch.setattr("builtins.open", mock_open)
+        assert _get_cotainr_calver_tag_pattern() == "test_pattern_6021"
+
+    def test_unable_to_find_tag_pattern(self, monkeypatch):
+        @contextlib.contextmanager
+        def mock_open(*args, **kwargs):
+            yield ["not a tag-pattern line"]
+
+        monkeypatch.setattr("builtins.open", mock_open)
+        with pytest.raises(RuntimeError):
+            _get_cotainr_calver_tag_pattern()
+
+
 class Test__get_hatch_version:
     def test_correct_dev_version_number(self):
-        pyproject_toml = (
-            (Path(__file__) / "../../../pyproject.toml").resolve().read_text()
-        )
-        cotainr_calver_tag_pattern = (
-            rf"{tomllib.loads(pyproject_toml)['tool']['hatch']['version']['tag-pattern']}"
-        )[:-2]  # Remove training "$)"
+        start_full_pattern = cotainr._version._get_cotainr_calver_tag_pattern()[
+            :-2  # Remove trailing "$)"
+        ]
         dev_extension_pattern = r"(\.dev[0-9]+\+g[a-z0-9]{7})?"
         local_version_pattern = r"(\.d20[0-9]{2}(0[1-9]|10|11|12)[0-9]{2})?"
         cotainr_dev_version_pattern = (
-            cotainr_calver_tag_pattern  # YYYY.MM.MICRO
+            start_full_pattern  # YYYY.MM.MICRO
             + dev_extension_pattern  # .devN+ghash (optional)
             + local_version_pattern  # .dYYYYMMDD (optional)
-            + r"$)"  # Add in trailing "$)" again
+            + r"$)"  # Add in trailing "$)" back in
         )
         cotainr_dev_version = _get_hatch_version()
         assert re.match(cotainr_dev_version_pattern, cotainr_dev_version)

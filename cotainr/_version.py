@@ -17,6 +17,8 @@ Functions
 ---------
 _determine_cotainr_version()
     Determine the version number for cotainr.
+_get_cotainr_calver_tag_pattern()
+    Load the cotainr calver tag pattern from pyproject.toml.
 _get_hatch_version()
     Compute the version number in a development environment.
 _get_importlib_metadata_version()
@@ -55,6 +57,41 @@ def _determine_cotainr_version():
     )
 
     return cotainr_version
+
+
+def _get_cotainr_calver_tag_pattern():
+    """
+    Load the cotainr calver tag pattern from pyproject.toml.
+
+    The hatch version tag pattern is the single source of truth for the regex
+    defining the calver pattern for cotainr version numbers.
+
+    Returns
+    -------
+    cotainr_calver_tag_pattern : str
+        The cotainr calver tag pattern regex.
+    """
+    pyproject_toml_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
+
+    # The tomllib module is only available in Python 3.11 and later.
+    # Until we only support Python 3.11 and later, we use this custom code to
+    # read the pyproject.toml file. It attempts to do the same thing as:
+    #   import tomllib
+    #   cotainr_calver_tag_pattern = tomllib.loads(pyproject_toml_path.read_text())["tool"]["hatch"]["version"]["tag-pattern"]
+    with open(pyproject_toml_path) as f:
+        for line in f:
+            if line.startswith("tag-pattern = "):
+                # Split line on "=" and remove #comments, whitespace, and single quotes
+                cotainr_calver_tag_pattern = (
+                    line.split("=")[1].split("#")[0].strip().strip("'")
+                )
+                break
+        else:
+            raise RuntimeError(
+                "Unable to find the cotainr calver tag pattern in pyproject.toml"
+            )
+
+    return cotainr_calver_tag_pattern
 
 
 def _get_hatch_version():
