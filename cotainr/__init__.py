@@ -7,11 +7,12 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
+import importlib.metadata
 import sys
 
 try:
-    from ._version import version as __version__  # noqa: F401
-except ModuleNotFoundError:
+    __version__ = importlib.metadata.version("cotainr")
+except importlib.metadata.PackageNotFoundError:
     __version__ = "<unknown version>"
 
 _minimum_dependency_version = {

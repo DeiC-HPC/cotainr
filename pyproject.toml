@@ -67,9 +67,6 @@ dev = [{include-group = "tests"}, {include-group = "lint"}, {include-group = "do
 [tool.hatch.version]
 source = "vcs"
 
-[tool.hatch.build.hooks.vcs]
-version-file="cotainr/_version.py"
-
 [tool.hatch.build.targets.sdist]
 include = [
     "/cotainr",
