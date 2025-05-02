@@ -160,15 +160,11 @@ exclude = [
 
 [tool.coverage.run]
 branch = true
-source =[
-    "cotainr",
-    "doc"]
+source =["cotainr"]
 omit = [
      "cotainr/tests/*",
-     "doc/test_*",
-     "doc/conf.py",
      ".venv/*",
-	]
+]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
