@@ -14,7 +14,6 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-import importlib.metadata
 import os
 from pathlib import Path
 import sys
@@ -27,7 +26,7 @@ import cotainr
 project = cotainr.__name__
 author = "DeiC"
 copyright = f"2022-{time.strftime('%Y')}, {author}"
-version = importlib.metadata.version("cotainr")
+version = cotainr.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
