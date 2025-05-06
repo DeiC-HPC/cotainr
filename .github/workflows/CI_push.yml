@@ -85,12 +85,19 @@ jobs:
       matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_for_linting) }}
     container:
       image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      options: --user=root
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Fix UID
+        shell: bash
+        run: |
+          usermod --uid 1001 MYUSER
+          find RELEVANT_PATHS -maxdepth 1 -uid OLDUID -exec chown --recursive --verbose 1001 '{}' ';'
+          chown --recursive --verbose 1001 .  # fix checkout uid
       - name: Verify the uv.lock is up-to-date
         run: uv lock --check
       - name: Install linting dependencies
