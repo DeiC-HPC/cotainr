@@ -1,6 +1,9 @@
 FROM ubuntu:latest
 LABEL authors="julius"
 
+ARG USER_UID=1001
+ARG USER_GID=$USER_UID
+
 # get build-arg inputs to set the singularity provider and versions
 ARG SINGULARITY_PROVIDER
 ENV SINGULARITY_PROVIDER=${SINGULARITY_PROVIDER}
@@ -71,14 +74,9 @@ RUN set -eux;\
     make install
 
 RUN set -eux;\
+    echo id -u;\
     singularity --version
 
-# Download the latest uv installer
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
-# Run the installer then remove it
+# Download and install unmanaged uv
 RUN set -eux;\
-    sh /uv-installer.sh && rm /uv-installer.sh
-
-# Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin/:$PATH"
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
