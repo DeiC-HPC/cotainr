@@ -30,7 +30,7 @@ apptainer:
 	$(eval CONTAINER_URL=$(APPTAINER_URL))
 
 id:
-	@echo "test "$$USERID
+	@echo $$USERID
 
 test:
 	$(CONTAINER_RUN) run $(CONTAINER_TEST_OPTIONS) $(CONTAINER_URL) -c $(CONTAINER_TEST_COMMAND)
