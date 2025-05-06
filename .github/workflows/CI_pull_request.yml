@@ -1,8 +1,14 @@
 name: CI on pull request
+
+# The test suite is triggered when opening, reopening or synchronizing a non-draft pull request
+# (The default triggers were identical but for both draft and non-draft pull requests)
+# Additionally, we trigger when a pull request is taken out from draft mode (ready_for_review)
+
 on:
   pull_request:
     branches:
       - main
+    types: [opened, reopened, synchronize, ready_for_review]
   schedule:
       - cron: '15 2 * * TUE'  # Also run the full test suite for PRs on the main branch every Tuesday night
   workflow_dispatch:  # allow for manually trigging the workflow
@@ -43,6 +49,7 @@ jobs:
           name: dist
           path: dist
   run-full-test-suite-x86:
+    if: github.event.pull_request.draft == false
     name: Run full test suite on x86
     runs-on: ${{ matrix.os }}
     strategy:
@@ -96,6 +103,7 @@ jobs:
             pytest_junit_out.xml
             htmlcov/*
   run-full-test-suite-ARM:
+    if: github.event.pull_request.draft == false
     name: Run full test suite ARM64
     runs-on: ${{ matrix.os }}
     strategy:
