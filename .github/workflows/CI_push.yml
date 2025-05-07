@@ -116,7 +116,7 @@ jobs:
     runs-on: ${{ matrix.os.runs-on }}
     container:
       image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
-      options: --priviliged
+      options: --privileged
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
