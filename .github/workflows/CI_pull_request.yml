@@ -102,7 +102,7 @@ jobs:
     runs-on: ${{ matrix.os.runs-on }}
     strategy:
       fail-fast: false
-       matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix) }}
     permissions:
       packages: read
     container:
