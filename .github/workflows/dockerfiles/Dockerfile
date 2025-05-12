@@ -77,7 +77,3 @@ RUN set -eux;\
 # Download and install unmanaged uv
 RUN set -eux;\
     curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
-
-# ARG USER_UID=1001
-# ARG USER_GID=$USER_UID
-# ARG USER_NAME=cotainr
