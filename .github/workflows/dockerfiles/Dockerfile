@@ -71,14 +71,18 @@ RUN set -eux;\
     make install
 
 RUN set -eux;\
+    echo id -u;\
     singularity --version
 
-# Download the latest uv installer
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
-# Run the installer then remove it
+# Download and install unmanaged uv
 RUN set -eux;\
-    sh /uv-installer.sh && rm /uv-installer.sh
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
 
-# Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin/:$PATH"
+
+ARG USER_UID=1001
+ARG USER_GID=$USER_UID
+ARG USER_NAME=cotainr
+
+RUN groupadd -g $USER_GID $USER_NAME
+RUN useradd -m -d /home/$USER_NAME -s /bin/bash -g $USER_GID -u $USER_UID $USER_NAME
+USER $USER_NAME
