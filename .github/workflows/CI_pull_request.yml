@@ -98,6 +98,7 @@ jobs:
           path: dist
 
   run-full-test-suite:
+    needs: [prepare-for-build]
     name: Run full test suite
     runs-on: ${{ matrix.os.runs-on }}
     strategy:
