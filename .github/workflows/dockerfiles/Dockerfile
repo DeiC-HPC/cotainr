@@ -83,7 +83,7 @@ ARG USER_UID=1001
 ARG USER_GID=$USER_UID
 ARG USER_NAME=cotainr
 
-RUN groupadd -g $USER_GID $USER_NAME
-RUN useradd -m -d /home/$USER_NAME -s /bin/bash -g $USER_GID -u $USER_UID $USER_NAME
-USER $USER_NAME
-WORKDIR /home/$USER_NAME
+# RUN groupadd -g $USER_GID $USER_NAME
+# RUN useradd -m -d /home/$USER_NAME -s /bin/bash -g $USER_GID -u $USER_UID $USER_NAME
+# USER $USER_NAME
+# WORKDIR /home/$USER_NAME
