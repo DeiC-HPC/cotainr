@@ -108,7 +108,7 @@ jobs:
       packages: read
     container:
       image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
-      options: --privileged --user=1001
+      options: --privileged
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -118,7 +118,7 @@ jobs:
       - name: Install test dependencies
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
-        run: uv run pytest
+        run: uv run pytest -vv --junitxml=pytest_junit_out.xml
       - name: Archive the test results and coverage
         uses: actions/upload-artifact@v4
         with:
