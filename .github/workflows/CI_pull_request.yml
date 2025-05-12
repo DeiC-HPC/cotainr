@@ -118,7 +118,7 @@ jobs:
       - name: Install test dependencies
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
-        run: uv run pytest -vv --junitxml=pytest_junit_out.xml
+        run: uv run pytest
       - name: Archive the test results and coverage
         uses: actions/upload-artifact@v4
         with:
