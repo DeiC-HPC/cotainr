@@ -100,8 +100,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
       - name: Build the Python Package
         run: uv build
       - name: Upload build artifacts for subsequent workflow steps
