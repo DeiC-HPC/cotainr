@@ -8,33 +8,98 @@ on:
   workflow_dispatch:  # allow for manually trigging the workflow
 
 jobs:
+
+  prepare-for-build:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      matrix_for_linting_building: ${{ steps.set-matrix-for-linting.outputs.matrix_for_linting_building }}
+      lowercase_repo_name: ${{ steps.lowercase.outputs.lowercase_repo_name }}
+      input_trigger_files_sha256: ${{ steps.setoutput.outputs.input_trigger_files_sha256 }}
+    steps:
+      - name: Checkout to repository
+        uses: actions/checkout@v4
+      - name: Set matrix data
+        id: set-matrix
+        # First generate a limited matrix. Echo the matrix for debugging purposes. Last set the output properly.
+        # The long jq query filters our matrix. We only pick 2 python versions. We pick two versions for each apptainer provider (i.e. two versions of apptainer and singularity).
+        # And we use all versions of the os, which is more about the underlying architecture than the actual OS.
+        run: |
+            matrix=$(jq -c . <  .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix=$matrix" >> $GITHUB_OUTPUT
+      - name: Set matrix data
+        id: set-matrix-for-linting
+        # Generate a limited matrix for the linting step. The linting only needs to be run once for one python version and one singularity/apptainer version.
+        run: |
+            matrix=$(jq -c '
+            {
+              "python-version": [ ."python-version" | first ],
+              "singularity": [ ."singularity" | first ]
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix_for_linting_building=$matrix" >> $GITHUB_OUTPUT
+      - name: lowercase github.repository
+        # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
+        id: lowercase
+        run: |
+              lowercase_repo_name="${{ github.repository }}"
+              lowercase_repo_name="${lowercase_repo_name,,}"
+              echo "lowercase_repo_name=$lowercase_repo_name" >> $GITHUB_OUTPUT
+      - name: Set sha256 of the input trigger files
+        id: setoutput
+        run: echo "input_trigger_files_sha256=${{ hashFiles('.github/workflows/matrix.json', '.github/workflows/dockerfiles/Dockerfile', '.github/workflows/CI_build_docker_images.yml') }}" >> $GITHUB_OUTPUT
+
   lint-and-format:
+    needs: [prepare-for-build]
     name: Lint and check formatting
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_for_linting_building) }}
+    container:
+      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      options: --user=1001
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
       - name: Verify the uv.lock is up-to-date
         run: uv lock --check
       - name: Install linting dependencies
-        run: uv sync --python 3.12 --managed-python --group=lint --frozen
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=lint --frozen
       - name: Restore pre-commit cache
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pre-commit
+          path: ${{ env.HOME }}/.cache/pre-commit
           key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit on all files
+        working-directory: ${{ github.workspace }}
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
+
   build:
+    needs: [prepare-for-build]
     name: Build package
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_for_linting_building) }}
+    container:
+      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      options: --user=1001
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
       - name: Build the Python Package
         run: uv build
       - name: Upload build artifacts for subsequent workflow steps
@@ -42,93 +107,33 @@ jobs:
         with:
           name: dist
           path: dist
-  run-full-test-suite-x86:
-    name: Run full test suite on x86
-    runs-on: ${{ matrix.os }}
+
+  run-full-test-suite:
+    needs: [prepare-for-build]
+    name: Run full test suite
+    runs-on: ${{ matrix.os.runs-on }}
     strategy:
       fail-fast: false
-      matrix:
-        os: ["ubuntu-latest"]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-        singularity: [
-          {provider: "singularity", version: "3.8.7"},
-#          {provider: "apptainer", version: "1.1.3"},
-          {provider: "apptainer", version: "1.3.4"},
-          {provider: "singularity-ce", version: "3.9.2"},
-          {provider: "singularity-ce", version: "4.1.3"},
-          {provider: "singularity-ce", version: "4.2.1"}
-        ]
+      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix) }}
+    permissions:
+      packages: read
+    container:
+      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      options: --privileged
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Attempt to restore Singularity/Apptainer installer from cache
-        uses: actions/cache@v4
-        id: cache-singularity-installer
-        with:
-          path: ./singularity_installer.deb
-          key: ${{ matrix.os }}-${{ matrix.singularity.provider }}_installer-${{ matrix.singularity.version }}
-      - name: Download Singularity ${{ matrix.singularity.version }}
-        if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && matrix.singularity.provider == 'singularity' }}
-        run: wget -O singularity_installer.deb https://github.com/apptainer/singularity/releases/download/v${{ matrix.singularity.version }}/singularity-container_${{ matrix.singularity.version }}_amd64.deb
-      - name: Download Apptainer ${{ matrix.singularity.version }}
-        if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && matrix.singularity.provider == 'apptainer' }}
-        run: wget -O singularity_installer.deb https://github.com/apptainer/apptainer/releases/download/v${{ matrix.singularity.version }}/apptainer_${{ matrix.singularity.version }}_amd64.deb
-      - name: Download SingularityCE ${{ matrix.singularity.version }}
-        if: ${{ steps.cache-singularity-installer.outputs.cache-hit != 'true' && matrix.singularity.provider == 'singularity-ce' }}
-        run: wget -O singularity_installer.deb https://github.com/sylabs/singularity/releases/download/v${{ matrix.singularity.version }}/singularity-ce_${{ matrix.singularity.version }}-focal_amd64.deb
-      - name: Set up Singularity/Apptainer
-        run: |
-          sudo apt install ./singularity_installer.deb
-          singularity --version
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-
       - name: Install test dependencies
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
-
-      - name: Run test suite via pytest
-        run: uv run pytest -vv --junitxml=pytest_junit_out.xml
+      - name: Run unittests via pytest
+        run: uv run pytest
       - name: Archive the test results and coverage
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-and-coverage_python${{ matrix.python-version }}_${{ matrix.singularity.provider }}${{ matrix.singularity.version }}
-          path: |
-            pytest_junit_out.xml
-            htmlcov/*
-  run-full-test-suite-ARM:
-    name: Run full test suite ARM64
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ["ubuntu-22.04-arm"]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-        singularity: [
-          {provider: "apptainer", version: "latest"}
-          ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Singularity/Apptainer
-        run: |
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt update
-          sudo apt install -y software-properties-common
-          sudo add-apt-repository -y ppa:apptainer/ppa
-          sudo apt update
-          sudo apt install -y apptainer
-          singularity --version
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Install test dependencies
-        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
-      - name: Run test suite via pytest
-        run: uv run pytest -vv --junitxml=pytest_junit_out.xml
-      - name: Archive the test results and coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-and-coverage_${{ matrix.os }}_python${{ matrix.python-version }}_${{ matrix.singularity.provider }}${{ matrix.singularity.version }}
+          name: test-results-and-coverage_python${{ matrix.python-version }}_${{ matrix.singularity.provider }}${{ matrix.singularity.version }}_${{ matrix.os.tag }}
           path: |
             pytest_junit_out.xml
             htmlcov/*
