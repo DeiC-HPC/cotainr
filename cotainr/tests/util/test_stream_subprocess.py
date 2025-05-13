@@ -59,6 +59,7 @@ class TestStreamSubprocess:
             map_log_level_func=lambda msg: log_level,
             log_settings=LogSettings(verbosity=1, log_file_path=None, no_color=False),
         )
+        caplog.clear()  # Clear any logs from LogDispatcher initialization
         stdout_text = """
         Text on line 1
 
@@ -88,6 +89,7 @@ class TestStreamSubprocess:
             map_log_level_func=lambda msg: log_level,
             log_settings=LogSettings(verbosity=0, log_file_path=None, no_color=False),
         )
+        caplog.clear()  # Clear any logs from LogDispatcher initialization
         stderr_text = """
         An error!
         More breakage...

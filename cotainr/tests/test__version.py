@@ -9,6 +9,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import contextlib
 from importlib.metadata import PackageNotFoundError
+import logging
 import re
 import types
 
@@ -18,56 +19,90 @@ import cotainr._version
 from cotainr._version import (
     _determine_cotainr_version,
     _get_cotainr_calver_tag_pattern,
-    _get_hatch_version,
-    _get_importlib_metadata_version,
 )
 
 
 class Test__determine_cotainr_version:
-    def test_hatch_vcs_based_version(self, monkeypatch):
-        def mock_get_hatch_version():
+    def test_hatch_correct_dev_version_number(self, caplog):
+        start_full_pattern = cotainr._version._get_cotainr_calver_tag_pattern()[
+            :-2  # Remove trailing "$)"
+        ]
+        dev_extension_pattern = r"(\.dev[0-9]+\+g[a-z0-9]{7})?"
+        local_version_pattern = r"(\.d20[0-9]{2}(0[1-9]|10|11|12)[0-9]{2})?"
+        cotainr_dev_version_pattern = (
+            start_full_pattern  # YYYY.MM.MICRO
+            + dev_extension_pattern  # .devN+ghash (optional)
+            + local_version_pattern  # .dYYYYMMDD (optional)
+            + r"$)"  # Add in trailing "$)" back in
+        )
+        with caplog.at_level(logging.DEBUG, logger="cotainr._version"):
+            cotainr_version = _determine_cotainr_version()
+        assert "Cotainr version number determined by hatch" in caplog.text
+        assert re.match(cotainr_dev_version_pattern, cotainr_version)
+        assert cotainr.__version__ == cotainr._version.__version__ == cotainr_version
+
+    @pytest.mark.parametrize(
+        "hatch_library", ["hatchling.metadata.core", "hatchling.plugin.manager"]
+    )
+    def test_hatch_graceful_hatchling_not_installed(
+        self, hatch_library, caplog, context_importerror
+    ):
+        with context_importerror(hatch_library):
+            with caplog.at_level(logging.DEBUG, logger="cotainr._version"):
+                _determine_cotainr_version()
+        assert (
+            "Unable to determine cotainr version number from hatch, "
+            "falling back to importlib.metadata."
+        ) in caplog.text
+
+    def test_hatch_graceful_no_vcs_version(self, caplog, monkeypatch):
+        class StubDummyProjectMetadata:
+            def __init__(self, *args, **kwargs):
+                self.hatch = types.SimpleNamespace(version=types.SimpleNamespace())
+
+        monkeypatch.setattr(
+            "hatchling.metadata.core.ProjectMetadata", StubDummyProjectMetadata
+        )
+        with caplog.at_level(logging.DEBUG, logger="cotainr._version"):
+            _determine_cotainr_version()
+
+        assert (
+            "Unable to determine cotainr version number from hatch, "
+            "falling back to importlib.metadata."
+        ) in caplog.text
+
+    def test_importlib_fallback(self, caplog, monkeypatch, context_importerror):
+        def mock_version(package):
             return "test_version_6021"
 
-        monkeypatch.setattr(
-            cotainr._version, "_get_hatch_version", mock_get_hatch_version
+        monkeypatch.setattr("importlib.metadata.version", mock_version)
+
+        with context_importerror("hatchling.metadata.core"):
+            with caplog.at_level(logging.DEBUG, logger="cotainr._version"):
+                cotainr_version = _determine_cotainr_version()
+
+        assert cotainr_version == "test_version_6021"
+        assert (
+            "Unable to determine cotainr version number from hatch, "
+            "falling back to importlib.metadata."
+        ) in caplog.text
+        assert "Cotainr version number determined by importlib.metadata" in caplog.text
+
+    def test_give_up(self, caplog, monkeypatch, context_importerror):
+        def mock_version(package):
+            raise PackageNotFoundError
+
+        monkeypatch.setattr("importlib.metadata.version", mock_version)
+
+        with context_importerror("hatchling.metadata.core"):
+            with caplog.at_level(logging.DEBUG, logger="cotainr._version"):
+                cotainr_version = _determine_cotainr_version()
+
+        assert cotainr_version == "<unknown version>"
+        assert (
+            "Unable to determine cotainr version number from hatch or importlib."
+            in caplog.text
         )
-        assert _determine_cotainr_version() == "test_version_6021"
-
-    def test_importlib_metadata_based_version(self, monkeypatch):
-        def mock_get_hatch_version():
-            return None
-
-        def mock_get_importlib_metadata_version():
-            return "test_version_6021"
-
-        monkeypatch.setattr(
-            cotainr._version, "_get_hatch_version", mock_get_hatch_version
-        )
-        monkeypatch.setattr(
-            cotainr._version,
-            "_get_importlib_metadata_version",
-            mock_get_importlib_metadata_version,
-        )
-
-        assert _determine_cotainr_version() == "test_version_6021"
-
-    def test_unknown_version(self, monkeypatch):
-        def mock_get_hatch_version():
-            return None
-
-        def mock_get_importlib_metadata_version():
-            return None
-
-        monkeypatch.setattr(
-            cotainr._version, "_get_hatch_version", mock_get_hatch_version
-        )
-        monkeypatch.setattr(
-            cotainr._version,
-            "_get_importlib_metadata_version",
-            mock_get_importlib_metadata_version,
-        )
-
-        assert _determine_cotainr_version() == "<unknown version>"
 
 
 class Test__get_cotainr_calver_tag_pattern:
@@ -120,59 +155,3 @@ class Test__get_cotainr_calver_tag_pattern:
         monkeypatch.setattr("builtins.open", mock_open)
         with pytest.raises(RuntimeError):
             _get_cotainr_calver_tag_pattern()
-
-
-class Test__get_hatch_version:
-    def test_correct_dev_version_number(self):
-        start_full_pattern = cotainr._version._get_cotainr_calver_tag_pattern()[
-            :-2  # Remove trailing "$)"
-        ]
-        dev_extension_pattern = r"(\.dev[0-9]+\+g[a-z0-9]{7})?"
-        local_version_pattern = r"(\.d20[0-9]{2}(0[1-9]|10|11|12)[0-9]{2})?"
-        cotainr_dev_version_pattern = (
-            start_full_pattern  # YYYY.MM.MICRO
-            + dev_extension_pattern  # .devN+ghash (optional)
-            + local_version_pattern  # .dYYYYMMDD (optional)
-            + r"$)"  # Add in trailing "$)" back in
-        )
-        cotainr_dev_version = _get_hatch_version()
-        assert re.match(cotainr_dev_version_pattern, cotainr_dev_version)
-        assert (
-            # If the hatch based version is available (which it should be when
-            # running these tests), that version should be the same as the
-            # cotainr version
-            cotainr.__version__ == cotainr._version.__version__ == cotainr_dev_version
-        )
-
-    def test_hatchling_not_installed(self, context_importerror):
-        with context_importerror("hatchling.metadata.core"):
-            assert _get_hatch_version() is None
-
-        with context_importerror("hatchling.plugin.manager"):
-            assert _get_hatch_version() is None
-
-    def test_no_vcs_version(self, monkeypatch):
-        class StubDummyProjectMetadata:
-            def __init__(self, *args, **kwargs):
-                self.hatch = types.SimpleNamespace(version=types.SimpleNamespace())
-
-        monkeypatch.setattr(
-            "hatchling.metadata.core.ProjectMetadata", StubDummyProjectMetadata
-        )
-        assert _get_hatch_version() is None
-
-
-class Test__get_importlib_metadata_version:
-    def test_correct_version_number(self, monkeypatch):
-        def mock_version(package):
-            return "test_version_6021"
-
-        monkeypatch.setattr("importlib.metadata.version", mock_version)
-        assert _get_importlib_metadata_version() == "test_version_6021"
-
-    def test_not_installed(self, monkeypatch):
-        def mock_version(package):
-            raise PackageNotFoundError
-
-        monkeypatch.setattr("importlib.metadata.version", mock_version)
-        assert _get_importlib_metadata_version() is None

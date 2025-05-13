@@ -9,7 +9,6 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import builtins
 import contextlib
-import importlib
 import io
 import logging
 import os
@@ -72,10 +71,17 @@ def context_reload_logging():
     Needed in tests of logging functionality where the tests end up affecting
     the internal state of the logging module.
 
-    See https://stackoverflow.com/q/7460363 for more context.
+    Based on: https://til.tafkas.net/posts/-resetting-python-logging-before-running-tests/
     """
     yield
-    importlib.reload(logging)
+    loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    loggers.append(logging.getLogger())
+    for logger in loggers:
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+            handler.close()
+        logger.setLevel(logging.NOTSET)
+        logger.propagate = True
 
 
 @pytest.fixture

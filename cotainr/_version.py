@@ -52,9 +52,40 @@ def _determine_cotainr_version():
     cotainr_version : str
         The cotainr version number.
     """
-    cotainr_version = (
-        _get_hatch_version() or _get_importlib_metadata_version() or "<unknown version>"
-    )
+    try:
+        # Attempt to get the version number dynamically from the git history
+        # using hatch-vcs.
+        from hatchling.metadata.core import ProjectMetadata
+        from hatchling.plugin.manager import PluginManager
+
+        cotainr_root_path = Path(__file__).parents[1]
+        metadata = ProjectMetadata(
+            root=cotainr_root_path, plugin_manager=PluginManager()
+        )
+        cotainr_version = metadata.hatch.version.cached
+        logger.debug("Cotainr version number determined by hatch: %s", cotainr_version)
+    except Exception:
+        # ImportError if hatchling is not installed.
+        # Any Exception that metadata.hatch.version.cached may raise if it is
+        # unable to determine the version number.
+        logger.debug(
+            "Unable to determine cotainr version number from hatch, falling back to importlib.metadata."
+        )
+        import importlib.metadata
+
+        try:
+            # Fallback to the version number from importlib.metadata
+            cotainr_version = importlib.metadata.version(__package__)
+            logger.debug(
+                "Cotainr version number determined by importlib.metadata: %s",
+                cotainr_version,
+            )
+        except importlib.metadata.PackageNotFoundError:
+            # If none of the above work, give up and return "<unknown version>".
+            cotainr_version = "<unknown version>"
+            logger.debug(
+                "Unable to determine cotainr version number from hatch or importlib."
+            )
 
     return cotainr_version
 
@@ -92,59 +123,6 @@ def _get_cotainr_calver_tag_pattern():
             )
 
     return cotainr_calver_tag_pattern
-
-
-def _get_hatch_version():
-    """
-    Compute the version number in a development environment.
-
-    Uses the hatchling package functionality to determine the version number.
-
-    Returns
-    -------
-    str or None
-        The version number or `None` if hatchling is unable to determine the
-        version number.
-    """
-    try:
-        from hatchling.metadata.core import ProjectMetadata
-        from hatchling.plugin.manager import PluginManager
-    except ImportError:
-        return None
-
-    cotainr_root_path = Path(__file__).parents[1]
-    metadata = ProjectMetadata(root=cotainr_root_path, plugin_manager=PluginManager())
-
-    try:
-        vcs_version = metadata.hatch.version.cached
-    except Exception:
-        # If "cached" doesn't exist or raises an exception, give up and return None.
-        return None
-
-    return vcs_version
-
-
-def _get_importlib_metadata_version():
-    """
-    Get the version number for an installed cotainr package.
-
-    Uses standard importlib.metadata functions to get the version number for an
-    installed package.
-
-    Returns
-    -------
-    str or None
-        The version number or `None` if not used from an installed package.
-
-    """
-    from importlib.metadata import PackageNotFoundError, version
-
-    try:
-        package_version = version(__package__)
-    except PackageNotFoundError:
-        return None
-
-    return package_version
 
 
 __version__ = _determine_cotainr_version()
