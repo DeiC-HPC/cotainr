@@ -58,7 +58,8 @@ jobs:
             matrix=$(jq -c '
             {
               "python-version": [ ."python-version" | first ],
-              "singularity": [ ."singularity" | first ]
+              "singularity": [ ."singularity" | first ],
+              "os": [ ."os" | first ]
             }
             ' .github/workflows/matrix.json)
             echo "$matrix"
@@ -67,8 +68,8 @@ jobs:
         # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
         id: lowercase
         run: |
-              lowercase_repo_name="${{ github.repository }}"
-              lowercase_repo_name="${lowercase_repo_name,,}"
+              repo_name="${{ github.repository }}"
+              lowercase_repo_name="${repo_name,,}"
               echo "lowercase_repo_name=$lowercase_repo_name" >> $GITHUB_OUTPUT
       - name: Set sha256 of the input trigger files
         id: setoutput
@@ -77,7 +78,7 @@ jobs:
   lint-and-format:
     needs: [prepare-for-build]
     name: Lint and check formatting
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os.runs-on }}
     permissions:
       packages: read
     strategy:
