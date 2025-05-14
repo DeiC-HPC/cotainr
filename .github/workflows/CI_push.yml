@@ -86,7 +86,7 @@ jobs:
       matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_for_linting) }}
     container:
       image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
-      options: --user=1001
+      options: --user=1001 --workdir /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -100,11 +100,13 @@ jobs:
       - name: Restore pre-commit cache
         uses: actions/cache@v4
         with:
-          path: ${{ env.HOME }}/.cache/pre-commit
+          path: ${{ github.workspace }}/.pre-commit-cache
           key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
       - name: Run pre-commit on all files
         working-directory: ${{ github.workspace }}
         run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
+        env:
+          PRE_COMMIT_HOME: ${{ github.workspace }}/.pre-commit-cache
 
   run-unittests:
     needs: [prepare-for-build]
