@@ -44,8 +44,8 @@ jobs:
         # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
         id: lowercase
         run: |
-              lowercase_repo_name="${{ github.repository }}"
-              lowercase_repo_name="${lowercase_repo_name,,}"
+              repo_name="${{ github.repository }}"
+              lowercase_repo_name="${repo_name,,}"
               echo "lowercase_repo_name=$lowercase_repo_name" >> $GITHUB_OUTPUT
       - name: Set sha256 of the input trigger files
         id: setoutput
