@@ -15,8 +15,6 @@ Adapted from the hatch-vcs-footgun-example, see
 
 Functions
 ---------
-_determine_cotainr_version()
-    Determine the version number for cotainr.
 _get_cotainr_calver_tag_pattern()
     Load the cotainr calver tag pattern from pyproject.toml.
 _get_hatch_version()
@@ -30,33 +28,7 @@ __version__
     The cotainr version number.
 """
 
-import logging
 from pathlib import Path
-
-logger = logging.getLogger(__name__)
-
-
-def _determine_cotainr_version():
-    """
-    Determine the version number for cotainr.
-
-    If the git history is available, the hatch-vcs package is used to determine
-    the version number based on the latest git release tag and any commits
-    since then.
-    If the git history is not available, the version number is
-    extracted from package metadata.
-    If neither is available, the version is reported as "<unknown version>".
-
-    Returns
-    -------
-    cotainr_version : str
-        The cotainr version number.
-    """
-    cotainr_version = (
-        _get_hatch_version() or _get_importlib_metadata_version() or "<unknown version>"
-    )
-
-    return cotainr_version
 
 
 def _get_cotainr_calver_tag_pattern():
@@ -80,7 +52,7 @@ def _get_cotainr_calver_tag_pattern():
     #   cotainr_calver_tag_pattern = tomllib.loads(pyproject_toml_path.read_text())["tool"]["hatch"]["version"]["tag-pattern"]
     with open(pyproject_toml_path) as f:
         for line in f:
-            if line.startswith("tag-pattern = "):
+            if line.startswith("tag-pattern"):
                 # Split line on "=" and remove #comments, whitespace, and single quotes
                 cotainr_calver_tag_pattern = (
                     line.split("=")[1].split("#")[0].strip().strip("'")
@@ -94,11 +66,16 @@ def _get_cotainr_calver_tag_pattern():
     return cotainr_calver_tag_pattern
 
 
-def _get_hatch_version():
+def _get_hatch_version(fp: str = __file__) -> str | None:
     """
     Compute the version number in a development environment.
 
     Uses the hatchling package functionality to determine the version number.
+
+    Parameters
+    ----------
+    fp : str
+        The path to the _version.py file.
 
     Returns
     -------
@@ -112,7 +89,11 @@ def _get_hatch_version():
     except ImportError:
         return None
 
-    cotainr_root_path = Path(__file__).parents[1]
+    file_path = Path(fp)
+    if file_path.parent.stem != "site-packages":
+        cotainr_root_path = file_path.parents[1]
+    else:
+        return None
     metadata = ProjectMetadata(root=cotainr_root_path, plugin_manager=PluginManager())
 
     try:
@@ -121,10 +102,11 @@ def _get_hatch_version():
         # If "cached" doesn't exist or raises an exception, give up and return None.
         return None
 
+    assert isinstance(vcs_version, str)
     return vcs_version
 
 
-def _get_importlib_metadata_version():
+def _get_importlib_metadata_version() -> str | None:
     """
     Get the version number for an installed cotainr package.
 
@@ -144,7 +126,11 @@ def _get_importlib_metadata_version():
     except PackageNotFoundError:
         return None
 
+    assert isinstance(package_version, str)
     return package_version
 
 
-__version__ = _determine_cotainr_version()
+# Priority queue: First hatch version, then import lib or else the default value
+__version__ = (
+    _get_hatch_version() or _get_importlib_metadata_version() or "unknown version"
+)

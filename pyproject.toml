@@ -160,7 +160,7 @@ exclude = [
 
 [tool.coverage.run]
 branch = true
-source =["cotainr"]
+source = ["cotainr"]
 omit = [
      "cotainr/tests/*",
      ".venv/*",

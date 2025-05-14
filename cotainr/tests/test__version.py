@@ -16,58 +16,10 @@ import pytest
 
 import cotainr._version
 from cotainr._version import (
-    _determine_cotainr_version,
     _get_cotainr_calver_tag_pattern,
     _get_hatch_version,
     _get_importlib_metadata_version,
 )
-
-
-class Test__determine_cotainr_version:
-    def test_hatch_vcs_based_version(self, monkeypatch):
-        def mock_get_hatch_version():
-            return "test_version_6021"
-
-        monkeypatch.setattr(
-            cotainr._version, "_get_hatch_version", mock_get_hatch_version
-        )
-        assert _determine_cotainr_version() == "test_version_6021"
-
-    def test_importlib_metadata_based_version(self, monkeypatch):
-        def mock_get_hatch_version():
-            return None
-
-        def mock_get_importlib_metadata_version():
-            return "test_version_6021"
-
-        monkeypatch.setattr(
-            cotainr._version, "_get_hatch_version", mock_get_hatch_version
-        )
-        monkeypatch.setattr(
-            cotainr._version,
-            "_get_importlib_metadata_version",
-            mock_get_importlib_metadata_version,
-        )
-
-        assert _determine_cotainr_version() == "test_version_6021"
-
-    def test_unknown_version(self, monkeypatch):
-        def mock_get_hatch_version():
-            return None
-
-        def mock_get_importlib_metadata_version():
-            return None
-
-        monkeypatch.setattr(
-            cotainr._version, "_get_hatch_version", mock_get_hatch_version
-        )
-        monkeypatch.setattr(
-            cotainr._version,
-            "_get_importlib_metadata_version",
-            mock_get_importlib_metadata_version,
-        )
-
-        assert _determine_cotainr_version() == "<unknown version>"
 
 
 class Test__get_cotainr_calver_tag_pattern:
@@ -143,6 +95,10 @@ class Test__get_hatch_version:
             # cotainr version
             cotainr.__version__ == cotainr._version.__version__ == cotainr_dev_version
         )
+
+    def test_installed_package(self):
+        installed_file_path = "/foo/bar/site-packages/cotainr"
+        assert _get_hatch_version(installed_file_path) is None
 
     def test_hatchling_not_installed(self, context_importerror):
         with context_importerror("hatchling.metadata.core"):
