@@ -66,7 +66,7 @@ def _get_cotainr_calver_tag_pattern():
     return cotainr_calver_tag_pattern
 
 
-def _get_hatch_version(fp: str = __file__) -> str | None:
+def _get_hatch_version(fp: str = __file__):
     """
     Compute the version number in a development environment.
 
@@ -106,7 +106,7 @@ def _get_hatch_version(fp: str = __file__) -> str | None:
     return vcs_version
 
 
-def _get_importlib_metadata_version() -> str | None:
+def _get_importlib_metadata_version():
     """
     Get the version number for an installed cotainr package.
 
