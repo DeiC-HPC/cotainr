@@ -1,23 +1,18 @@
 {
-  //We support all active python version
-  //preferably try to support the upcoming version as well
+  "_comment_python": "We support all active python versions. Preferably we try to support the upcoming version as well. TODO: add 3.13 and 3.14",
   "python-version": [
     "3.9",
     "3.10",
     "3.11",
-    "3.12",
-    // "3.13",
-    // "3.14",
+    "3.12"
   ],
-    //Oldest version is from a system we want to support, fx. LUMI
-  //Then every major and minor version up to newest version
+  "_comment_singularity": "Oldest version is from a system we want to support, fx. LUMI. Then every major and minor version up to newest version. TODO: Update apptainer version 1.4.1, when released and tested.",
   "singularity": [
       {
         "provider": "apptainer",
         "version": "1.3.4"
       },
       {
-        //Update to 1.4.1 when that is released and tested
         "provider": "apptainer",
         "version": "1.3.6"
       },
@@ -34,8 +29,7 @@
         "version": "4.3.0"
       }
   ],
-  //Latest operating system version for github runners
-  //For both x86 and ARM
+  "_comment_os": "Latest operating system version for github runners. For both x86 and ARM",
   "os":[
     {
      "runs-on": "ubuntu-latest",
