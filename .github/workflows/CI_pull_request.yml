@@ -116,6 +116,7 @@ jobs:
           path: dist
 
   run-full-test-suite:
+    if: github.event.pull_request.draft == false
     needs: [prepare-for-build]
     name: Run full test suite
     runs-on: ${{ matrix.os.runs-on }}
