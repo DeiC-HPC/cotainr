@@ -11,7 +11,7 @@ CONTAINER_VOLUME_MOUNT=-v ${PWD}:/code
 CONTAINER_TEST_OPTIONS=--privileged $(CONTAINER_ENTRYPOINT) $(CONTAINER_INTERNAL_PYTHON_VENV) $(CONTAINER_ENVIRONMENT) $(CONTAINER_VOLUME_MOUNT)
 
 APPTAINER_URL=ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.4:docker_dev_env_lint
-SINGULARITY_URL=ghcr.io/deic-hpc/cotainr-dev_env-singularity-ce-4.3.0:a0799f3dd059e2e1a3b6a7c5025944ebb38c92f01377d499461470f6db43b748
+SINGULARITY_URL=ghcr.io/deic-hpc/cotainr-dev_env-singularity-ce-4.3.0:docker_dev_env_lint
 
 CONTAINER_URL=$(APPTAINER_URL)
 
