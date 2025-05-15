@@ -69,24 +69,31 @@ Imports in test modules are based on the following conventions:
 
 Continuous Integration (CI)
 ---------------------------
-Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions. The tests run on the GitHub-hosted `ubuntu-latest <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_ runner. When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
+Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions.
+The tests run on the following two GitHub-hosted runners: ubuntu-latest and ubuntu-24.04-arm. For details of the runners see the `github documentation <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_.
+We run the tests on both runners to ensure that `cotainr` works on both AMD64 and ARM machines.
+When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
 
 - *stable*: The minimum supported version of the dependency.
 - *latest*: The latest released version of the dependency.
+- *relevant* :From VIP system version to newest stable version in steps of minor versions.
 - *all*: All supported versions of the dependency.
 
 CI workflows
 ~~~~~~~~~~~~
+All workflows are run on docker images build by the `CI_build_docker_images.yml` pipeline. The Docker images are stored on the Github Container Registry (`ghcr <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry>`_).
 The following CI `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ are implemented:
 
 - `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_:
   Runs the unit tests, integration tests, and end-to-end tests on pull requests to the *main* branch.
-  *All* Python versions and *stable* Singularity as well as *stable* Apptainer versions are tested.
+  *All* Python versions and *relevant* Singularity-CE as well as *relevant* Apptainer versions are tested. For details of the exact test matrix see the `matrix.json <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/matrix.json>`_ file.
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
 - `CI_push.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml>`_:
-  Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions.
+  Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions. The same applies for Singularity-CE and Apptainer versions.
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
-
+- `CI_build_docker_images.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_build_docker_images.yml>`_:
+  Runs the docker build process. The Dockerfile used for the building can be found `here <https://github.com/DeiC-HPC/cotainr/actions/workflows/dockerfiles/Dockerfile>`_
+  We build docker images for *all* supported architectures (AMD64 & ARM), *relevant* Singularity-CE as well as *relevant* Apptainer versions. Python is not installed during the build process but is installed during the test process.
 
 Continuous Delivery (CD)
 ------------------------
