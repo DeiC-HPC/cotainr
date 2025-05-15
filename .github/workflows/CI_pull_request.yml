@@ -25,9 +25,9 @@ jobs:
         run: |
             matrix=$(jq -c '
             {
-              "python-version": .python-version,
-              "singularity": .singularity,
-              "os": .os
+              "python-version": ."python-version",
+              "singularity": ."singularity",
+              "os": ."os"
             }
             ' .github/workflows/matrix.json)
             echo "$matrix"
