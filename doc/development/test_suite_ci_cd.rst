@@ -87,6 +87,7 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
   Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions.
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
 
+The test suite in the CI on Pull Requests is very thorough, and so it is only launched for pull requests that are not in draft mode. Additionally, it is launched the moment when a pull request is taken out of draft mode. On development where end-to-end and singularity integration testing are critical, the test suite should be run locally through the docker containers.
 
 Continuous Delivery (CD)
 ------------------------
