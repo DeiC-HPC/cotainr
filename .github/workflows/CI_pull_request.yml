@@ -23,7 +23,13 @@ jobs:
         id: set-matrix
         # First generate a full matrix. Echo the matrix for debugging purposes. Last set the output properly.
         run: |
-            matrix=$(jq -c . <  .github/workflows/matrix.json)
+            matrix=$(jq -c '
+            {
+              "python-version": ."python-version",
+              "singularity": [ ."singularity",
+              "os": ."os"
+            }
+            ' .github/workflows/matrix.json)
             echo "$matrix"
             echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: Set matrix data
