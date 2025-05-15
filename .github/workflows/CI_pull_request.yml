@@ -22,6 +22,7 @@ jobs:
       - name: Set matrix data
         id: set-matrix
         # First generate a full matrix. Echo the matrix for debugging purposes. Last set the output properly.
+        # We unfortunatly cannot just grab the whole matrix as some of the fields are comments. We need fields as comments because JSON does not support comments. 
         run: |
             matrix=$(jq -c '
             {
