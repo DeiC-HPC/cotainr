@@ -76,7 +76,7 @@ When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/
 
 - *stable*: The minimum supported version of the dependency.
 - *latest*: The latest released version of the dependency.
-- *relevant* :From VIP system version to newest stable version in steps of minor versions.
+- *relevant*: From VIP system version to newest stable version in steps of minor versions.
 - *all*: All supported versions of the dependency.
 
 CI workflows
