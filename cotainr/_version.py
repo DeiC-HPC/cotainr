@@ -66,16 +66,11 @@ def _get_cotainr_calver_tag_pattern():
     return cotainr_calver_tag_pattern
 
 
-def _get_hatch_version(fp: str = __file__):
+def _get_hatch_version():
     """
     Compute the version number in a development environment.
 
     Uses the hatchling package functionality to determine the version number.
-
-    Parameters
-    ----------
-    fp : str
-        The path to the _version.py file.
 
     Returns
     -------
@@ -89,12 +84,18 @@ def _get_hatch_version(fp: str = __file__):
     except ImportError:
         return None
 
-    file_path = Path(fp)
-    if file_path.parent.stem != "site-packages":
-        cotainr_root_path = file_path.parents[1]
-    else:
+    file_path = Path(__file__)
+    if file_path.parent.stem == "site-packages":
+        # If the parent directory is "site-packages", it looks like we are in
+        # an environment with several installed Python packages. No
+        # pyproject.toml file should be available in "site-packages", but if it
+        # is, we can't be sure which package it belongs to, so don't use hatch
+        # to determine the version number.
         return None
-    metadata = ProjectMetadata(root=cotainr_root_path, plugin_manager=PluginManager())
+    else:
+        metadata = ProjectMetadata(
+            root=f"{file_path.parents[1]}", plugin_manager=PluginManager()
+        )
 
     try:
         vcs_version = metadata.hatch.version.cached

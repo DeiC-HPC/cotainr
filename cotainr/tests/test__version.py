@@ -9,6 +9,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import contextlib
 from importlib.metadata import PackageNotFoundError
+from pathlib import Path
 import re
 import types
 
@@ -96,9 +97,16 @@ class Test__get_hatch_version:
             cotainr.__version__ == cotainr._version.__version__ == cotainr_dev_version
         )
 
-    def test_installed_package(self):
-        installed_file_path = "/foo/bar/site-packages/cotainr"
-        assert _get_hatch_version(installed_file_path) is None
+    def test_installed_package(self, monkeypatch):
+        class StubFixedPath:
+            def __init__(self, *args, **kwargs):
+                self.path = Path("/foo/bar/site-packages/cotainr")
+
+            def __getattr__(self, name):
+                return getattr(self.path, name)
+
+        monkeypatch.setattr(cotainr._version, "Path", StubFixedPath)
+        assert _get_hatch_version() is None
 
     def test_hatchling_not_installed(self, context_importerror):
         with context_importerror("hatchling.metadata.core"):
