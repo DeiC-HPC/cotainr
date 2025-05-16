@@ -48,7 +48,7 @@ RUN set -eux ; \
 # just hardcoded the goversion for now to the latest. the script below extracts the min required go version from the mconfig file.
 # However, singularity-ce ommits the minor version in the mconfig file so the download fails.
 # export GOVERSION=$(grep -re 'hstgo_version=' mconfig | sed 's/.*"\(.*\)".*/\1/');\
-# Todo: the if for the arch is a bit questionable atm.
+# TODO: the if for the arch is a bit questionable atm.
 RUN set -eux;\
     export OS=linux;\
     export GOVERSION=1.24.0;\

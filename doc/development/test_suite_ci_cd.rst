@@ -70,6 +70,8 @@ Imports in test modules are based on the following conventions:
 Continuous Integration (CI)
 ---------------------------
 Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions.
+The CI integration debends heavily on the defined `matrix <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_.
+This matrix defines the Python versions, Singularity-CE versions and Apptainer versions that are tested. Furthermore, it also defines the Github Runners and the corresponding architectures on which we test `cotainr`.
 The tests run on the following two GitHub-hosted runners: ubuntu-latest and ubuntu-24.04-arm. For details of the runners see the `github documentation <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_.
 We run the tests on both runners to ensure that `cotainr` works on both AMD64 and ARM machines.
 When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
