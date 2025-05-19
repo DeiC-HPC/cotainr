@@ -97,6 +97,8 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
   Runs the docker build process. The Dockerfile used for the building can be found `here <https://github.com/DeiC-HPC/cotainr/actions/workflows/dockerfiles/Dockerfile>`_
   We build docker images for *all* supported architectures (AMD64 & ARM), *relevant* Singularity-CE as well as *relevant* Apptainer versions. Python is not installed during the build process but is installed during the test process.
 
+The test suite in the CI on Pull Requests is very thorough, and so it is only launched for pull requests that are not in draft mode. Additionally, it is launched the moment when a pull request is taken out of draft mode. On development where end-to-end and singularity integration testing are critical, the test suite should be run locally through the docker containers.
+
 Continuous Delivery (CD)
 ------------------------
 Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/continuous-deployment.html>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
