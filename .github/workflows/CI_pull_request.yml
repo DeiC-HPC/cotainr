@@ -28,8 +28,15 @@ jobs:
       - name: Set matrix data
         id: set-matrix
         # First generate a full matrix. Echo the matrix for debugging purposes. Last set the output properly.
+        # We unfortunatly cannot just grab the whole matrix as some of the fields are comments. We need fields as comments because JSON does not support comments.
         run: |
-            matrix=$(jq -c . <  .github/workflows/matrix.json)
+            matrix=$(jq -c '
+            {
+              "python-version": ."python-version",
+              "singularity": ."singularity",
+              "os": ."os"
+            }
+            ' .github/workflows/matrix.json)
             echo "$matrix"
             echo "matrix=$matrix" >> $GITHUB_OUTPUT
       - name: Set matrix data

@@ -122,8 +122,6 @@ jobs:
           # The tag is a mix out of the architecture and the input_trigger_files_sha256 on the three files that impact the build of the docker images.
           tags: |
             ${{ env.REGISTRY }}/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ matrix.os.tag }}-${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           platforms: ${{ matrix.os.platform }}
           # The provenance attestation describes how an image was built and what it contains. This would be a nice to have.
           # However, it impacts if the final output of the build process is a manifest or an image. Enabling this means that the ghcr gets quite cluttered.
