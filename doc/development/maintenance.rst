@@ -1,7 +1,7 @@
 .. _maintenance:
 
-Maintenance:
-============
+Maintenance
+===========
 
 We currently have one important topic for ongoing maintenance work.
 This are the needed procedures to bump/deprecate supported versions of Python, Singularity-CE and Apptainer.
