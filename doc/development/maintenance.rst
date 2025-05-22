@@ -3,11 +3,7 @@
 Maintenance
 ===========
 
-We currently have one important topic for ongoing maintenance work.
-This are the needed procedures to bump/deprecate supported versions of Python, Singularity-CE and Apptainer.
-
-Below we describe the changes required for bumping Python.
-Singularity-CE and Apptainer bumps for now only need to be tested by bumping the version in the test matrix.
+The only production dependencies are Python, Singularity-CE and Apptainer. `cotainr` should be up-to-date with the newest supported versions of all these dependencies. The full list of current supported and tested versions are single-sourced in the `matrix.json` file. (Note, the Python version is also specified in `pyproject.toml`). Whenever new minor supported versions are released, they should be tested. If no changes are required, the new versions should be added to `matrix.json` in a `dev_env*` git branch.
 
 In the code, we try to keep track of points of importance for version bumps by leaving markers.
 More specifically we leave the following `MARK_` throughout the code to highlight important sections that require a change.
