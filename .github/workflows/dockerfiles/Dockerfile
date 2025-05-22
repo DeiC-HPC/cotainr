@@ -45,9 +45,10 @@ RUN set -eux ; \
         wget -O singularity_installer.tar.gz https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-ce-${SINGULARITY_VERSION}.tar.gz;\
     fi
 
-# just hardcoded the goversion for now to the latest. the script below extracts the min required go version from the mconfig file.
-# However, singularity-ce ommits the minor version in the mconfig file so the download fails.
-# export GOVERSION=$(grep -re 'hstgo_version=' mconfig | sed 's/.*"\(.*\)".*/\1/');\
+# The script below extracts the min required go version from the mconfig file.
+# The first sed extracts the version sub-string delimited by a " (https://stackoverflow.com/questions/16675179/how-to-use-sed-to-extract-substring/16675318#16675318)
+# Some of the apptainer/singularity-ce mconfig files ommit the patch version.
+# So the second sed substitutes a 0 for the patch version if necessary.
 # TODO: the if for the arch is a bit questionable atm.
 RUN set -eux;\
     mkdir singularity;\
