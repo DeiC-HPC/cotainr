@@ -14,7 +14,7 @@ More specifically we leave the following `MARK_` throughout the code to highligh
 `MARK_PYTHON_VERSION` thus indicates changes that need to be made in case of version bumps.
 And likewise `MARK_APPTAINER_VERSION` indicates if changes for Apptainer/Singularity-CE need to be made.
 
-Additional, marks could be `MARK_MAINTENANCE`.
+Additional marks could be `MARK_MAINTENANCE`.
 
 Python version bumping/deprecating
 ----------------------------------
