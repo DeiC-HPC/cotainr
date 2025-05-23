@@ -1,8 +1,10 @@
 export USERID = $(shell id -u)
 
-CONTAINER_RUN := docker
+CONTAINER_RUN=docker
 
 CONTAINER_TEST_COMMAND="cd /home/ubuntu/code && ls -alh && uv sync --group=tests && uv run pytest"
+CONTAINER_DOC_COMMAND="uv sync --group docs && uv run make apidoc && uv run make relnotes && uv run make html"
+
 
 CONTAINER_ENTRYPOINT=--entrypoint bash
 CONTAINER_INTERNAL_PYTHON_VENV=--tmpfs=/venv:exec
@@ -16,6 +18,8 @@ APPTAINER_URL=ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.4:docker_dev_env_li
 SINGULARITY_URL=ghcr.io/deic-hpc/cotainr-dev_env-singularity-ce-4.3.0:docker_dev_env_lint
 
 CONTAINER_URL=$(APPTAINER_URL)
+
+default: test
 
 podman:
 	$(eval CONTAINER_RUN=podman)
@@ -35,4 +39,11 @@ id:
 	@echo $$USERID
 
 test:
-	$(CONTAINER_RUN) run $(CONTAINER_TEST_OPTIONS) $(CONTAINER_URL) -c $(CONTAINER_TEST_COMMAND)
+	$(eval CONTAINER_COMMAND=$(CONTAINER_TEST_COMMAND))
+	$(call execute)
+
+doc:
+	$(eval CONTAINER_COMMAND=$(CONTAINER_DOC_COMMAND))
+	$(call execute)
+
+execute = $(CONTAINER_RUN) run $(CONTAINER_TEST_OPTIONS) $(CONTAINER_URL) -c $(CONTAINER_COMMAND)
