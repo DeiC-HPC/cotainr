@@ -21,6 +21,12 @@
 			"source": "pre-commit-env",
 			"target": "/pre-commit-env",
 			"type": "volume"
+		},
+		{
+			// Persist the command history
+			"source": "commandhistory",
+			"target": "/commandhistory",
+			"type": "volume"
 		}
 	],
 
@@ -28,10 +34,13 @@
 	// https://code.visualstudio.com/remote/advancedcontainers/start-processes
 	"postStartCommand": "uv sync --frozen",
 
-	// Set environment variables to use in IDE proceses in the container.
+	// Set environment variables to use in IDE processes in the container.
 	"remoteEnv": {
-		"UV_LINK_MODE": "copy", // hardlinking does not seem to work properly in a volume mount
-		"PRE_COMMIT_HOME": "/pre-commit-env"
+		"LANG": "C.UTF-8", // Set the locale to C.UTF-8 to avoid issues with non-ASCII characters
+		"UV_LINK_MODE": "copy", // uv hardlinking does not work in a volume mount
+		"PRE_COMMIT_HOME": "/pre-commit-env", // Set the pre-commit env path to a persisted mounted volume
+		"HISTFILE": "/commandhistory/.bash_history", // Set the history file to a persisted mounted volume
+		"PROMPT_COMMAND": "history -a" // Append to the history file after each command
 	},
 
 	// Run container as non-root user. More info: https://aka.ms/dev-containers-non-root.
