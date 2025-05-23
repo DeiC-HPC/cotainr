@@ -3,7 +3,7 @@ export USERID = $(shell id -u)
 CONTAINER_RUN=docker
 
 CONTAINER_TEST_COMMAND="cd /home/ubuntu/code && ls -alh && uv sync --group=tests && uv run pytest"
-CONTAINER_DOC_COMMAND="uv sync --group docs && uv run make apidoc && uv run make relnotes && uv run make html"
+CONTAINER_DOC_COMMAND="cd /home/ubuntu/code/doc &&  uv sync --group docs && uv run make apidoc && uv run make relnotes && uv run make html"
 
 
 CONTAINER_ENTRYPOINT=--entrypoint bash
@@ -42,7 +42,7 @@ test:
 	$(eval CONTAINER_COMMAND=$(CONTAINER_TEST_COMMAND))
 	$(call execute)
 
-doc:
+docs:
 	$(eval CONTAINER_COMMAND=$(CONTAINER_DOC_COMMAND))
 	$(call execute)
 
