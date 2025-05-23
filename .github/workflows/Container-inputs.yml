@@ -25,7 +25,7 @@ on:
       input_trigger_files_sha256:
         description: "SHA of docker build related files to ensure correctness"
         value: ${{ jobs.generate_inputs.outputs.input_trigger_files_sha256 }}
-  
+
 jobs:
   generate_inputs:
     name: Generate inputs
