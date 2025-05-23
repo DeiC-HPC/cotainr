@@ -2,32 +2,49 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/universal
 {
 	"name": "Cotainr devcontainer",
-
 	// Default image to use as a base for the dev container.
 	// If you don't have access to this registry, you can build the container locally from the ./github/dockerfiles/Dockerfile.
 	"image": "ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.4:docker_dev_env_PR_pipeline",
-
 	// Set security options needed to run Apptainer/SingularityCE in the container.
-	"securityOpt": ["systempaths=unconfined"],
-
+	"securityOpt": [
+		"systempaths=unconfined",
+		"no-new-privileges"
+	],
+	// Mounts to persist select data between container restarts and rebuilds.
+	"mounts": [
+		{
+			"source": "pre-commit-env",
+			"target": "/pre-commit-env",
+			"type": "volume"
+		}
+	],
 	// Sync the uv python venv on startup
 	// https://code.visualstudio.com/remote/advancedcontainers/start-processes
 	"postStartCommand": "uv sync --frozen",
-
 	// Set environment variables to use in IDE proceses in the container.
 	"remoteEnv": {
-		"UV_LINK_MODE": "copy"  // hardlinking does not seem to work properly in a volume mount
+		"UV_LINK_MODE": "copy", // hardlinking does not seem to work properly in a volume mount
+		"PRE_COMMIT_HOME": "/pre-commit-env"
 	},
-
 	// Run container as non-root user. More info: https://aka.ms/dev-containers-non-root.
 	// https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user#_specifying-a-user-for-vs-code
-	"remoteUser": "1000:1000",
-
+	// containerUser is needed over remoteUser to have volumes mounted with the correct permissions for use by the non-root user.
+	"containerUser": "1000:1000",
 	// Configure tool-specific properties.
 	"customizations": {
 		// Define VS Code extensions to install in the dev container.
 		// https://code.visualstudio.com/docs/devcontainers/containers#_managing-extensions
 		"vscode": {
+			"settings": {
+				"terminal.integrated.env.linux": {
+					"GIT_EDITOR": "code --wait" // Use VS Code when editing commit messages
+				},
+				"github.copilot.chat.codeGeneration.instructions": [
+					{
+						"text": "This dev container is used for developing and testing Cotainr. Cotainr is a tool for building Singularity / Apptainer containers in a rootless setting. It is written in pure Python and uses pytest for testing as well as sphinx for building the documentation. The documentation is written as restructured text."
+					}
+				]
+			},
 			"extensions": [
 				"ms-python.python",
 				"ms-azuretools.vscode-containers",
