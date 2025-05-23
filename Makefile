@@ -1,5 +1,3 @@
-export USERID = $(shell id -u)
-
 CONTAINER_RUN=docker
 
 CONTAINER_TEST_COMMAND="cd /home/ubuntu/code && ls -alh && uv sync --group=tests && uv run pytest"
@@ -34,9 +32,6 @@ singularity:
 
 apptainer:
 	$(eval CONTAINER_URL=$(APPTAINER_URL))
-
-id:
-	@echo $$USERID
 
 test:
 	$(eval CONTAINER_COMMAND=$(CONTAINER_TEST_COMMAND))
