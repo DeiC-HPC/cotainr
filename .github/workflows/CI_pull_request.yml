@@ -14,7 +14,8 @@ on:
   workflow_dispatch:  # allow for manually trigging the workflow
 
 jobs:
-
+    
+  # Prepares the matrix inputs, generates a lowercase version of the repo name, calculates sha256 of the input trigger paths.
   container-inputs:
     uses: ./.github/workflows/Container-inputs.yml
 
@@ -26,7 +27,7 @@ jobs:
       packages: read
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_linting) }}
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
     container:
       image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
       options: --user=1001
@@ -59,7 +60,7 @@ jobs:
       packages: read
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_linting) }}
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
     container:
       image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
       options: --user=1001
