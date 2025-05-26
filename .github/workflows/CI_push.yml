@@ -26,7 +26,7 @@ env:
   HOME: /github/home
 
 jobs:
-    
+
   # Prepares the matrix inputs, generates a lowercase version of the repo name, calculates sha256 of the input trigger paths.
   container-inputs:
     uses: ./.github/workflows/Container-inputs.yml
