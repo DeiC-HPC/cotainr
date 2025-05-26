@@ -37,6 +37,7 @@ singularity: changes the container to one containing singularity\n\
 apptainer: changes the container to one containing apptainer (default)\n\
 "
 
+.PHONY:default help podman login singularity apptainer test docs
 default: test
 
 help:
