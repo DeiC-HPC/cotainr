@@ -1,11 +1,11 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/universal
 {
-	"name": "Cotainr devcontainer",
+	"name": "Cotainr dev container",
 
 	// Default image to use as a base for the dev container.
 	// If you don't have access to this registry, you can build the container locally from the ./github/dockerfiles/Dockerfile.
-	"image": "ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.4:docker_dev_env_PR_pipeline",
+	"image": "ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.4:main",
 
 	// Set security options needed to run Apptainer/SingularityCE in the container.
 	// These should be sufficient for running the container using rootless Podman.
