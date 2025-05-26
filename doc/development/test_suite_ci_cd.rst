@@ -99,6 +99,12 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
 
 The test suite in the CI on Pull Requests is very thorough, and so it is only launched for pull requests that are not in draft mode. Additionally, it is launched the moment when a pull request is taken out of draft mode. On development where end-to-end and singularity integration testing are critical, the test suite should be run locally through the docker containers.
 
+The CI utilizes `reusable workflows <https://docs.github.com/en/actions/sharing-automations/reusing-workflows>`_ of frequently used helper workflow steps.
+
+- `Container-inputs.yml`: Extract the required variables for running jobs on the correct docker image. This extracts the relevant part from the single source `matrix.json` to be used in the other workflows. Additionally, the workflow returns the GitHub repository name in lowercase as required by the GHCR repository and the SHA of `matrix.json`, `Dockerfile` and `CI_Build_docker_images.yml` to ensure the correctness of the container version.
+
+Note on reusable workflows in contrast with `composite workflows <https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action>`_. The composite actions are useful when another workflow is run as part of another workflow step. However, this is not the case of `Container-inputs.yml` where the matrix is needed before the 'another workflow step' is even executed. And so it is more suitable to use reusable workflows because the job is run as its own pre-processing step, thus providing the matrix input to the subsequent job steps that require it.
+
 Continuous Delivery (CD)
 ------------------------
 Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/continuous-deployment.html>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
