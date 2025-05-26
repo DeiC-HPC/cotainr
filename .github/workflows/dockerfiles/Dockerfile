@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-LABEL authors="julius"
+LABEL authors="DeiC HPC"
 
 # get build-arg inputs to set the singularity provider and versions
 ARG SINGULARITY_PROVIDER
@@ -75,5 +75,10 @@ RUN set -eux;\
     singularity --version
 
 # Download and install unmanaged uv
+# Set UV_LINK_MODE to copy since hardlinking does not work with volume mounts
 RUN set -eux;\
     curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
+ENV UV_LINK_MODE="copy"
+
+# Set default locale to english (as needed for the docs prepare-release.py script) and utf-8 as required when using with e.g. a VS Code terminal.
+ENV LANG="C.UTF-8"

@@ -36,8 +36,8 @@
 
 	// Set environment variables to use in IDE processes in the container.
 	"remoteEnv": {
-		"LANG": "C.UTF-8", // Set the locale to C.UTF-8 to avoid issues with non-ASCII characters
-		"UV_LINK_MODE": "copy", // uv hardlinking does not work in a volume mount
+		//"LANG": "C.UTF-8", // Set the locale to C.UTF-8 to avoid issues with non-ASCII characters
+		//"UV_LINK_MODE": "copy", // uv hardlinking does not work in a volume mount
 		"PRE_COMMIT_HOME": "/pre-commit-env", // Set the pre-commit env path to a persisted mounted volume
 		"HISTFILE": "/commandhistory/.bash_history", // Set the history file to a persisted mounted volume
 		"PROMPT_COMMAND": "history -a" // Append to the history file after each command
