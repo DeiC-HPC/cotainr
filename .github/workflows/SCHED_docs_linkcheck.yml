@@ -7,17 +7,60 @@ on:
     - cron: '15 2 * * TUE'  # every Tuesday night
   workflow_dispatch:  # allow for manually trigging the workflow
 jobs:
-  check-docs-links:
-    name: Check for broken links in documentation
+
+  prepare-for-build:
     runs-on: ubuntu-latest
+    outputs:
+      matrix_for_linkchecking: ${{ steps.set-matrix-for-link-check.outputs.matrix_for_linkchecking }}
+      lowercase_repo_name: ${{ steps.lowercase.outputs.lowercase_repo_name }}
+      input_trigger_files_sha256: ${{ steps.setoutput.outputs.input_trigger_files_sha256 }}
+    steps:
+      - name: Checkout to repository
+        uses: actions/checkout@v4
+      - name: Set matrix data
+        id: set-matrix-for-link-check
+        # Generate a limited matrix for the linkcheck step. The linkcheck only needs to be run once for one python version and one singularity/apptainer version.
+        run: |
+          matrix=$(jq -c '
+          {
+            "python-version": [ ."python-version" | first ],
+            "singularity": [ ."singularity" | first ],
+            "os": [ ."os" | first ]
+          }
+          ' .github/workflows/matrix.json)
+          echo "$matrix"
+          echo "matrix_for_linkchecking=$matrix" >> $GITHUB_OUTPUT
+      - name: lowercase github.repository
+        # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
+        id: lowercase
+        run: |
+          repo_name="${{ github.repository }}"
+          lowercase_repo_name="${repo_name,,}"
+          echo "lowercase_repo_name=$lowercase_repo_name" >> $GITHUB_OUTPUT
+      - name: Set sha256 of the input trigger files
+        id: setoutput
+        run: echo "input_trigger_files_sha256=${{ hashFiles('.github/workflows/matrix.json', '.github/workflows/dockerfiles/Dockerfile', '.github/workflows/CI_build_docker_images.yml') }}" >> $GITHUB_OUTPUT
+
+  check-docs-links:
+    needs: [prepare-for-build]
+    name: Check for broken links in documentation
+    runs-on: ${{ matrix.os.runs-on }}
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_for_linkchecking) }}
+    container:
+      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
 
       - name: Install test dependencies
-        run: uv sync --python 3.12 --managed-python --group=docs --frozen
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=docs --frozen
       - name: Build documentation
         run: |
           uv run make -C doc apidoc
