@@ -1,7 +1,7 @@
 name: CI on push to branch
 
 # This workflow runs a limited number of tests on every push.
-# The tests are defined by the 'Set matrix data' step in the prepare-for-build job.
+# The tests are defined by the 'Set matrix data' step in the container-inputs job.
 # The tests are run on the docker images build by the CI_build_docker_images action/pipeline.
 # This action does NOT run if ONLY the files in the paths-ignore are changed. However, it will run if other files are also changed
 
@@ -26,66 +26,22 @@ env:
   HOME: /github/home
 
 jobs:
-  prepare-for-build:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
-      matrix_for_linting: ${{ steps.set-matrix-for-linting.outputs.matrix_for_linting }}
-      lowercase_repo_name: ${{ steps.lowercase.outputs.lowercase_repo_name }}
-      input_trigger_files_sha256: ${{ steps.setoutput.outputs.input_trigger_files_sha256 }}
-    steps:
-      - name: Checkout to repository
-        uses: actions/checkout@v4
-      - name: Set matrix data
-        id: set-matrix
-        # First generate a limited matrix. Echo the matrix for debugging purposes. Last set the output properly.
-        # The long jq query filters our matrix. We only pick 2 python versions. We pick two versions for each apptainer provider (i.e. two versions of apptainer and singularity).
-        # And we use all versions of the os, which is more about the underlying architecture than the actual OS.
-        run: |
-            matrix=$(jq -c '
-            {
-              "python-version": [ ."python-version" | first, last ],
-              "singularity": .singularity | group_by(.provider) | map(first, last) | unique,
-              "os": .os
-            }
-            ' .github/workflows/matrix.json)
-            echo "$matrix"
-            echo "matrix=$matrix" >> $GITHUB_OUTPUT
-      - name: Set matrix data
-        id: set-matrix-for-linting
-        # Generate a limited matrix for the linting step. The linting only needs to be run once for one python version and one singularity/apptainer version.
-        run: |
-            matrix=$(jq -c '
-            {
-              "python-version": [ ."python-version" | first ],
-              "singularity": [ ."singularity" | first ],
-              "os": [ ."os" | first ]
-            }
-            ' .github/workflows/matrix.json)
-            echo "$matrix"
-            echo "matrix_for_linting=$matrix" >> $GITHUB_OUTPUT
-      - name: lowercase github.repository
-        # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
-        id: lowercase
-        run: |
-              repo_name="${{ github.repository }}"
-              lowercase_repo_name="${repo_name,,}"
-              echo "lowercase_repo_name=$lowercase_repo_name" >> $GITHUB_OUTPUT
-      - name: Set sha256 of the input trigger files
-        id: setoutput
-        run: echo "input_trigger_files_sha256=${{ hashFiles('.github/workflows/matrix.json', '.github/workflows/dockerfiles/Dockerfile', '.github/workflows/CI_build_docker_images.yml') }}" >> $GITHUB_OUTPUT
+
+  # Prepares the matrix inputs, generates a lowercase version of the repo name, calculates sha256 of the input trigger paths.
+  container-inputs:
+    uses: ./.github/workflows/Container-inputs.yml
 
   lint-and-format:
-    needs: [prepare-for-build]
+    needs: [container-inputs]
     name: Lint and check formatting
     runs-on: ${{ matrix.os.runs-on }}
     permissions:
       packages: read
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_for_linting) }}
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
     container:
-      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
       options: --user=1001
       credentials:
         username: ${{ github.actor }}
@@ -109,16 +65,16 @@ jobs:
           PRE_COMMIT_HOME: ${{ github.workspace }}/.pre-commit-cache
 
   run-unittests:
-    needs: [prepare-for-build]
+    needs: [container-inputs]
     name: Run unittests
     permissions:
       packages: read
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix) }}
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_push) }}
     runs-on: ${{ matrix.os.runs-on }}
     container:
-      image: ghcr.io/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
