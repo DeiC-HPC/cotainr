@@ -1,0 +1,119 @@
+name: 'Generate docker container inputs'
+
+on:
+  workflow_call:
+    # Map the workflow outputs to job outputs
+    outputs:
+      matrix_full:
+        description: "The CI_pull_request.yml full test suite matrix, full matrix"
+        value: ${{ jobs.generate_inputs.outputs.matrix_full }}
+      matrix_push:
+        description: "The CI_push.yml test suite matrix, Python and Singularity table first and last"
+        value: ${{ jobs.generate_inputs.outputs.matrix_push }}
+      matrix_single_default:
+        description: "The default single Python, Singularity and OS, for linting etc."
+        value: ${{ jobs.generate_inputs.outputs.matrix_single_default }}
+      matrix_build_with_os:
+        description: "The docker build matrix, singularity and OS tables"
+        value: ${{ jobs.generate_inputs.outputs.matrix_build_with_os }}
+      matrix_build_without_os:
+        description: "The docker build matrix, only singularity table"
+        value: ${{ jobs.generate_inputs.outputs.matrix_build_without_os }}
+      lowercase_repo_name:
+        description: "Lowercase name of the organisation for GHCR repository name"
+        value: ${{ jobs.generate_inputs.outputs.lowercase_repo_name }}
+      input_trigger_files_sha256:
+        description: "SHA of docker build related files to ensure correctness"
+        value: ${{ jobs.generate_inputs.outputs.input_trigger_files_sha256 }}
+
+jobs:
+  generate_inputs:
+    name: Generate inputs
+    runs-on: ubuntu-latest
+    outputs:
+      matrix_full: ${{ steps.set-matrix-full.outputs.matrix_full }}
+      matrix_push: ${{ steps.set-matrix-push.outputs.matrix_push }}
+      matrix_single_default: ${{ steps.set-matrix-single-default.outputs.matrix_single_default }}
+      matrix_build_with_os: ${{ steps.set-matrix-build-with-os.outputs.matrix_build_with_os }}
+      matrix_build_without_os: ${{ steps.set-matrix-build-without-os.outputs.matrix_build_without_os }}
+      lowercase_repo_name: ${{ steps.lowercase.outputs.lowercase_repo_name }}
+      input_trigger_files_sha256: ${{ steps.calculate-sha.outputs.input_trigger_files_sha256 }}
+    steps:
+      - name: Checkout to repository
+        uses: actions/checkout@v4
+      - name: Set matrix-full data
+        id: set-matrix-full
+        # First generate a full matrix. Echo the matrix for debugging purposes. Last set the output properly.
+        # We unfortunatly cannot just grab the whole matrix as some of the fields are comments. We need fields as comments because JSON does not support comments.
+        run: |
+            matrix_full=$(jq -c '
+            {
+              "python-version": ."python-version",
+              "singularity": ."singularity",
+              "os": ."os"
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix_full"
+            echo "matrix_full=$matrix_full" >> $GITHUB_OUTPUT
+      - name: Set matrix_push data
+        id: set-matrix-push
+        # First generate a limited matrix_push. Echo the matrix_push for debugging purposes. Last set the output properly.
+        # The long jq query filters our matrix_push. We only pick 2 python versions. We pick two versions for each apptainer provider (i.e. two versions of apptainer and singularity).
+        # And we use all versions of the os, which is more about the underlying architecture than the actual OS.
+        run: |
+            matrix_push=$(jq -c '
+            {
+                "python-version": [ ."python-version" | first, last ],
+                "singularity": .singularity | group_by(.provider) | map(first, last) | unique,
+                "os": .os
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix_push"
+            echo "matrix_push=$matrix_push" >> $GITHUB_OUTPUT
+      - name: Set matrix_single_default data
+        id: set-matrix-single-default
+        # Generate a limited matrix for one python version and one singularity/apptainer version. For example for linting
+        run: |
+            matrix=$(jq -c '
+            {
+                "python-version": [ ."python-version" | first ],
+                "singularity": [ ."singularity" | first ],
+                "os": [ ."os" | first ]
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix"
+            echo "matrix_single_default=$matrix" >> $GITHUB_OUTPUT
+      # Build matrix with the architecture, to build the image for both arm64 and amd64.
+      - name: Set matrix build data with os
+        id: set-matrix-build-with-os
+        run: |
+            matrix_build_with_os=$(jq -c '
+            {
+              "singularity": .singularity,
+              "os": .os
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix_build_with_os"
+            echo "matrix_build_with_os=$matrix_build_with_os" >> $GITHUB_OUTPUT
+      # Test matrix with only singularity, needed in the create-manifest job to combine the architectures into one manifest.
+      - name: Set matrix build data without os
+        id: set-matrix-build-without-os
+        run: |
+            matrix_build_without_os=$(jq -c '
+            {
+              "singularity": .singularity,
+            }
+            ' .github/workflows/matrix.json)
+            echo "$matrix_build_without_os"
+            echo "matrix_build_without_os=$matrix_build_without_os" >> $GITHUB_OUTPUT
+      - name: lowercase github.repository
+        # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
+        id: lowercase
+        run: |
+                repo_name="${{ github.repository }}"
+                lowercase_repo_name="${repo_name,,}"
+                echo "lowercase_repo_name=$lowercase_repo_name" >> $GITHUB_OUTPUT
+      - name: Set sha256 of the input trigger files
+        # Create a hash of the docker build dependent files to ensure correct container is used.
+        id: calculate-sha
+        run: echo "input_trigger_files_sha256=${{ hashFiles('.github/workflows/matrix.json', '.github/workflows/dockerfiles/Dockerfile', '.github/workflows/CI_build_docker_images.yml') }}" >> $GITHUB_OUTPUT
