@@ -45,13 +45,17 @@ RUN set -eux ; \
         wget -O singularity_installer.tar.gz https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-ce-${SINGULARITY_VERSION}.tar.gz;\
     fi
 
-# just hardcoded the goversion for now to the latest. the script below extracts the min required go version from the mconfig file.
-# However, singularity-ce ommits the minor version in the mconfig file so the download fails.
-# export GOVERSION=$(grep -re 'hstgo_version=' mconfig | sed 's/.*"\(.*\)".*/\1/');\
-# Todo: the if for the arch is a bit questionable atm.
+# The script below extracts the min required go version from the mconfig file.
+# The first sed extracts the version sub-string delimited by a " (https://stackoverflow.com/questions/16675179/how-to-use-sed-to-extract-substring/16675318#16675318)
+# Some of the apptainer/singularity-ce mconfig files ommit the patch version.
+# So the second sed substitutes a 0 for the patch version if necessary.
+# TODO: the if for the arch is a bit questionable atm.
 RUN set -eux;\
+    mkdir singularity;\
+    tar -xzf singularity_installer.tar.gz --strip-components=1 -C /singularity;\
+    cd singularity;\
     export OS=linux;\
-    export GOVERSION=1.24.0;\
+    export GOVERSION=$(grep -re 'hstgo_version=' mconfig | sed 's/.*"\(.*\)".*/\1/' | sed -E 's/^([0-9]+\.[0-9]+)$/\1.0/');\
     [[ "$(uname -m)" == 'x86_64' || "$(uname -m)" == 'AMD64'  || "$(uname -m)" == 'amd64' ]] && export ARCH=amd64 || export ARCH=arm64;\
     echo $ARCH;\
     wget -O /tmp/go${GOVERSION}.${OS}-${ARCH}.tar.gz \
@@ -62,8 +66,6 @@ ENV PATH=$PATH:/usr/local/go/bin
 
 # Install singularity
 RUN set -eux;\
-    mkdir singularity;\
-    tar -xzf singularity_installer.tar.gz --strip-components=1 -C /singularity;\
     cd singularity;\
     ./mconfig --without-suid;\
     cd ./builddir;\
@@ -71,14 +73,9 @@ RUN set -eux;\
     make install
 
 RUN set -eux;\
+    echo id -u;\
     singularity --version
 
-# Download the latest uv installer
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
-# Run the installer then remove it
+# Download and install unmanaged uv
 RUN set -eux;\
-    sh /uv-installer.sh && rm /uv-installer.sh
-
-# Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin/:$PATH"
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/usr/local/bin" sh
