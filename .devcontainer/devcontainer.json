@@ -44,6 +44,8 @@
 	// Run container as non-root user. More info: https://aka.ms/dev-containers-non-root.
 	// https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user#_specifying-a-user-for-vs-code
 	// containerUser is needed over remoteUser to have volumes mounted with the correct permissions for use by the non-root user.
+	// This has been tested with Podman. If using Docker, more configuration may be needed to avoid permission errors with the volume mounts.
+	// See https://github.com/microsoft/vscode-remote-release/issues/9931 for more details.
 	"containerUser": "1000:1000",
 
 	// Configure tool-specific properties.
