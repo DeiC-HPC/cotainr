@@ -33,8 +33,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Needed for hatch-vcs versioning
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
       - name: Build the Python Package
@@ -63,8 +61,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Needed for hatch-vcs versioning
       - name: Attempt to restore Singularity/Apptainer installer from cache
         uses: actions/cache@v4
         id: cache-singularity-installer
@@ -113,8 +109,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Needed for hatch-vcs versioning
       - name: Set up Singularity/Apptainer
         run: |
           export DEBIAN_FRONTEND=noninteractive
