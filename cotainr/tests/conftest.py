@@ -8,7 +8,6 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import contextlib
-import importlib
 import io
 import logging
 import os
@@ -44,10 +43,23 @@ def context_reload_logging():
     Needed in tests of logging functionality where the tests end up affecting
     the internal state of the logging module.
 
-    See https://stackoverflow.com/q/7460363 for more context.
+    The current implementation is based on:
+    https://til.tafkas.net/posts/-resetting-python-logging-before-running-tests/
+
+    It used to be implemented as `importlib.reload(logging)`. However, it
+    turns out that this approach does not work for some tests where multiple
+    test cases use the caplog fixture. For those cases, only the first test
+    case would actually capture the log messages - the others would be empty.
     """
     yield
-    importlib.reload(logging)
+    loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+    loggers.append(logging.getLogger())
+    for logger in loggers:
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+            handler.close()
+        logger.setLevel(logging.NOTSET)
+        logger.propagate = True
 
 
 @pytest.fixture

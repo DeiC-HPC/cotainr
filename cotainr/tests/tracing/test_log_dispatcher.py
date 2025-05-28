@@ -363,6 +363,7 @@ class TestLogToStderr:
             map_log_level_func=lambda msg: level,
             log_settings=LogSettings(verbosity=3, log_file_path=None, no_color=True),
         )
+        caplog.clear()  # Clear any logs from LogDispatcher initialization
         log_dispatcher.log_to_stderr("test_6021")
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == level
@@ -375,6 +376,7 @@ class TestLogToStderr:
             map_log_level_func=lambda msg: logging.INFO,
             log_settings=LogSettings(verbosity=1, log_file_path=None, no_color=True),
         )
+        caplog.clear()  # Clear any logs from LogDispatcher initialization
         msgs = ["  before", "after  ", "  before and after  "]
         for msg in msgs:
             log_dispatcher.log_to_stderr(msg=msg)
@@ -395,6 +397,7 @@ class TestLogToStdout:
             map_log_level_func=lambda msg: level,
             log_settings=LogSettings(verbosity=3, log_file_path=None, no_color=True),
         )
+        caplog.clear()  # Clear any logs from LogDispatcher initialization
         log_dispatcher.log_to_stdout("test_6021")
         assert len(caplog.records) == 1
         assert caplog.records[0].levelno == level
@@ -407,6 +410,7 @@ class TestLogToStdout:
             map_log_level_func=lambda msg: logging.INFO,
             log_settings=LogSettings(verbosity=1, log_file_path=None, no_color=True),
         )
+        caplog.clear()  # Clear any logs from LogDispatcher initialization
         msgs = ["  before", "after  ", "  before and after  "]
         for msg in msgs:
             log_dispatcher.log_to_stdout(msg=msg)
@@ -423,6 +427,7 @@ class TestPrefixStderrName:
             map_log_level_func=lambda msg: 0,  # not used in test since we log directly to loggers,
             log_settings=LogSettings(verbosity=3, log_file_path=None, no_color=True),
         )
+        caplog.clear()  # Clear any logs from LogDispatcher initialization
         with log_dispatcher.prefix_stderr_name(prefix="context_prefix_6021"):
             log_dispatcher.logger_stderr.info("test_6021")
 
