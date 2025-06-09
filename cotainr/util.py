@@ -29,7 +29,19 @@ import subprocess
 import sys
 
 logger = logging.getLogger(__name__)
-systems_file = (Path(__file__) / "../../systems.json").resolve()
+systems_files = list(Path(__file__).parent.glob("system.json")) + list(
+    Path(__file__).parent.parent.glob("system.json")
+)
+if len(systems_files) == 1:
+    systems_file = systems_files[0]
+elif len(systems_files) > 1:
+    raise ValueError(
+        "Conflicting system.json files were found in "
+        f"{Path(__file__).parent.resolve()} and "
+        f"{Path(__file__).parent.parent.resolve()}"
+    )
+else:
+    systems_file = (Path(__file__) / "../../systems.json").resolve()
 
 
 def get_systems():
