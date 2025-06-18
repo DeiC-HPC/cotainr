@@ -65,7 +65,9 @@ jobs:
         name: dist
         path: dist
     - name: Publish distribution to TestPyPI
-      run: uv publish --index testpypi
+      run: | 
+        uv publish --index testpypi
+        sleep 60
 
   test-testpypi:
     name: Test TestPyPI Build
