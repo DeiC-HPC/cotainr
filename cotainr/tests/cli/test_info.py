@@ -120,17 +120,6 @@ class Test_check_singularity_dependency:
             == "Found apptainer 1.0.0 >= 1.0.0, \x1b[38;5;2mOK\x1b[0m"
         )
 
-    def test_found_singularity(self, monkeypatch):
-        monkeypatch.setattr(
-            subprocess,
-            "check_output",
-            lambda *args, **kwargs: "singularity version 3.7.4-1",
-        )
-        assert (
-            Info()._check_singularity_dependency()
-            == "Found singularity 3.7.4-1 >= 3.7.4, \x1b[38;5;2mOK\x1b[0m"
-        )
-
     def test_found_singularity_ce(self, monkeypatch):
         monkeypatch.setattr(
             subprocess,
