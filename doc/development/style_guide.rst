@@ -5,8 +5,9 @@ Style guide
 We aim to keep the `cotainr` code base and documentation consistent by following the style guides listed here.
 
 - We follow the :pep:`8` style guide.
-- The Python source code is formatted using `Ruff <https://github.com/astral-sh/ruff>`_ .
-- The codebase is linted with `pre-commit <https://pre-commit.com/>`_.
+- All metadata and tool configuration is defined in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file, except where this is not possible, e.g. for pre-commit and Readthedocs.
+- The Python source code is formatted using `Ruff <https://github.com/astral-sh/ruff>`_ - see the `cotainr pyproject.toml file <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ for the Ruff rules we use.
+- The codebase is linted with `pre-commit <https://pre-commit.com/>`_ - see the `cotainr .pre-commit-config.yaml file <https://github.com/DeiC-HPC/cotainr/blob/main/.pre-commit-config.yaml>`_ for the pre-commit hooks we use.
 - All `docstrings <https://peps.python.org/pep-0257/>`_ are formatted according to the `numpydoc format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 - We reference the python interpreter executable as `python3` (not `python`) when explicitly calling the system python executable and as :data:`sys.executable` when reinvoking the interpreter as recommended in :pep:`394`.
 
