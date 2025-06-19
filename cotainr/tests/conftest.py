@@ -46,8 +46,8 @@ def context_reload_logging():
     The current implementation is based on:
     https://til.tafkas.net/posts/-resetting-python-logging-before-running-tests/
 
-    It used to be implemented as `importlib.reload(logging)`. However, it
-    turns out that this approach does not work for some tests where multiple
+    It used to be implemented as `importlib.reload(logging)`. However, it turns
+    out that this simpler approach does not work for some tests where multiple
     test cases use the caplog fixture. For those cases, only the first test
     case would actually capture the log messages - the others would be empty.
     """
