@@ -25,11 +25,11 @@ As an example, consider the following `conda environment file <https://conda.io/
       - python=3.11.0
       - numpy=1.23.5
 
-A container based on the official `Ubuntu 22.04 DockerHub image <https://hub.docker.com/_/ubuntu>`_, containing this conda environment, may be built using:
+A container based on the official `Ubuntu 24.04 DockerHub image <https://hub.docker.com/_/ubuntu>`_, containing this conda environment, may be built using:
 
 .. code-block:: console
 
-    $ cotainr build my_conda_env_container.sif --base-image=docker://ubuntu:22.04 --conda-env=my_conda_env.yml
+    $ cotainr build my_conda_env_container.sif --base-image=docker://ubuntu:24.04 --conda-env=my_conda_env.yml
 
 The conda environment is automatically activated when the container is run, allowing for directly using the Python and NumPy versions installed in the conda environment, e.g.
 
@@ -66,9 +66,9 @@ allows for installing SciPy via pip.
 
 Pip packages from private repositories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A pip package from a private repository behind an ssh key may be installed by enabling `ssh-agent forwarding <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/using-ssh-agent-forwarding>`_ on the host machine using `cotainr`.
+A pip package from a private GitHub repository accessible using an ssh key may be installed by enabling `ssh-agent forwarding to GitHub <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/using-ssh-agent-forwarding>`_ on the host machine on which `cotainr` is used.
 
-With `my_conda_env.yml` as
+For example, with `my_conda_env.yml` containing the following:
 
 .. code-block:: yaml
     :caption: my_conda_env.yml
@@ -85,5 +85,5 @@ With `my_conda_env.yml` as
 
 where :code:`github.com:foo/bar.git` is a private repository.
 
-This is fundamentally `an apptainer limitation/feature <https://stackoverflow.com/questions/65252415/use-ssh-key-of-host-during-singularity-apptainer-build>`_ and not related to `cotainr` per se.
+The need for using `ssh-agent` is fundamentally `an apptainer limitation/feature <https://stackoverflow.com/questions/65252415/use-ssh-key-of-host-during-singularity-apptainer-build>`_ and not related to `cotainr` per se.
 For this to work, the directory pointed to on the host by the :code:`SSH_AUTH_SOCK` environment variable must be bound to the container. If :code:`echo $SSH_AUTH_SOCK` already points to one of the directories bound by default, e.g. :code:`/tmp`, everything should work. Otherwise, another solution must be found, as `cotainr` does not expose directory binding from `apptainer`.

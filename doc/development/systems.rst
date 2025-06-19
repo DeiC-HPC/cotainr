@@ -23,7 +23,7 @@ The base image path can be one of the support targets for `apptainer/singularity
 
     {
       "system-name": {
-        "base-image": "docker://ubuntu:22.04"
+        "base-image": "docker://ubuntu:24.04"
       },
       "another-system-name": {
         "base-image": "/path/to/file/on/system"

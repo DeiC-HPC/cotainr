@@ -18,7 +18,6 @@ _minimum_dependency_version = {
     # integers
     "python": (3, 9, 0),
     "apptainer": (1, 0, 0),
-    "singularity": (3, 7, 4),
     "singularity-ce": (3, 9, 2),
 }
 
