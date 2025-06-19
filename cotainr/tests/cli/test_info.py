@@ -36,10 +36,7 @@ class TestExecute:
         # One line with singularity / apptainer version check
         assert (
             sum(
-                any(
-                    provider in line
-                    for provider in ["singularity", "singularity-ce", "apptainer"]
-                )
+                any(provider in line for provider in ["singularity-ce", "apptainer"])
                 for line in stdout.split("\n")
             )
             == 1
