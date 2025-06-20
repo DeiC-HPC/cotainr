@@ -8,6 +8,10 @@ repos:
       - id: ruff-format
         args:
           - -v
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.13
+    hooks:
+      - id: uv-lock  # Ensure uv.lock is up to date
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
