@@ -2,10 +2,10 @@
 
 Style guide
 ===========
-We aim to keep the `cotainr` code base and documentation consistent by following the style guides listed here.
+We aim to keep the `cotainr` code base and documentation consistent by following the style guidelines listed here.
 
 - We follow the :pep:`8` style guide.
-- All metadata and tool configuration is defined in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file, except where this is not possible, e.g. for pre-commit and Readthedocs.
+- All metadata and tool configuration is defined in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file, except where this is not possible, e.g. for `pre-commit  <https://pre-commit.com/>`_ and `ReadtheDocs <https://readthedocs.org/>`_.
 - The Python source code is formatted using `Ruff <https://github.com/astral-sh/ruff>`_ - see the `cotainr pyproject.toml file <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ for the Ruff rules we use.
 - The codebase is linted with `pre-commit <https://pre-commit.com/>`_ - see the `cotainr .pre-commit-config.yaml file <https://github.com/DeiC-HPC/cotainr/blob/main/.pre-commit-config.yaml>`_ for the pre-commit hooks we use.
 - All `docstrings <https://peps.python.org/pep-0257/>`_ are formatted according to the `numpydoc format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
@@ -25,16 +25,13 @@ Specifically, we use the following conventions:
 pre-commit
 ----------
 
-If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automatically check and
-format your code as a git pre-commit hook. A simple way to install pre-commit and set up the
-hooks is to run something like
+If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automatically check and format your code using a `git pre-commit hook <https://git-scm.com/book/ms/v2/Customizing-Git-Git-Hooks>`_. The pre-commit tool is included in the `lint` dependency group (which is also part of the `dev` dependency group) in the cotainr `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file. Thus, an easy way to install pre-commit and setup up the pre-commit hooks for cotainr using the `uv package manager <https://docs.astral.sh/uv/>`_ is to run the following commands in the cotainr repository root directory:
 
 .. code-block:: bash
 
-    pip install pre-commit
-    pre-commit install
+    uv sync --group lint
+    uv run pre-commit install
 
-but this varies depending on your system and setup.
+This will install the pre-commit hooks defined in the `.pre-commit-config.yaml <https://github.com/DeiC-HPC/cotainr/blob/main/.pre-commit-config.yaml>`_. The pre-commit hooks will then automatically run when you run :code:`git commit` in the repository. The  :ref:`CI/CD workflow <test_suite>` uses the same pre-commit configuration for linting and formatting.
 
-The pre-commit configuration is stored in ``.pre-commit-config.yaml`` in the root of the repository.
-The CI/CD workflow in :ref:`test_suite` uses the same pre-commit configuration for linting and formatting.
+The pre-commit hooks may be updated by running :code:`pre-commit autoupdate` which will update the `.pre-commit-config.yaml` to use the latest versions of the pre-commit hooks. The next time you run :code:`git commit`, the installed hooks will be automatically updated to the new versions.
