@@ -17,13 +17,17 @@
 
 	// Mounts to persist select data between container restarts and rebuilds.
 	"mounts": [
+		{// Persist the virtual environment (with paths relative to the dev container setup)
+			"source": "uv-venv",
+			"target": "/uv-venv",
+			"type": "volume"
+		},
 		{// Persist the pre-commit environment
 			"source": "pre-commit-env",
 			"target": "/pre-commit-env",
 			"type": "volume"
 		},
-		{
-			// Persist the command history
+		{// Persist the command history
 			"source": "commandhistory",
 			"target": "/commandhistory",
 			"type": "volume"
@@ -36,6 +40,7 @@
 
 	// Set environment variables to use in IDE processes in the container.
 	"remoteEnv": {
+		"UV_PROJECT_ENVIRONMENT": "/uv-venv", // Set the uv virtual environment path to a persisted mounted volume
 		"PRE_COMMIT_HOME": "/pre-commit-env", // Set the pre-commit env path to a persisted mounted volume
 		"HISTFILE": "/commandhistory/.bash_history", // Set the history file to a persisted mounted volume
 		"PROMPT_COMMAND": "history -a" // Append to the history file after each command
@@ -56,6 +61,8 @@
 				"terminal.integrated.env.linux": {
 					"GIT_EDITOR": "code --wait" // Use VS Code when editing commit messages
 				},
+				"python.defaultInterpreterPath": "/uv-venv/bin/python", // Set the default Python interpreter to the uv virtual environment
+				"python.terminal.activateEnvironment": true, // Activate the uv virtual environment in the terminal
 				"github.copilot.chat.codeGeneration.instructions": [
 					{
 						"text": "This dev container is used for developing and testing Cotainr. Cotainr is a tool for building Singularity / Apptainer containers in a rootless setting. It is written in pure Python and uses pytest for testing as well as sphinx for building the documentation. The documentation is written as restructured text."
