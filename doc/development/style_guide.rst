@@ -10,6 +10,7 @@ We aim to keep the `cotainr` code base and documentation consistent by following
 - The codebase is linted with `pre-commit <https://pre-commit.com/>`_ - see the `cotainr .pre-commit-config.yaml file <https://github.com/DeiC-HPC/cotainr/blob/main/.pre-commit-config.yaml>`_ for the pre-commit hooks we use.
 - All `docstrings <https://peps.python.org/pep-0257/>`_ are formatted according to the `numpydoc format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 - We reference the python interpreter executable as `python3` (not `python`) when explicitly calling the system python executable and as :data:`sys.executable` when reinvoking the interpreter as recommended in :pep:`394`.
+- No (hard) line wrapping is used in restructured text and markdown files placed in the `doc/` directory (the :ref:`cotainr reference documentation <reference_docs>` files).
 
 When hacking on `cotainr`, we generally try to:
 
