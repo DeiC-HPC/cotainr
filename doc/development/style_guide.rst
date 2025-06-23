@@ -5,7 +5,7 @@ Style guide
 We aim to keep the `cotainr` code base and documentation consistent by following the style guidelines listed here.
 
 - We follow the :pep:`8` style guide.
-- All metadata and tool configuration is defined in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file, except where this is not possible, e.g. for `pre-commit  <https://pre-commit.com/>`_ and `ReadtheDocs <https://readthedocs.org/>`_.
+- All metadata and tool configurations are defined in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file, except where this is not possible, e.g. for `pre-commit  <https://pre-commit.com/>`_ and `ReadtheDocs <https://readthedocs.org/>`_.
 - The Python source code is formatted using `Ruff <https://github.com/astral-sh/ruff>`_ - see the `cotainr pyproject.toml file <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ for the Ruff rules we use.
 - The codebase is linted with `pre-commit <https://pre-commit.com/>`_ - see the `cotainr .pre-commit-config.yaml file <https://github.com/DeiC-HPC/cotainr/blob/main/.pre-commit-config.yaml>`_ for the pre-commit hooks we use.
 - All `docstrings <https://peps.python.org/pep-0257/>`_ are formatted according to the `numpydoc format <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
@@ -15,17 +15,19 @@ When hacking on `cotainr`, we generally try to:
 
 - Error early.
 - Use self-describing commands and options.
+- Use comments to explain why something is done, not how.
+- Include unit and integration tests for new features and bug fixes.
 - Make it simple.
 
 Specifically, we use the following conventions:
 
-- Force keyword only arguments to functions and methods.
+- Force keyword only arguments to functions and methods (as defined in :pep:`3102`).
 - Use relative imports within the `cotainr` package when importing functionality from other modules. The imports must be done such that all objects imported are still references (not copies) which allows for monkey patching objects in their definition module in tests.
 
 pre-commit
 ----------
 
-If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automatically check and format your code using a `git pre-commit hook <https://git-scm.com/book/ms/v2/Customizing-Git-Git-Hooks>`_. The pre-commit tool is included in the `lint` dependency group (which is also part of the `dev` dependency group) in the cotainr `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file. Thus, an easy way to install pre-commit and setup up the pre-commit hooks for cotainr using the `uv package manager <https://docs.astral.sh/uv/>`_ is to run the following commands in the cotainr repository root directory:
+If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automatically check and format your code using a `git pre-commit hook <https://git-scm.com/book/ms/v2/Customizing-Git-Git-Hooks>`_. The pre-commit tool is included in the `lint` dependency group (which is also part of the `dev` dependency group) in the cotainr `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file. Thus, an easy way to install pre-commit and setup up the pre-commit hooks for cotainr using the `uv package manager <https://docs.astral.sh/uv/>`_ is to run the following commands in the checked out cotainr git repository root directory:
 
 .. code-block:: bash
 
