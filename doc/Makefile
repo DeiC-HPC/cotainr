@@ -16,7 +16,7 @@ help:
 	@python3 -c """import sphinx.util; print('  %s  to autogenerate the API reference rst files' % sphinx.util.console.blue('apidoc'.ljust(10)))"""
 	@python3 -c """import sphinx.util; print('  %s  to autogenerate the release notes rst file' % sphinx.util.console.blue('relnotes'.ljust(10)))"""
 
-.PHONY: help apidoc Makefile
+.PHONY: help apidoc relnotes Makefile
 
 apidoc:
 	@$(SPHINXAPIDOC) --force --separate --no-toc -o api_reference $(SOURCEDIR)/../$(PACKAGENAME) $(SOURCEDIR)/../$(PACKAGENAME)/tests/*

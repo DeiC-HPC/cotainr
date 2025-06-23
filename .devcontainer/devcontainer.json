@@ -1,0 +1,87 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/universal
+{
+	"name": "Cotainr dev container",
+
+	// Default image to use as a base for the dev container.
+	// If you don't have access to this registry, you can build the container locally from the ./github/dockerfiles/Dockerfile.
+	"image": "ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.4:main",
+
+	// Set security options needed to run Apptainer/SingularityCE in the container.
+	// These should be sufficient for running the container using rootless Podman.
+	// More settings may be needed for other container runtimes, e.g. Docker.
+	"securityOpt": [
+		"systempaths=unconfined",
+		"no-new-privileges"
+	],
+
+	// Mounts to persist select data between container restarts and rebuilds.
+	"mounts": [
+		{// Persist the virtual environment (with paths relative to the dev container setup)
+			"source": "uv-venv",
+			"target": "/uv-venv",
+			"type": "volume"
+		},
+		{// Persist the pre-commit environment
+			"source": "pre-commit-env",
+			"target": "/pre-commit-env",
+			"type": "volume"
+		},
+		{// Persist the command history
+			"source": "commandhistory",
+			"target": "/commandhistory",
+			"type": "volume"
+		}
+	],
+
+	// Sync the uv python venv on startup
+	// https://code.visualstudio.com/remote/advancedcontainers/start-processes
+	"postStartCommand": "uv sync --frozen",
+
+	// Set environment variables to use in IDE processes in the container.
+	"remoteEnv": {
+		"UV_PROJECT_ENVIRONMENT": "/uv-venv", // Set the uv virtual environment path to a persisted mounted volume
+		"PRE_COMMIT_HOME": "/pre-commit-env", // Set the pre-commit env path to a persisted mounted volume
+		"HISTFILE": "/commandhistory/.bash_history", // Set the history file to a persisted mounted volume
+		"PROMPT_COMMAND": "history -a" // Append to the history file after each command
+	},
+
+	// Run container as non-root user. More info: https://aka.ms/dev-containers-non-root.
+	// https://code.visualstudio.com/remote/advancedcontainers/add-nonroot-user#_specifying-a-user-for-vs-code
+	// containerUser is needed over remoteUser to have volumes mounted with the correct permissions for use by the non-root user.
+	// This has been tested with Podman. If using Docker, more configuration may be needed to avoid permission errors with the volume mounts.
+	// See https://github.com/microsoft/vscode-remote-release/issues/9931 for more details.
+	"containerUser": "1000:1000",
+
+	// Configure tool-specific properties.
+	"customizations": {
+		"vscode": {
+			// VS Code settings for the container.
+			"settings": {
+				"terminal.integrated.env.linux": {
+					"GIT_EDITOR": "code --wait" // Use VS Code when editing commit messages
+				},
+				"python.defaultInterpreterPath": "/uv-venv/bin/python", // Set the default Python interpreter to the uv virtual environment
+				"python.terminal.activateEnvironment": true, // Activate the uv virtual environment in the terminal
+				"github.copilot.chat.codeGeneration.instructions": [
+					{
+						"text": "This dev container is used for developing and testing Cotainr. Cotainr is a tool for building Singularity / Apptainer containers in a rootless setting. It is written in pure Python and uses pytest for testing as well as sphinx for building the documentation. The documentation is written as restructured text."
+					}
+				]
+			},
+			// VS Code extensions to install in the dev container.
+			// https://code.visualstudio.com/docs/devcontainers/containers#_managing-extensions
+			"extensions": [
+				"ms-python.python",
+				"ms-azuretools.vscode-containers",
+				"ms-vscode.makefile-tools",
+				"github.vscode-github-actions",
+				"streetsidesoftware.code-spell-checker",
+				"tamasfe.even-better-toml",
+				"redhat.vscode-yaml",
+				"DavidAnson.vscode-markdownlint",
+				"trond-snekvik.simple-rst"
+			]
+		}
+	}
+}
