@@ -38,7 +38,6 @@ jobs:
     permissions:
       packages: read
     strategy:
-      fail-fast: false
       matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
     container:
       image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
@@ -81,6 +80,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for hatch-vcs versioning
       - name: Install test dependencies
         run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
