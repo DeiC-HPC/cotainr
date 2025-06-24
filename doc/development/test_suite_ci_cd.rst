@@ -92,13 +92,17 @@ The following CI `workflows <https://docs.github.com/en/actions/using-workflows/
 
 - `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_:
   Runs the unit tests, integration tests, and end-to-end tests on pull requests (*not* draft pull requests) to the *main* branch. *All* Python versions and *all* Singularity-CE as well as *all* Apptainer versions are tested.
-  Additionally, lint and formatting checks (as described in the :ref:`style guide <style_guide>`) as well as a build of the :ref:`cotainr wheel and sdist packages <pypi_package>` are also run. Runs on both x86_64 and ARM64 architectures in the :ref:`containerized development environment <containerized_development_environment>`.
+  Additionally, lint and formatting checks (as described in the :ref:`style guide <style_guide>`) as well as a build of the :ref:`cotainr wheel and sdist packages <pypi_package>`, a build of :ref:`HTML documentation <building_the_html_docs>`, and checks for any broken documentation hyperlinks are also run. Runs on both x86_64 and ARM64 architectures (except for the build and lint parts that only run on x86_64) in the :ref:`containerized development environment <containerized_development_environment>`.
 - `CI_push.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml>`_:
   Runs the unit tests on pushes to all branches. Restricted to *minimum* and *latest* Python versions as well as *minimum* and *latest* Singularity-CE and Apptainer versions. Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run. Runs on both x86_64 and ARM64 architectures in the :ref:`containerized development environment <containerized_development_environment>`.
 - `CI_build_docker_images.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_build_docker_images.yml>`_:
-  Runs the automated process for building containers used in the :ref:`containerized development environment <containerized_development_environment>` whenever changes are made to the files defining the development environment on the *main* branch or development branches starting with *docker_dev_env*.
+  Runs the automated process for building the containers used in the :ref:`containerized development environment <containerized_development_environment>` whenever changes are made to the files defining the development environment on the *main* branch or development branches starting with *docker_dev_env*.
 
-The test suite in the CI on Pull Requests is very thorough, and so it is only launched for pull requests that are not in `draft mode <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request#converting-a-pull-request-to-a-draft>`_. Additionally, it is launched the moment when a pull request is taken out of draft mode. On development where end-to-end and singularity integration testing are critical, the test suite should be run locally through the docker containers.
+The test suite in the CI on Pull Requests is very thorough, and so it is only launched for pull requests that are not in `draft mode <https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request#converting-a-pull-request-to-a-draft>`_. Additionally, it is launched the moment when a pull request is taken out of draft mode. On development where end-to-end and singularity integration testing are critical, the test suite should be run locally through the :ref:`containerized development environment <containerized_development_environment>`.
+
+Scheduled tests
+~~~~~~~~~~~~~~~
+In order to proactively monitor for external changes that may break `cotainr`, we additionally run the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow as a `scheduled GitHub actions <https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule>`_ (weekly, every Tuesday night).
 
 Continuous Delivery (CD)
 ------------------------
@@ -106,7 +110,7 @@ Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.git
 
 CD workflows
 ~~~~~~~~~~~~
-The following CD `workflow <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented:
+The following GitHub CD `workflow <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented:
 
 - `CD_release.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CD_release.yml>`_: Creates GitHub and PyPI releases when new tags following the :ref:`versioning scheme <version-scheme>` are committed to the main branch.
 
@@ -121,7 +125,7 @@ The following CD `workflow <https://docs.github.com/en/actions/using-workflows/a
 
   The testPyPI and PyPI index locations are both implemented as `GitHub environments <https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment>`_ attached to the https://github.com/DeiC-HPC account. These environments have deployment protection rules which require review from a member of the HPC-developers team before the action is executed. This ensures protection against accidental tag pushes which is needed since releases on TestPyPI and PyPI are not supposed to be removed at any point in time.
 
-  The release workflow in the :ref:`containerized development environment <containerized_development_environment>` on a x86_64 architecture and makes use of the :ref:`single sourced dependency matrix <single_source_dep_matrix>`.
+  The release workflow runs in the :ref:`containerized development environment <containerized_development_environment>` on a x86_64 architecture and makes use of the :ref:`single sourced dependency matrix <single_source_dep_matrix>`.
 
 Read the Docs continuous documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -130,17 +134,6 @@ The :ref:`HTML documentation <building_the_html_docs>` served at http://cotainr.
 .. include:: ../../.readthedocs.yml
     :literal:
 
-This fully automates the process of building `*latest* and *stable* versions <https://docs.readthedocs.io/en/stable/versions.html>`_ of the HTML documentation served at http://cotainr.readthedocs.io. Additionally, the `"build pull requests" <https://docs.readthedocs.io/en/stable/pull-requests.html>`_ feature is enabled. A pull request documentation build is linked in the list of checks for the GitHub pull request.
+This fully automates the process of building `Read the Docs *latest* and *stable* versions <https://docs.readthedocs.io/en/stable/versions.html>`_ of the HTML documentation served at http://cotainr.readthedocs.io. Additionally, the `"build pull requests" <https://docs.readthedocs.io/en/stable/pull-requests.html>`_ feature is enabled. A pull request documentation build is linked in the list of checks for the GitHub pull request.
 
-The automated release process `can be inspected here <https://readthedocs.org/dashboard/cotainr/rules/>`_. Essentially any git-tag matching the described :ref:`versioning-scheme <releasing>` will be picked up by Read the Docs and should be available among the versions as well as activated as `stable <https://cotainr.readthedocs.io/en/stable>`_ and `latest <https://cotainr.readthedocs.io/en/latest>`_
-
-
-Scheduled tests
----------------
-We run `scheduled GitHub actions <https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule>`_ (weekly, every Tuesday night) in order to continuously test `cotainr` against its dependencies. That way we proactively monitor for changes in dependencies that end up breaking `cotainr`.
-
-Currently, the following scheduled `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ are implemented:
-
-- `SCHED_docs_linkcheck <https://github.com/DeiC-HPC/cotainr/actions/workflows/SCHED_docs_linkcheck.yml>`_: Builds the documentation and checks for any broken hyperlinks.
-
-Additionally, we currently also schedule the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow which tests the most recent point release of Python in the :ref:`CI test matrix <continuous_integration>`.
+The Read the Docs automated documentation release process is implemented in the `"CalVer releases" automation rule <https://readthedocs.org/dashboard/cotainr/rules/>`_ in the `cotainr`` Read the Docs project. Essentially any git-tag matching the described :ref:`versioning-scheme <releasing>` will be picked up by Read the Docs, built, and made available as well as activated as `stable <https://cotainr.readthedocs.io/en/stable>`_ and `latest <https://cotainr.readthedocs.io/en/latest>`_.
