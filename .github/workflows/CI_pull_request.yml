@@ -26,7 +26,6 @@ jobs:
     permissions:
       packages: read
     strategy:
-      fail-fast: false
       matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
     container:
       image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
@@ -59,7 +58,6 @@ jobs:
     permissions:
       packages: read
     strategy:
-      fail-fast: false
       matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
     container:
       image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
