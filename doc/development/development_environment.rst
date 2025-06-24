@@ -2,23 +2,31 @@
 
 Containerized development environment
 =====================================
-The `cotainr` project provides a containerized development environment that can be used to develop and test `cotainr` itself. This environment is built using `Docker <https://www.docker.com/>`_ and is defined in the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_.
+The `cotainr` project provides a containerized development environment that can be used to develop and test `cotainr` itself. The containerized development environment is defined in the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_ included in the https://github.com/DeiC-HPC/cotainr repository.
+
+Developers that are part of the https://github.com/DeiC-HPC organization may pull the development containers from the https://github.com/orgs/DeiC-HPC/packages `cotainr` `GitHub Container Registry (GHCR) <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry>`_. This requires logging in to GHCR using the `GitHub gh CLI tool <https://cli.github.com/manual/>`_ or the `docker login <https://docs.docker.com/reference/cli/docker/login/>`_ / `podman login <https://docs.podman.io/en/stable/markdown/podman-login.1.html>`_ CLI tool with a `personal access token (classic) <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic>`_ that has at least the `read:packages` scope.
+
+Automated building of the containers
+------------------------------------
+Containers are automatically built and pushed to GHCR using the `CI_build_docker_images.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_build_docker_images.yml>`_ GitHub Action workflow. This workflow uses `the official Docker GitHub Actions <https://docs.docker.com/build/ci/github-actions/>`_ to build the containers for all supported architectures and dependencies as defined in the :ref:`single sourced dependency matrix <single_source_dep_matrix>`.
 
 
-Runs the docker build process. The Dockerfile used for the building can be found `here <https://github.com/DeiC-HPC/cotainr/actions/workflows/dockerfiles/Dockerfile>`_
+The workflow is triggered on pushes to the `main` branch as well as branches starting with `docker_dev_env` if the files defining the development environment are changed, i.e. if changes are made to the following files:
 
-We build docker images for *all* supported architectures (AMD64 & ARM), *relevant* Singularity-CE as well as *relevant* Apptainer versions. Python is not installed during the build process but is installed during the test process.
+- `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_
+- `matrix.json <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_
+- `CI_build_docker_images.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_build_docker_images.yml>`_
 
-
-All workflows are run on docker images build by the `CI_build_docker_images.yml` pipeline. The Docker images are stored on the Github Container Registry (`ghcr <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry>`_).
-
-
-
-The CI utilizes `reusable workflows <https://docs.github.com/en/actions/sharing-automations/reusing-workflows>`_ in frequently used helper scripts and in other workflows that has multiple use-cases.
+A SHA256 checksum of these files is calculated by the `hashFiles <https://docs.github.com/en/actions/reference/evaluate-expressions-in-workflows-and-actions#hashfiles>`_ function is used to uniquely identify the "version" of the development environment as defined by theses files. The built containers are tagged with this checksum, which allows for identification of the containers that should be used in the :ref:`CI/CD pipelines <test_suite>`. That way we can ensure that right containers (based on the definition in the files above) for the `main` or `docker_dev_env_*` branches. Additionally, the containers are tagged with the branch name (`main` or `docker_dev_env_*`) to make it easier to pull the containers for local development.
 
 
-- `Container-inputs.yml`: Extracts the required variables for running jobs on the correct docker image. This extracts the relevant part from the single source `matrix.json` to be used in the other workflows. Additionally, the workflow returns the GitHub repository name in lowercase as required by the GHCR repository and the SHA of `matrix.json`, `Dockerfile` and `CI_Build_docker_images.yml` to ensure the correctness of the container version.
-- `CI_push.yml`: The push tests are both utilized by itself on the push action and in `CI_build_docker_images.yml` after a new docker build.
+Manually building the containers
+--------------------------------
+If you do not have access to the GHCR or want to build the containers locally, you can do using the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_. When building the containers locally, you need to provide the SINGULARITY_PROVIDER and SINGULARITY_VERSION build arguments to the `docker build <https://docs.docker.com/reference/cli/docker/buildx/build/>`_ / `podman build <https://docs.podman.io/en/stable/markdown/podman-build.1.html>`_ command, e.g.
+
+.. code-block:: console
+
+    $ docker build --build-arg SINGULARITY_PROVIDER=apptainer --build-arg SINGULARITY_VERSION=1.3.6 -t cotainr-dev-env:local -f .github/workflows/dockerfiles/Dockerfile .
 
 
 Running in the containerized development environment
