@@ -63,7 +63,7 @@ class CotainrSubcommand(ABC):
     @abstractmethod
     def execute(self):
         """Execute the subcommand."""
-        pass
+        pass  # pragma: no cover
 
 
 class Build(CotainrSubcommand):

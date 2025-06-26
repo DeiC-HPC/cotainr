@@ -7,17 +7,30 @@ on:
     - cron: '15 2 * * TUE'  # every Tuesday night
   workflow_dispatch:  # allow for manually trigging the workflow
 jobs:
+
+  # Prepares the matrix inputs, generates a lowercase version of the repo name, calculates sha256 of the input trigger paths.
+  container-inputs:
+    uses: ./.github/workflows/Container-inputs.yml
+
   check-docs-links:
+    needs: [container-inputs]
     name: Check for broken links in documentation
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os.runs-on }}
+    permissions:
+      packages: read
+    strategy:
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
+    container:
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v5
 
       - name: Install test dependencies
-        run: uv sync --python 3.12 --managed-python --group=docs --frozen
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=docs --frozen
       - name: Build documentation
         run: |
           uv run make -C doc apidoc

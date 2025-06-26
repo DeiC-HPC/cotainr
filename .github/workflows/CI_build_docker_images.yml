@@ -4,7 +4,7 @@ name: Build and deploy dev env docker images to GHCR
 # NOTE: this workflow only runs on the main branch and branches starting with 'docker_dev_env'.
 # The purpose is to be able to test cotainr on different apptainer/singularity versions both locally and via github actions.
 # The general flow of the action is:
-# 1. Prepare various inputs (prepare-for-build stage) for the builder (build-docker-images) & manifest creation (create-manifest) jobs.
+# 1. Prepare various inputs (container-inputs stage) for the builder (build-docker-images) & manifest creation (create-manifest) jobs.
 # 2. Build the images (build-docker-images) for different architectures (arm64 and amd64).
 # 3. Create a manifest that combines the two architectures (create-manifest).
 # 4. Launch the CI_push workflow.
@@ -30,52 +30,11 @@ jobs:
 
   # Prepares the test matrix inputs, generates a lowercase version of the repo name, calculates sha256 of the input trigger paths.
   # Two different built matrices are needed. One that includes the Apptainer/Singularity & OS/architecture and one with only the Apptainer/Singularity version.
-  prepare-for-build:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix_with_os: ${{ steps.set-matrix-with-os.outputs.matrix_with_os }}
-      matrix_without_os: ${{ steps.set-matrix-without-os.outputs.matrix_without_os }}
-      lowercase_repo_name: ${{ steps.lowercase.outputs.lowercase_repo_name }}
-      input_trigger_files_sha256: ${{ steps.setoutput.outputs.input_trigger_files_sha256 }}
-    steps:
-     - name: Checkout to repository
-       uses: actions/checkout@v4
-    # Build matrix with the architecture, to build the image for both arm64 and amd64.
-     - name: Set matrix data with os
-       id: set-matrix-with-os
-       run: |
-            matrix=$(jq -c '
-            {
-              "singularity": .singularity,
-              "os": .os
-            }
-            ' .github/workflows/matrix.json)
-            echo "$matrix"
-            echo "matrix_with_os=$matrix" >> $GITHUB_OUTPUT
-    # Test matrix with only singularity, needed in the create-manifest job to combine the architectures into one manifest.
-     - name: Set matrix data without os
-       id: set-matrix-without-os
-       run: |
-            matrix=$(jq -c '
-            {
-              "singularity": .singularity,
-            }
-            ' .github/workflows/matrix.json)
-            echo "$matrix"
-            echo "matrix_without_os=$matrix" >> $GITHUB_OUTPUT
-    # The lowercase name of the organisation & repository is needed because the GHCR (github container repository) works with lowercase only.
-     - name:
-       id: lowercase
-       run: |
-            lowercase_repo_name="${{ github.repository }}"
-            lowercase_repo_name="${lowercase_repo_name,,}"
-            echo "lowercase_repo_name=$lowercase_repo_name" >> $GITHUB_OUTPUT
-     - name: Set sha256 of the input trigger files
-       id: setoutput
-       run: echo "input_trigger_files_sha256=${{ hashFiles('.github/workflows/matrix.json', '.github/workflows/dockerfiles/Dockerfile', '.github/workflows/CI_build_docker_images.yml') }}" >> $GITHUB_OUTPUT
+  container-inputs:
+    uses: ./.github/workflows/Container-inputs.yml
 
   build-docker-images:
-    needs: [prepare-for-build]
+    needs: [container-inputs]
     # The github runner is defined in the matrix.json file. This enables us to run the arm build on a native runner.
     runs-on: ${{ matrix.os.runs-on }}
     # set permissions for the job, this is needed for pushing the images to the GHCR
@@ -84,7 +43,7 @@ jobs:
       packages: write
       id-token: write
     strategy:
-        matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_with_os) }}
+        matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_build_with_os) }}
 
     steps:
       # Set up BuildKit Docker container builder to be able to build
@@ -108,7 +67,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
+          images: ${{ env.REGISTRY }}/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
           labels: org.opencontainers.image.description=${{ matrix.os.platform }}
 
       # Build and push Docker image with Buildx (don't push on PR)
@@ -121,9 +80,7 @@ jobs:
           push: true
           # The tag is a mix out of the architecture and the input_trigger_files_sha256 on the three files that impact the build of the docker images.
           tags: |
-            ${{ env.REGISTRY }}/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ matrix.os.tag }}-${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ env.REGISTRY }}/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ matrix.os.tag }}-${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
           platforms: ${{ matrix.os.platform }}
           # The provenance attestation describes how an image was built and what it contains. This would be a nice to have.
           # However, it impacts if the final output of the build process is a manifest or an image. Enabling this means that the ghcr gets quite cluttered.
@@ -136,7 +93,7 @@ jobs:
 
   create-manifest:
     name: Create Multi-Arch Manifest
-    needs: [prepare-for-build, build-docker-images]
+    needs: [container-inputs, build-docker-images]
     runs-on: ubuntu-latest
     # set permissions for the job
     permissions:
@@ -144,7 +101,7 @@ jobs:
       packages: write
       id-token: write
     strategy:
-        matrix: ${{ fromJson(needs.prepare-for-build.outputs.matrix_without_os) }}
+        matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_build_without_os) }}
 
     steps:
       # Extract metadata (tags, labels) for Docker
@@ -153,7 +110,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
+          images: ${{ env.REGISTRY }}/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -164,8 +121,8 @@ jobs:
 
       - name: Combine and Tag Manifest with Buildx
         run: |
-          IMAGE=${{ env.REGISTRY }}/${{ needs.prepare-for-build.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
-          HASH=${{ needs.prepare-for-build.outputs.input_trigger_files_sha256 }}
+          IMAGE=${{ env.REGISTRY }}/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}
+          HASH=${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
 
           docker buildx imagetools create \
             --tag $IMAGE:$HASH \

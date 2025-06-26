@@ -2,13 +2,97 @@ name: CD on release tag
 
 on:
   workflow_dispatch:
-  push:    # Initialize release with 'git push origin tag <tag_name>' where <tag_name> follows the YYYY.MM.MINOR version format
+  push:    # Initialize release with 'git push origin tag <tag_name>' where <tag_name> follows the YYYY.MM.MICRO version format
     tags:  # Actual deployment to testpypi and pypi environments requires review
-      - '20[0-9][0-9].0[1-9].[0-9]+'  # Expected limits: 2000.01.0 - 2099.09.123+
+      - '20[0-9][0-9].[1-9].[0-9]+'  # Expected limits: 2000.1.0 - 2099.9.123+
       - '20[0-9][0-9].1[0-2].[0-9]+'  # Expected limits: 2000.10.0 - 2099.12.123+
 
 jobs:
+
+  # Prepares the matrix inputs, generates a lowercase version of the repo name, calculates sha256 of the input trigger paths.
+  container-inputs:
+    uses: ./.github/workflows/Container-inputs.yml
+
+  build:
+    needs: [container-inputs]
+    name: Build package
+    runs-on: ${{ matrix.os.runs-on }}
+    permissions:
+      packages: read
+    strategy:
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
+    container:
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
+      options: --user=1001
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  publish-to-testpypi:
+    needs: [build, container-inputs]
+    name: Publish to TestPyPI
+    runs-on: ${{ matrix.os.runs-on }}
+    permissions:
+      packages: read
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    strategy:
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
+    container:
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
+      options: --user=1001
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/cotainr
+
+    steps:
+    - uses: actions/checkout@v4  # Checkout because `uv publish` requires pyproject.toml
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+    - name: Publish distribution to TestPyPI
+      run: |
+        uv publish --index testpypi
+        sleep 60
+
+  test-testpypi:
+    name: Test TestPyPI Build
+    needs: [publish-to-testpypi, container-inputs]
+    runs-on: ${{ matrix.os.runs-on }}
+    permissions:
+      packages: read
+    strategy:
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
+    container:
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
+      options: --user=1001
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+    - name: Test TestPyPI build
+      run: |
+        uv venv --python ${{ matrix.python-version }}
+        source .venv/bin/activate
+        uv pip install cotainr==${{ github.ref_name }} --index https://test.pypi.org/simple/
+        cotainr info
+        cotainr build --help
+
   github-release:
+    needs: test-testpypi
     name: GitHub Release
     permissions:
       contents: write
@@ -26,72 +110,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  build:
-    name: Build package
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - run: uv build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist
-
-  publish-to-testpypi:
-    needs: build
-    name: Publish to TestPyPI
-    runs-on: ubuntu-latest
-
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/p/cotainr
-
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-
-    steps:
-    - uses: actions/checkout@v4  # Checkout because `uv publish` requires pyproject.toml
-    - name: Download all the dists
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: dist
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v5
-    - name: Publish distribution to TestPyPI
-      run: uv publish --index testpypi
-
-  test-testpypi:
-    name: Test TestPyPI Build
-    needs: publish-to-testpypi
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v5
-      with:
-        enable-cache: false
-
-    - name: Test TestPyPI build
-      run: |
-        uv venv --python 3.12
-        source .venv/bin/activate
-        uv pip install cotainr==${{ github.ref_name }} --index https://test.pypi.org/simple/
-        cotainr info
-        cotainr build --help
-
   publish-to-pypi:
-    needs: test-testpypi
-    runs-on: ubuntu-latest
+    name: Publish to PyPI
+    needs: [test-testpypi, container-inputs]
+    runs-on: ${{ matrix.os.runs-on }}
+    permissions:
+      packages: read
+      id-token: write  # IMPORTANT: mandatory for trusted publishing
+    strategy:
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
+    container:
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
+      options: --user=1001
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     environment:
       name: pypi
       url: https://pypi.org/p/cotainr
 
-    permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
-
     steps:
     - uses: actions/checkout@v4  # Checkout because `uv publish` requires pyproject.toml
     - name: Download all the dists
@@ -99,7 +137,5 @@ jobs:
       with:
         name: dist
         path: dist
-    - name: Set up uv
-      uses: astral-sh/setup-uv@v5
     - name: Publish distribution to PyPI
       run: uv publish

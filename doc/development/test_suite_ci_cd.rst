@@ -69,24 +69,42 @@ Imports in test modules are based on the following conventions:
 
 Continuous Integration (CI)
 ---------------------------
-Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions. The tests run on the GitHub-hosted `ubuntu-latest <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_ runner. When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
+Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions.
+The CI integration debends heavily on the `defined matrix <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_.
+This matrix defines the Python versions, Singularity-CE versions and Apptainer versions that are tested. Furthermore, it also defines the Github Runners and the corresponding architectures on which we test `cotainr`.
+The tests run on the following two GitHub-hosted runners: ubuntu-latest and ubuntu-24.04-arm. For details of the runners see the `github documentation <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_.
+We run the tests on both runners to ensure that `cotainr` works on both AMD64 and ARM machines.
+When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
 
 - *stable*: The minimum supported version of the dependency.
 - *latest*: The latest released version of the dependency.
+- *relevant*: From VIP system version to newest stable version in steps of minor versions.
 - *all*: All supported versions of the dependency.
 
 CI workflows
 ~~~~~~~~~~~~
+All workflows are run on docker images build by the `CI_build_docker_images.yml` pipeline. The Docker images are stored on the Github Container Registry (`ghcr <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry>`_).
 The following CI `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ are implemented:
 
 - `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_:
   Runs the unit tests, integration tests, and end-to-end tests on pull requests to the *main* branch.
-  *All* Python versions and *stable* Singularity as well as *stable* Apptainer versions are tested.
+  *All* Python versions and *relevant* Singularity-CE as well as *relevant* Apptainer versions are tested. For details of the exact test matrix see the `matrix.json <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/matrix.json>`_ file.
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
 - `CI_push.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml>`_:
-  Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions.
+  Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions. The same applies for Singularity-CE and Apptainer versions.
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
+- `CI_build_docker_images.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_build_docker_images.yml>`_:
+  Runs the docker build process. The Dockerfile used for the building can be found `here <https://github.com/DeiC-HPC/cotainr/actions/workflows/dockerfiles/Dockerfile>`_
+  We build docker images for *all* supported architectures (AMD64 & ARM), *relevant* Singularity-CE as well as *relevant* Apptainer versions. Python is not installed during the build process but is installed during the test process.
 
+The test suite in the CI on Pull Requests is very thorough, and so it is only launched for pull requests that are not in draft mode. Additionally, it is launched the moment when a pull request is taken out of draft mode. On development where end-to-end and singularity integration testing are critical, the test suite should be run locally through the docker containers.
+
+The CI utilizes `reusable workflows <https://docs.github.com/en/actions/sharing-automations/reusing-workflows>`_ in frequently used helper scripts and in other workflows that has multiple use-cases.
+
+- `Container-inputs.yml`: Extracts the required variables for running jobs on the correct docker image. This extracts the relevant part from the single source `matrix.json` to be used in the other workflows. Additionally, the workflow returns the GitHub repository name in lowercase as required by the GHCR repository and the SHA of `matrix.json`, `Dockerfile` and `CI_Build_docker_images.yml` to ensure the correctness of the container version.
+- `CI_push.yml`: The push tests are both utilized by itself on the push action and in `CI_build_docker_images.yml` after a new docker build.
+
+Note on reusable workflows in contrast with `composite workflows <https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action>`_. The composite actions are useful when another workflow is run as part of another workflow step. However, this is not the case of `Container-inputs.yml` where the matrix is needed before the 'another workflow step' is even executed. And so it is more suitable to use reusable workflows because the job is run as its own pre-processing step, thus providing the matrix input to the subsequent job steps that require it.
 
 Continuous Delivery (CD)
 ------------------------
