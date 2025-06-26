@@ -2,7 +2,7 @@ CONTAINER_RUN=docker
 
 TESTFLAGS=
 CONTAINER_TEST_COMMAND=cd /home/ubuntu/code && uv sync --group=tests && uv run pytest
-CONTAINER_DOC_COMMAND="cd /home/ubuntu/code/doc && uv sync --group docs && uv run make apidoc && uv run make relnotes && uv run make html"
+CONTAINER_DOC_COMMAND=cd /home/ubuntu/code/doc && uv sync --group docs && uv run make apidoc && uv run make relnotes && uv run make html
 
 
 CONTAINER_ENTRYPOINT=--entrypoint bash
@@ -69,7 +69,7 @@ test:
 	$(call execute)
 
 docs:
-	$(eval CONTAINER_COMMAND=$(CONTAINER_DOC_COMMAND))
+	$(eval CONTAINER_COMMAND="$(CONTAINER_DOC_COMMAND)")
 	$(call execute)
 
 execute = $(CONTAINER_RUN) run $(CONTAINER_OPTIONS) $(CONTAINER_URL) -c $(CONTAINER_COMMAND)
