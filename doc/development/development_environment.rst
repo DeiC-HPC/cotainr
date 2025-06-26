@@ -26,26 +26,33 @@ If you do not have access to the GHCR or want to build the containers locally, y
 
     $ docker build --build-arg SINGULARITY_PROVIDER=apptainer --build-arg SINGULARITY_VERSION=1.3.6 -t cotainr-dev-env:local -f .github/workflows/dockerfiles/Dockerfile .
 
-
 Running in the containerized development environment
 ----------------------------------------------------
 The containerized development environment includes a singularity container runtime (`apptainer` or `singularity-ce`) and the `uv <https://docs.astral.sh/uv/>`_ Python packages manager. At runtime, you need to run :code:`uv sync` to install/update the Python environment to include the dependencies specified in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file to get a fully working development environment.
 
 Synchronizing the `uv` managed Python virtual environment is so fast and cheap that we have opted for doing it every time the container is started instead of building individual container images for all the different Python versions and dependencies specified in the :ref:`single sourced dependency matrix <single_source_dep_matrix>`.
 
-We recommend running the containerized development environment as a non-root user within the container using either `docker <https://docs.docker.com/get-started/>`_ or `podman <https://podman.io/getting-started/overview>`_. Since we are running one container runtime (`apptainer` / `singularity-ce`) inside another container runtime (`docker` / `podman`), it is in general necessary to:
+We recommend running the containerized development environment `rootless as a non-root user <https://www.redhat.com/en/blog/rootless-containers-podman>`_ using either `docker <https://docs.docker.com/get-started/>`_ or `podman <https://podman.io/getting-started/overview>`_. Since we are running one container runtime (`apptainer` / `singularity-ce`) inside another container runtime (`docker` / `podman`), for this to work, it is in general necessary to:
 
-1. Have unprivileged user namespaces enabled.
-2. Run with at least some of the `docker`/`podman` security options disabled. While it is possible to run with `--privileged` flag, this disables all security features and is not recommended. Instead, we recommend looking at the suggested security options in the reference makefile and development container configurations and then try to run with as few of these options as possible.
+1. Have unprivileged user namespaces enabled. Generally this means that the `user.max_user_namespaces` kernel parameter must be 1 (or larger) and the `kernel.unprivileged_userns_clone` kernel parameter must be set to 1. This is the default on most modern Linux distributions. Additionally, you must make sure that `the other prerequisites for running rootless <https://docs.docker.com/engine/security/rootless/#prerequisites>`_ are met.
+2. Run with at least some of the `docker` / `podman` security options disabled. While it is possible to run with the :code:`--privileged` flag, this disables all security features and is not recommended. Instead, we recommend looking at the suggested security options in the reference :ref:`makefile <dev_env_makefile>` and :ref:`development container <dev_env_devcontainer>` configurations and then try to run with as few of these options as possible.
 
 We provide two reference methods to run the containerized development environment, one for running it in a terminal using a makefile and one for running the container as a `development container <https://containers.dev/>`_ integrated with an IDE.
+
+A note on the ID of the user running inside the container
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The containerized development environment is designed to be run as a non-root user. On most Linux distributions, the default non-root user has user ID 1000. So in the reference :ref:`makefile <dev_env_makefile>` and :ref:`development container <dev_env_devcontainer>` configurations, we assume that you are running as user 1000 and map this user to the user inside the container to avoid permission issues when accessing files on the host system from inside the container.
+
+On the GitHub action runners, used in the `CI/CD pipelines <test_suite>`, the default user is also user ID 1001. Consequently, we specify :code:`--user 1001` when running the containerized development environment in the GitHub Actions workflows to avoid subtle permission errors when accessing files on the host system from inside the container, e.g. `accessing the repository clone done by the checkout action <https://github.com/actions/checkout/issues/47>`_. While this rootless setting should theoretically also work for running `apptainer` / `singularity-ce` inside the container on the GitHub action runners, when we need `apptainer` / `singularity-ce` we run as the root user with the :code:`--privileged` flag. This is because it is currently `too tedious to disable the apparmor restriction on kernel.unprivileged_userns_clone <https://github.com/actions/runner-images/issues/10015>`_ which seems to be necessary for running as a non-root user inside the container on the GitHub action runners.
 
 .. _dev_env_makefile:
 
 Using the reference makefile
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We provide a reference `Makefile <https://github.com/DeiC-HPC/cotainr/blob/main/Makefile>`_ that includes targets for running the containerized development environment for running the `cotainr` :ref:`test suite <test_suite>` as well as building the :ref:`reference documentation <reference_docs>`. It should generally work with both `docker` and `podman`, on most Linux distributions, though you may have to adjust it to your specific environment if your local user does not have user ID 1000 or if you want to limit the `docker` / `podman` security options that are disabled. Run :code:`make help` for more details on the available targets.
 
 .. _dev_env_devcontainer:
 
 Using the IDE development container
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We provide a reference `devcontainer.json <https://github.com/DeiC-HPC/cotainr/blob/main/.devcontainer/devcontainer.json>`_ file that includes the necessary configuration to run the containerized development environment as a `development container <https://containers.dev/>`_ integrated with an IDE. This allows for a seamless development experience with features like code completion, linting, and debugging. The `devcontainer.json` file is mainly designed for use with `Visual Studio Code <https://code.visualstudio.com/docs/remote/containers>`_ with rootless `podman` as the container runtime. For this to work, you need to install the `Dev Containers extension <https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers>`_ and set the :code:`dev.containers.dockerPath` setting to :code:`podman` in your `Visual Studio Code settings <https://code.visualstudio.com/docs/configure/settings>`_.
