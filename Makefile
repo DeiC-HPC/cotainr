@@ -27,14 +27,17 @@ We have a list of different goals defined to help out:\n\
 help: prints this output\n\
 login: helps you login to the container registry\n\
 \n\
-There are two goals that are executed in the container\n\
+Execution goals that are executed in the container\n\
 test: executes the cotainr test-suite in a container\n\
 docs: build the cotainr documentation in a container\n\
 \n\
-We have couple of goals to be defined before any execution goal to setup the environment:\n\
+Environments goals that are defined before the execution goal to setup the environment\n\
 podman: changes the cotainer runner from docker to podman\n\
 singularity: changes the container to one containing singularity\n\
 apptainer: changes the container to one containing apptainer (default)\n\
+\n\
+Runtime environment flags can be provided in any order\n\
+TESTFLAGS: string that is parsed to pytest, e.g. TESTFLAGS='-k test_info.py'\n\
 "
 
 .PHONY:default help podman login singularity apptainer test docs
@@ -62,7 +65,7 @@ apptainer:
 	$(eval CONTAINER_URL=$(APPTAINER_URL))
 
 test:
-	$(eval CONTAINER_COMMAND=$(CONTAINER_TEST_COMMAND) $(TESTFLAGS))
+	$(eval CONTAINER_COMMAND="$(CONTAINER_TEST_COMMAND) $(TESTFLAGS)")
 	$(call execute)
 
 docs:
