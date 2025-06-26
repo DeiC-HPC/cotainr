@@ -10,7 +10,6 @@ Automated building of the containers
 ------------------------------------
 Containers are automatically built and pushed to GHCR using the `CI_build_docker_images.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_build_docker_images.yml>`_ GitHub Action workflow. This workflow uses `the official Docker GitHub Actions <https://docs.docker.com/build/ci/github-actions/>`_ to build the containers for all supported architectures and dependencies as defined in the :ref:`single sourced dependency matrix <single_source_dep_matrix>`.
 
-
 The workflow is triggered on pushes to the `main` branch as well as branches starting with `docker_dev_env` if the files defining the development environment are changed, i.e. if changes are made to the following files:
 
 - `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_
@@ -19,10 +18,9 @@ The workflow is triggered on pushes to the `main` branch as well as branches sta
 
 A SHA256 checksum of these files is calculated by the `hashFiles <https://docs.github.com/en/actions/reference/evaluate-expressions-in-workflows-and-actions#hashfiles>`_ function is used to uniquely identify the "version" of the development environment as defined by theses files. The built containers are tagged with this checksum, which allows for identification of the containers that should be used in the :ref:`CI/CD pipelines <test_suite>`. That way we can ensure that right containers (based on the definition in the files above) for the `main` or `docker_dev_env_*` branches. Additionally, the containers are tagged with the branch name (`main` or `docker_dev_env_*`) to make it easier to pull the containers for local development.
 
-
 Manually building the containers
 --------------------------------
-If you do not have access to the GHCR or want to build the containers locally, you can do using the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_. When building the containers locally, you need to provide the SINGULARITY_PROVIDER and SINGULARITY_VERSION build arguments to the `docker build <https://docs.docker.com/reference/cli/docker/buildx/build/>`_ / `podman build <https://docs.podman.io/en/stable/markdown/podman-build.1.html>`_ command, e.g.
+If you do not have access to the GHCR or want to build the containers locally, you can do using the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_. When building the containers locally, you need to provide the SINGULARITY_PROVIDER (`apptainer` or `singularity-ce``) and SINGULARITY_VERSION build arguments to the `docker build <https://docs.docker.com/reference/cli/docker/buildx/build/>`_ / `podman build <https://docs.podman.io/en/stable/markdown/podman-build.1.html>`_ command, e.g.
 
 .. code-block:: console
 
@@ -31,10 +29,23 @@ If you do not have access to the GHCR or want to build the containers locally, y
 
 Running in the containerized development environment
 ----------------------------------------------------
+The containerized development environment includes a singularity container runtime (`apptainer` or `singularity-ce`) and the `uv <https://docs.astral.sh/uv/>`_ Python packages manager. At runtime, you need to run :code:`uv sync` to install/update the Python environment to include the dependencies specified in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file to get a fully working development environment.
 
+Synchronizing the `uv` managed Python virtual environment is so fast and cheap that we have opted for doing it every time the container is started instead of building individual container images for all the different Python versions and dependencies specified in the :ref:`single sourced dependency matrix <single_source_dep_matrix>`.
+
+We recommend running the containerized development environment as a non-root user within the container using either `docker <https://docs.docker.com/get-started/>`_ or `podman <https://podman.io/getting-started/overview>`_. Since we are running one container runtime (`apptainer` / `singularity-ce`) inside another container runtime (`docker` / `podman`), it is in general necessary to:
+
+1. Have unprivileged user namespaces enabled.
+2. Run with at least some of the `docker`/`podman` security options disabled. While it is possible to run with `--privileged` flag, this disables all security features and is not recommended. Instead, we recommend looking at the suggested security options in the reference makefile and development container configurations and then try to run with as few of these options as possible.
+
+We provide two reference methods to run the containerized development environment, one for running it in a terminal using a makefile and one for running the container as a `development container <https://containers.dev/>`_ integrated with an IDE.
+
+.. _dev_env_makefile:
 
 Using the reference makefile
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As an IDE development container
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _dev_env_devcontainer:
+
+Using the IDE development container
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
