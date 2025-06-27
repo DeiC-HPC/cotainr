@@ -1,32 +1,31 @@
-easyblock = 'Tarball'
+easyblock = 'PythonPackage'
 
 name = 'cotainr'
-version = '2024.10.0'
+version = 'YYYY.MM.MINOR'
+
 homepage = 'https://github.com/DeiC-HPC/container-builder'
 description = 'cotainr is a tool that helps making Singularity/Apptainer containers.'
 
-sources = [ {
-  'filename': '%(name)s-%(version)s.tar.gz',
-  'download_filename': '%(version)s.tar.gz',
-  'source_urls':       ['https://github.com/DeiC-HPC/cotainr/archive/refs/tags'],
-} ]
+install_src = 'https://pypi.python.org/packages/py3/%(nameletter)s/%(name)s/%(name)s-%(version)s-py3-none-any.whl'
 
 toolchain = SYSTEM
+use_pip = True
+sanity_pip_check = True
 
-systems = """{
+local_systems = """{
   "lumi-g": {
-    "base-image": "docker://rocm/dev-ubuntu-22.04:5.5.1-complete"
+    "base-image": "docker://rocm/dev-ubuntu-24.04:6.2.4-complete"
   },
   "lumi-c": {
-    "base-image": "docker://ubuntu:22.04"
+    "base-image": "docker://ubuntu:24.04"
   }
 }"""
 
-postinstallcmds = ['cd %(installdir)s/ ; cat >systems.json <<EOF\n' + systems + '\nEOF\n']
+postinstallcmds = ['cd %(installdir)s/lib/python%(pyshortver)s/site-packages/cotainr/ ; cat >systems.json <<EOF\n' + local_systems + '\nEOF\n']
 
 sanity_check_paths = {
     'files': ['bin/cotainr'],
-    'dirs': ['cotainr'],
+    'dirs': ['lib/python%(pyshortver)s/site-packages/cotainr'],
 }
 
 sanity_check_commands = ['cotainr']
