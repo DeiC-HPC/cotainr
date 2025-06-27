@@ -76,7 +76,7 @@ class CondaInstall:
         self,
         *,
         sandbox,
-        prefix="/opt/conda",
+        prefix="/opt/cotainr/conda",
         license_accepted=False,
         log_settings=None,
     ):
