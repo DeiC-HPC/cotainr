@@ -402,10 +402,10 @@ class CondaInstall:
         elif self._verbosity == 2:
             # Conda INFO
             return " -v"
-        elif self._verbosity == 3:
+        elif self._verbosity == 3 or self._verbosity == 4:
             # Conda DEBUG
             return " -vv"
-        elif self._verbosity >= 4:
+        elif self._verbosity >= 5:
             # Conda TRACE
             return " -vvv"
         else:
