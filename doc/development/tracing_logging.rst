@@ -78,7 +78,8 @@ Within `cotainr`, we map the subcommand `--verbose` / `--quiet` flags to a `verb
 -v                   1                      INFO                  INFO                         <None>                   <None>
 -vv                  2                      DEBUG                 INFO                         <None>                   -v
 -vvv                 3                      DEBUG                 DEBUG                        -v                       -vv
--vvvv                4                      DEBUG                 DEBUG                        -d                       -vvv
+-vvvv                4                      DEBUG                 DEBUG                        -d                       -vv
+-vvvvv               5                      DEBUG                 DEBUG                        -d                       -vvv
 ===================  =====================  ====================  ===========================  =======================  =================
 
 The subcommand `--verbose` / `--quiet` flags are mapped to a `verbosity` level as part of the parsing of the CLI arguments, e.g. as in :class:`cotainr.CLI.build.add_arguments`. Based on the `verbosity` level,
