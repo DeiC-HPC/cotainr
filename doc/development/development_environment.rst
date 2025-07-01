@@ -56,3 +56,6 @@ We provide a reference `Makefile <https://github.com/DeiC-HPC/cotainr/blob/main/
 Using the IDE development container
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We provide a reference `devcontainer.json <https://github.com/DeiC-HPC/cotainr/blob/main/.devcontainer/devcontainer.json>`_ file that includes the necessary configuration to run the containerized development environment as a `development container <https://containers.dev/>`_ integrated with an IDE. This allows for a seamless development experience with features like code completion, linting, and debugging. The `devcontainer.json` file is mainly designed for use with `Visual Studio Code <https://code.visualstudio.com/docs/remote/containers>`_ with rootless `podman` as the container runtime. For this to work, you need to install the `Dev Containers extension <https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers>`_ and set the :code:`dev.containers.dockerPath` setting to :code:`podman` in your `Visual Studio Code settings <https://code.visualstudio.com/docs/configure/settings>`_.
+
+.. warning::
+    The IDE development container setup is still work-in-progress. It may not work as expected for all combinations of IDEs and container runtimes. It may still need further configuration to fully integrate with Visual Studio Code or other IDEs.
