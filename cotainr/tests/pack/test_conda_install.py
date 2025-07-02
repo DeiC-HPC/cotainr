@@ -516,7 +516,15 @@ class Test_GetInstallScript:
 class Test_CondaVerbosityArg:
     @pytest.mark.parametrize(
         ["verbosity", "verbosity_arg"],
-        [(-1, " -q"), (0, " -q"), (1, ""), (2, " -v"), (3, " -vv"), (4, " -vvv")],
+        [
+            (-1, " -q"),
+            (0, " -q"),
+            (1, ""),
+            (2, " -v"),
+            (3, " -vv"),
+            (4, " -vv"),
+            (5, " -vvv"),
+        ],
     )
     def test_correct_mapping_of_verbosity(
         self,

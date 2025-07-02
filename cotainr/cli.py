@@ -63,7 +63,7 @@ class CotainrSubcommand(ABC):
     @abstractmethod
     def execute(self):
         """Execute the subcommand."""
-        pass
+        pass  # pragma: no cover
 
 
 class Build(CotainrSubcommand):
@@ -190,8 +190,8 @@ class Build(CotainrSubcommand):
             help=(
                 "increase the verbosity of the output from cotainr. "
                 "Can be used multiple times: Once for subprocess output, "
-                "twice for subprocess INFO, three times for DEBUG, "
-                "and four times for TRACE"
+                "twice for subprocess INFO, three times for VERBOSE, four times for DEBUG "
+                "and five times for TRACE."
             ),
         )
         verbose_quiet_group.add_argument(
