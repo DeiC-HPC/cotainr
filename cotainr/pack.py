@@ -23,8 +23,7 @@ import time
 import urllib.error
 import urllib.request
 
-from . import tracing
-from . import util
+from . import tracing, util
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +73,12 @@ class CondaInstall:
     """
 
     def __init__(
-        self, *, sandbox, prefix="/opt/conda", license_accepted=False, log_settings=None
+        self,
+        *,
+        sandbox,
+        prefix="/opt/conda",
+        license_accepted=False,
+        log_settings=None,
     ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
@@ -255,6 +259,7 @@ class CondaInstall:
             )
             process.kill()  # We only use this process to extract the license
 
+        util._flush_stdin_buffer()
         if license_text:
             license_text = license_text.replace(
                 # remove prompt for pressing enter (as we have already done this...)
@@ -282,6 +287,35 @@ class CondaInstall:
                 "No license seems to be displayed by the Miniforge installer."
             )
 
+    @staticmethod
+    def _get_install_script(architecture):
+        """
+        Determine the Miniforge installer to be downloaded based on system architecture.
+
+        Always downloads a Linux version as the container is expected to always be Linux.
+
+        Parameters
+        ----------
+        architecture : str
+            The container architecture as returned by "uname -m".
+
+        Raises
+        ------
+        ValueError
+            If the container sandbox architecture is not supported.
+        """
+        if architecture in ("arm64", "aarch64"):
+            install_script = "Miniforge3-Linux-aarch64.sh"
+        elif architecture == "x86_64":
+            install_script = "Miniforge3-Linux-x86_64.sh"
+        else:
+            raise ValueError(
+                "Cotainr's CondaInstall only supports x86_64 and arm64/aarch64. "
+                f'Cotainr got "{architecture=}" for your container'
+            )
+
+        return install_script
+
     def _download_miniforge_installer(self, *, installer_path):
         """
         Download the Miniforge installer to `installer_path`.
@@ -293,12 +327,22 @@ class CondaInstall:
 
         Raises
         ------
+        RuntimeError
+            If the container sandbox architecture is unknown.
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
+        architecture = self.sandbox.architecture
+        if architecture is None:
+            raise RuntimeError(
+                f"Cotainr's CondaInstall got '{architecture=}' "
+                "which indicates that it is not running in a container sandbox context."
+            )
+
+        install_script = CondaInstall._get_install_script(architecture)
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
-            "Miniforge3-Linux-x86_64.sh"
+            + install_script
         )
 
         # Make up to 3 attempts at downloading the installer
@@ -360,10 +404,10 @@ class CondaInstall:
         elif self._verbosity == 2:
             # Conda INFO
             return " -v"
-        elif self._verbosity == 3:
+        elif self._verbosity == 3 or self._verbosity == 4:
             # Conda DEBUG
             return " -vv"
-        elif self._verbosity >= 4:
+        elif self._verbosity >= 5:
             # Conda TRACE
             return " -vvv"
         else:
@@ -395,9 +439,7 @@ class CondaInstall:
                 return True
 
         class NoEmptyLinesFilter(logging.Filter):
-            """
-            Remove any empty lines.
-            """
+            """Remove any empty lines."""
 
             def filter(self, record):
                 return record.msg.strip() != ""

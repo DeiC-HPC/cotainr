@@ -5,23 +5,23 @@
     "url": "https://cotainr.readthedocs.io/en/latest/"
   },
   {
-    "name": "2023.11.0 (stable)",
+    "name": "2025.03.0 (stable)",
     "version": "stable",
     "url": "https://cotainr.readthedocs.io/en/stable/"
+  },
+  {
+    "name": "2024.10.0",
+    "version": "2024.10.0",
+    "url": "https://cotainr.readthedocs.io/en/2024.10.0/"
+  },
+  {
+    "name": "2023.11.0",
+    "version": "2023.11.0",
+    "url": "https://cotainr.readthedocs.io/en/2023.11.0/"
   },
   {
     "name": "2023.02.0",
     "version": "2023.02.0",
     "url": "https://cotainr.readthedocs.io/en/2023.02.0/"
-  },
-  {
-    "name": "2023.01.0",
-    "version": "2023.01.0",
-    "url": "https://cotainr.readthedocs.io/en/2023.01.0/"
-  },
-  {
-    "name": "2022.12.0",
-    "version": "2022.12.0",
-    "url": "https://cotainr.readthedocs.io/en/2022.12.0/"
   }
 ]

@@ -1,13 +1,19 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.4
+    rev: v0.9.9
     hooks:
       - id: ruff
         args:
           - --fix
       - id: ruff-format
+        args:
+          - -v
+      - id: ruff-format
+        name: ruff-format-diff
+        args:
+          - --diff
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: debug-statements
       - id: end-of-file-fixer

@@ -7,10 +7,11 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 """
 
+import builtins
 import contextlib
-import logging
 import importlib
 import io
+import logging
 import os
 from pathlib import Path
 import shlex
@@ -34,6 +35,33 @@ def argparse_options_line():
         return "options:\n"
     else:
         return "optional arguments:\n"
+
+
+@pytest.fixture
+def context_importerror(monkeypatch):
+    """
+    Force an ImportError when importing the a specified module.
+
+    The `mock_import_context` contextmanager forces an `ImportError` to be
+    raised when trying to import the `module_name` module within the context.
+    Imports of all other modules are unaffected.
+    """
+
+    @contextlib.contextmanager
+    def mock_import_context(module_name):
+        builtins_import = builtins.__import__
+
+        def mock_import(name, globals, locals, fromlist, level):
+            if name == module_name:
+                raise ImportError(f"PATCH: ImportError forced for {module_name=}")
+            else:
+                return builtins_import(name, globals, locals, fromlist, level)
+
+        with monkeypatch.context() as m:
+            m.setattr("builtins.__import__", mock_import)
+            yield
+
+    return mock_import_context
 
 
 @pytest.fixture(autouse=True)

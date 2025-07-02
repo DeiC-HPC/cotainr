@@ -15,10 +15,12 @@ import shlex
 import pytest
 
 from cotainr.cli import Build, CotainrCLI
+
 from ..container.patches import (
-    patch_save_singularity_sandbox_context,
-    patch_disable_singularity_sandbox_subprocess_runner,
     patch_disable_add_metadata,
+    patch_disable_singularity_sandbox_subprocess_runner,
+    patch_fake_singularity_sandbox_env_folder,
+    patch_save_singularity_sandbox_context,
 )
 from ..pack.patches import (
     patch_disable_conda_install_bootstrap_conda,
@@ -26,7 +28,7 @@ from ..pack.patches import (
     patch_disable_conda_install_download_miniforge_installer,
 )
 from ..tracing.patches import patch_disable_console_spinner
-from ..util.patches import patch_system_with_actual_file, patch_empty_system
+from ..util.patches import patch_empty_system, patch_system_with_actual_file
 
 
 class TestConstructor:
@@ -321,9 +323,11 @@ class TestExecute:
         image_path = "some_image_path_6021"
         base_image = "some_base_image_6021"
         Build(image_path=image_path, base_image=base_image).execute()
-        sandbox_create_cmd, sandbox_build_cmd = (
+        (sandbox_create_cmd, sandbox_uname_cmd, sandbox_build_cmd) = (
             capsys.readouterr().out.strip().split("\n")
         )
+
+        assert "'uname', '-m'" in sandbox_uname_cmd
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
         assert all(
             s in sandbox_create_cmd
@@ -340,6 +344,7 @@ class TestExecute:
         patch_disable_singularity_sandbox_subprocess_runner,
         patch_disable_conda_install_bootstrap_conda,
         patch_disable_conda_install_download_miniforge_installer,
+        patch_fake_singularity_sandbox_env_folder,
         patch_save_singularity_sandbox_context,
         patch_disable_add_metadata,
         patch_disable_console_spinner,
@@ -350,6 +355,7 @@ class TestExecute:
         base_image = "some_base_image_6021"
         conda_env = "some_conda_env_6021"
         conda_env_content = "Some conda env content 6021"
+        saved_sandbox_dir = Path(f"./{patch_save_singularity_sandbox_context}")
         Path(conda_env).write_text(conda_env_content)
         Build(
             image_path=image_path,
@@ -359,11 +365,11 @@ class TestExecute:
         ).execute()
 
         # Check that conda_env file has been copied to container
-        assert Path(f"./saved_sandbox_dir/{conda_env}").read_text() == conda_env_content
+        assert (saved_sandbox_dir / f"{conda_env}").read_text() == conda_env_content
 
         # Check that the singularity environment has been updated activate conda env
         assert (
-            Path("./saved_sandbox_dir/environment")
+            (saved_sandbox_dir / ".singularity.d/env/92-cotainr-env.sh")
             .read_text()
             .strip()
             .endswith("conda activate conda_container_env")
@@ -372,6 +378,7 @@ class TestExecute:
         # Check sandbox interaction commands
         (
             sandbox_create_cmd,
+            sandbox_uname_cmd,
             conda_bootstrap_cmd,
             conda_bootstrap_clean_cmd,
             conda_env_create_cmd,
@@ -379,6 +386,7 @@ class TestExecute:
             sandbox_build_cmd,
         ) = capsys.readouterr().out.strip().split("\n")
         assert sandbox_create_cmd.startswith("PATCH: Ran command in sandbox:")
+        assert "'uname', '-m'" in sandbox_uname_cmd
         assert all(
             s in sandbox_create_cmd
             for s in ["'singularity'", "'build'", "'--sandbox'", f"'{base_image}'"]
@@ -467,8 +475,8 @@ class TestHelpMessage:
             "                        completing the container build process\n"
             "  --verbose, -v         increase the verbosity of the output from cotainr. Can\n"
             "                        be used multiple times: Once for subprocess output,\n"
-            "                        twice for subprocess INFO, three times for DEBUG, and\n"
-            "                        four times for TRACE\n"
+            "                        twice for subprocess INFO, three times for VERBOSE,\n"
+            "                        four times for DEBUG and five times for TRACE.\n"
             "  --quiet, -q           do not show any non-CRITICAL output from cotainr\n"
             "  --log-to-file         create files containing all logging information shown\n"
             "                        on stdout/stderr\n"

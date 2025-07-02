@@ -24,8 +24,8 @@ systems_file
 
 from concurrent.futures import ThreadPoolExecutor
 import functools
-import logging
 import json
+import logging
 from pathlib import Path
 import subprocess
 import sys
@@ -143,31 +143,6 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
 
     return completed_process
 
-
-def _print_and_capture_stream(*, stream_handle, print_dispatch):
-    """
-    Print a text stream while also storing it.
-
-    Parameters
-    ----------
-    stream_handle : :py:class:`io.TextIOWrapper`
-        The text stream to print and capture.
-    print_dispatch : Callable
-        The callable to use for printing.
-
-    Returns
-    -------
-    captured_stream : list of str
-        The lines captured from the stream.
-    """
-    captured_stream = []
-    for line in stream_handle:
-        print_dispatch(line)
-        captured_stream.append(line)
-
-    return captured_stream
-
-
 def answer_is_yes(input_text):
     """
     Print text and compare the input given to "yes"
@@ -192,3 +167,47 @@ def answer_is_yes(input_text):
         if answer_no:
             return False
         answer_prompt = "Did not understand your input. Please answer yes/[N]o\n"
+
+def _print_and_capture_stream(*, stream_handle, print_dispatch):
+    """
+    Print a text stream while also storing it.
+
+    Parameters
+    ----------
+    stream_handle : :py:class:`io.TextIOWrapper`
+        The text stream to print and capture.
+    print_dispatch : Callable
+        The callable to use for printing.
+
+    Returns
+    -------
+    captured_stream : list of str
+        The lines captured from the stream.
+    """
+    captured_stream = []
+    for line in stream_handle:
+        print_dispatch(line)
+        captured_stream.append(line)
+
+    return captured_stream
+
+def _flush_stdin_buffer():
+    """
+    Discard queued data on stdin file descriptor.
+
+    TCIOFLUSH selects both the input queue and output queue to be discarded.
+
+    https://stackoverflow.com/questions/2520893/how-to-flush-the-input-stream
+    """
+    from io import UnsupportedOperation
+
+    try:
+        sys.stdin.fileno()
+    except UnsupportedOperation:
+        # stdin is a pseudofile (e.g. Pytest without --no-capture)
+        return
+
+    # Python Standard library, Linux/Unix/OSX
+    from termios import TCIOFLUSH, tcflush
+
+    tcflush(sys.stdin, TCIOFLUSH)

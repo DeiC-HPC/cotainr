@@ -1,0 +1,44 @@
+{
+  "MARK_PYTHON_VERSION": "Add or remove python version number.",
+  "python-version": [
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12"
+  ],
+  "MARK_APPTAINER_VERSION": "MARK: Update apptainer version 1.4.1, when released and tested.",
+  "singularity": [
+    {
+      "provider": "apptainer",
+      "version": "1.3.4"
+    },
+    {
+      "provider": "apptainer",
+      "version": "1.3.6"
+    },
+    {
+      "provider": "singularity-ce",
+      "version": "4.1.3"
+    },
+    {
+      "provider": "singularity-ce",
+      "version": "4.2.1"
+    },
+    {
+      "provider": "singularity-ce",
+      "version": "4.3.0"
+    }
+  ],
+  "os": [
+    {
+      "runs-on": "ubuntu-latest",
+      "tag": "amd64",
+      "platform": "linux/amd64"
+    },
+    {
+      "runs-on": "ubuntu-24.04-arm",
+      "tag": "arm64",
+      "platform": "linux/arm64"
+    }
+  ]
+}
