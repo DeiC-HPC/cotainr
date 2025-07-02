@@ -14,7 +14,7 @@ stream_subprocess(\*, args, \*\*kwargs)
 get_systems()
     Get a dictionary of predefined systems, defined in systems.json
 answer_is_yes()
-    Pass text to the terminal and verify that the answer is yes
+    Pass text to the terminal and verify that the answer is yes, only terminates on "yes" or "no"
 
 Attributes
 ----------
@@ -143,9 +143,10 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
 
     return completed_process
 
+
 def answer_is_yes(input_text):
     """
-    Print text and compare the input given to "yes"
+    Print text and compare the input given to "yes".
 
     Parameters
     ----------
@@ -167,6 +168,7 @@ def answer_is_yes(input_text):
         if answer_no:
             return False
         answer_prompt = "Did not understand your input. Please answer yes/[N]o\n"
+
 
 def _print_and_capture_stream(*, stream_handle, print_dispatch):
     """
@@ -190,6 +192,7 @@ def _print_and_capture_stream(*, stream_handle, print_dispatch):
         captured_stream.append(line)
 
     return captured_stream
+
 
 def _flush_stdin_buffer():
     """
