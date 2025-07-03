@@ -35,6 +35,6 @@ If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automaticall
     uv sync --group lint
     uv run pre-commit install
 
-This will install the pre-commit hooks defined in the `.pre-commit-config.yaml <https://github.com/DeiC-HPC/cotainr/blob/main/.pre-commit-config.yaml>`_. The pre-commit hooks will then automatically run when you run :code:`git commit` in the repository. The  :ref:`CI/CD workflow <test_suite>` uses the same pre-commit configuration for linting and formatting.
+This will install the pre-commit hooks defined in the `.pre-commit-config.yaml <https://github.com/DeiC-HPC/cotainr/blob/main/.pre-commit-config.yaml>`_. The pre-commit hooks will then automatically run when you run :code:`git commit` in the repository. The  :ref:`CI/CD workflow <continuous_integration>` uses the same pre-commit configuration for linting and formatting.
 
 The pre-commit hooks may be updated by running :code:`pre-commit autoupdate` which will update the `.pre-commit-config.yaml` to use the latest versions of the pre-commit hooks. The next time you run :code:`git commit`, the installed hooks will be automatically updated to the new versions.
