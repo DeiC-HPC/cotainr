@@ -13,6 +13,8 @@ stream_subprocess(\*, args, \*\*kwargs)
     Run a the command described by `args` while streaming stdout and stderr.
 get_systems()
     Get a dictionary of predefined systems, defined in systems.json
+answer_is_yes()
+    Pass text to the terminal and verify that the answer is yes, only terminates on "yes" or "no"
 
 Attributes
 ----------
@@ -112,16 +114,20 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
             stdout_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stdout,
-                print_dispatch=log_dispatcher.log_to_stdout
-                if log_dispatcher is not None
-                else functools.partial(print, end="", file=sys.stdout),
+                print_dispatch=(
+                    log_dispatcher.log_to_stdout
+                    if log_dispatcher is not None
+                    else functools.partial(print, end="", file=sys.stdout)
+                ),
             )
             stderr_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stderr,
-                print_dispatch=log_dispatcher.log_to_stderr
-                if log_dispatcher is not None
-                else functools.partial(print, end="", file=sys.stderr),
+                print_dispatch=(
+                    log_dispatcher.log_to_stderr
+                    if log_dispatcher is not None
+                    else functools.partial(print, end="", file=sys.stderr)
+                ),
             )
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
@@ -136,6 +142,32 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     completed_process.check_returncode()
 
     return completed_process
+
+
+def answer_is_yes(input_text):
+    """
+    Print text and compare the input given to "yes".
+
+    Parameters
+    ----------
+    input_text : str
+        a string to be printed for verification by the user
+
+    Returns
+    -------
+    answer_is_yes : boolean
+        A boolean indicating whether or not the answer is yes
+    """
+    answer_prompt = input_text + " yes/[N]o\n"
+    while True:
+        answer = input(answer_prompt).lower()
+        answer_yes = answer == "yes"
+        answer_no = answer.startswith("n") or answer == ""
+        if answer_yes:
+            return True
+        if answer_no:
+            return False
+        answer_prompt = "Did not understand your input. Please answer yes/[N]o\n"
 
 
 def _print_and_capture_stream(*, stream_handle, print_dispatch):
