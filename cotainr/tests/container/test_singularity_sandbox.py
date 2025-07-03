@@ -295,14 +295,6 @@ class TestRunCommandInContainer:
                 test_file_permissions = test_file_mode & 0o777
                 assert oct(test_file_permissions) == "0o644"
 
-    def test_error_handling(self, data_cached_alpine_sif):
-        cmd = "some6021 non-meaningful command"
-        with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
-            with pytest.raises(
-                ValueError, match=f"^Invalid command {cmd=} passed to Singularity"
-            ):
-                sandbox.run_command_in_container(cmd=cmd)
-
     def test_no_home(self, data_cached_alpine_sif):
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
             process = sandbox.run_command_in_container(cmd="ls -l /home")

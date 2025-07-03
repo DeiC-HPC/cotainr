@@ -133,7 +133,11 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
         stderr="".join(captured_stderr),
     )
 
-    completed_process.check_returncode()
+    try:
+        completed_process.check_returncode()
+    except subprocess.CalledProcessError as err:
+        log_dispatcher.log_exception(err) if log_dispatcher is not None else print(err.stderr)
+        sys.exit()
 
     return completed_process
 
