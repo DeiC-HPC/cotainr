@@ -364,7 +364,16 @@ class Test_SubprocessRunner:
 class Test_AddVerbosityArg:
     @pytest.mark.parametrize(
         ["verbosity", "verbosity_arg"],
-        [(-1, "-s"), (0, "-q"), (1, None), (2, None), (3, "-v"), (4, "-v")],
+        [
+            (-1, "-s"),
+            (0, "-q"),
+            (1, None),
+            (2, None),
+            (3, "-v"),
+            (4, "-d"),
+            (5, "-d"),
+            (6, "-d"),
+        ],
     )
     def test_correct_mapping_of_verbosity(self, verbosity, verbosity_arg):
         sandbox = SingularitySandbox(base_image="my_base_image_6021")

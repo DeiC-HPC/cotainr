@@ -5,23 +5,18 @@ Getting Started
 
 `cotainr` makes it easy to build `Singularity`_/`Apptainer`_ containers for certain :ref:`use cases <use_cases>`. If this is your first time learning about `cotainr`, we encourage you to read the :ref:`motivation for using cotainr <why_cotainr>`.
 
-In order to get started using `cotainr`, you need to download and install the `cotainr` source code. Please note that cotainr only supports x86_64 and ARM64/AArch64 architectures. Alternative, you may be in luck that you are using an HPC system on which `cotainr` is already installed.
+In order to get started, you can install `cotainr` directly using pip.
+
+.. code-block:: console
+
+    $ pip install cotainr
+
+Additionally, you need to have `Singularity`_ or `Apptainer`_ installed. More details about dependencies may be found in the :ref:`User Guide <cotainr_dependencies>`.
+
+Alternatively, if you are using an HPC system, you may be in luck that `cotainr` is already installed on the system. Refer to the instructions below for getting started in that case.
 
 .. grid:: 1
     :gutter: 4
-
-    .. grid-item-card:: Getting the `cotainr` source code
-        :class-card: sd-rounded-0 sd-shadow-sm
-
-        All releases of `cotainr` are available on GitHub: https://github.com/DeiC-HPC/cotainr/releases
-
-        .. dropdown:: Installation instructions
-            :animate: fade-in
-            :color: secondary
-
-            `cotainr` only runs on Linux and requires that `Python`_ >=3.8 as well as `Singularity`_ >=3.7.4 [#]_ or `Apptainer`_ >=1.0.0 is installed on the system. More details about dependencies may be found in the :ref:`User Guide <cotainr_dependencies>`.
-
-            To install `cotainr`, download and unpack the source code. Then add the :code:`cotainr/bin` directory to your :code:`PATH` to get access to the :ref:`cotainr command line interface <command_line_interface>`.
 
     .. grid-item-card:: Using `cotainr` on HPC systems where it is already installed
 
@@ -50,6 +45,3 @@ In order to get started using `cotainr`, you need to download and install the `c
 .. _Apptainer: https://apptainer.org/
 .. _Python: https://www.python.org/
 .. _Singularity: https://sylabs.io/singularity/
-
-.. rubric:: Footnotes
-.. [#] As of version 3.8.0, Sylabs have changed the name of their version to SingularityCE. However, we only officially support their version from 3.9.2.

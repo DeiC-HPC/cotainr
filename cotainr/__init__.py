@@ -9,18 +9,21 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import sys
 
-__version__ = "2024.10.0"
+from ._version import __version__
+
+__all__ = ["__version__"]
+
 _minimum_dependency_version = {
     # Versions must be specified as a (major, minor, patchlevel) tuple of
     # integers
-    "python": (3, 8, 0),
+    "python": (3, 9, 0),
     "apptainer": (1, 0, 0),
     "singularity": (3, 7, 4),
     "singularity-ce": (3, 9, 2),
 }
 
 # Error early on too old Python version
-if sys.version_info < _minimum_dependency_version["python"]:
+if sys.version_info < _minimum_dependency_version["python"]:  # pragma: no cover
     # Note that this is using percent formatting on purpose, so this
     # file can be executed by Python versions older than the minimum
     # for Cotainr in general; this includes being able to run with

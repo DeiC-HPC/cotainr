@@ -1,38 +1,88 @@
 name: CI on push to branch
+
+# This workflow runs a limited number of tests on every push.
+# The tests are defined by the 'Set matrix data' step in the container-inputs job.
+# The tests are run on the docker images build by the CI_build_docker_images action/pipeline.
+# This action does NOT run if ONLY the files in the paths-ignore are changed. However, it will run if other files are also changed
+
+# NOTE:
+# If both ignored and non-ignored files are changed the CI_push pipeline will FAIL.
+# This is expected behaviour as the image with the right tag (sha256) is not yet available.
+# However, the tests get triggered again by the CI_build_docker_images pipeline. So the 2nd set of tests should work.
+
 on:
   push:
     branches:
       - "**"
     tags-ignore:
       - "**"
+    paths-ignore: # this workflow still runs If other file changes are added concurrently to these.
+      - '.github/workflows/matrix.json'
+      - '.github/workflows/dockerfiles/Dockerfile'
+      - '.github/workflows/CI_build_docker_images.yml'
+  workflow_call:
+
+env:
+  HOME: /github/home
+
 jobs:
+
+  # Prepares the matrix inputs, generates a lowercase version of the repo name, calculates sha256 of the input trigger paths.
+  container-inputs:
+    uses: ./.github/workflows/Container-inputs.yml
+
   lint-and-format:
+    needs: [container-inputs]
     name: Lint and check formatting
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-      - uses: pre-commit/action@v3.0.1
-  run-unittests:
-    name: Run unittests
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os.runs-on }}
+    permissions:
+      packages: read
     strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.12"]
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
+    container:
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
+      options: --user=1001
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Verify the uv.lock is up-to-date
+        run: uv lock --check
+      - name: Install linting dependencies
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=lint --frozen
+      - name: Restore pre-commit cache
+        uses: actions/cache@v4
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
+          path: ${{ github.workspace }}/.pre-commit-cache
+          key: pre-commit-3-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Run pre-commit on all files
+        working-directory: ${{ github.workspace }}
+        run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
+        env:
+          PRE_COMMIT_HOME: ${{ github.workspace }}/.pre-commit-cache
+
+  run-unittests:
+    needs: [container-inputs]
+    name: Run unittests
+    permissions:
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_push) }}
+    runs-on: ${{ matrix.os.runs-on }}
+    container:
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for hatch-vcs versioning
       - name: Install test dependencies
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install -e .[tests]
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=tests --frozen
       - name: Run unittests via pytest
-        run: pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"
+        run: uv run pytest -vv -m "not endtoend and not singularity_integration and not conda_integration"

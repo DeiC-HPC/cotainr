@@ -8,16 +8,20 @@ Test suite & CI/CD
 The test suite
 --------------
 
-The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. The entire test suite is run from the repository root directory by issuing:
+The `cotainr` test suite is implemented using `pytest <https://docs.pytest.org/>`_ and uses the `pytest-cov <https://docs.pytest.org/>`_ plugin for reporting test coverage. In order to run the test suite locally, first set up a developer environment by installing the test dependencies declared in the `cotainr pyproject.toml file <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_. This can be done using `uv <https://docs.astral.sh/uv/>`_ for setting up the environment:
 
 .. code-block:: console
 
-    $ pytest
+    $ uv sync --group tests
 
-Dependencies
-~~~~~~~~~~~~
-In order to run the tests, you must have the Python packages listed in the `test` extra.
-You can use ``pip install -e .[tests]`` to install the required packages.
+Alternatively, you can also install the (default) `dev` group which contains the full development environment, including the `tests` group.
+
+Once the development environment has been installed, simply run `pytest` from the repository root directory, e.g. using uv:
+
+.. code-block:: console
+
+    $ uv run pytest
+
 
 Pytest marks
 ~~~~~~~~~~~~
@@ -61,32 +65,67 @@ Imports in test modules are based on the following conventions:
 - Sub-package specific fixtures are explicitly imported using relative imports, e.g. :code:`from ..container.data import data_cached_ubuntu_sif` in `tests/pack/test_conda_install.py`.
 - Fixtures defined in `tests/conftest.py` are not explicitly imported (they are implicitly imported by `pytest``). Thus, if a fixture is used, but not imported, in a test module, `tests/conftest.py` is the only module in which it can (or at least should) be defined.
 
+.. _continuous_integration:
+
 Continuous Integration (CI)
 ---------------------------
-Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions. The tests run on the GitHub-hosted `ubuntu-latest <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_ runner. When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
+Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.com/en/actions>`_ in the `cotainr` GitHub repository https://github.com/DeiC-HPC/cotainr/actions.
+The CI integration debends heavily on the `defined matrix <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_.
+This matrix defines the Python versions, Singularity-CE versions and Apptainer versions that are tested. Furthermore, it also defines the Github Runners and the corresponding architectures on which we test `cotainr`.
+The tests run on the following two GitHub-hosted runners: ubuntu-latest and ubuntu-24.04-arm. For details of the runners see the `github documentation <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_.
+We run the tests on both runners to ensure that `cotainr` works on both AMD64 and ARM machines.
+When running the CI test `matrix <https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs>`_, we differentiate between the following (meta)versions of dependencies:
 
 - *stable*: The minimum supported version of the dependency.
 - *latest*: The latest released version of the dependency.
+- *relevant*: From VIP system version to newest stable version in steps of minor versions.
 - *all*: All supported versions of the dependency.
 
 CI workflows
 ~~~~~~~~~~~~
+All workflows are run on docker images build by the `CI_build_docker_images.yml` pipeline. The Docker images are stored on the Github Container Registry (`ghcr <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry>`_).
 The following CI `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ are implemented:
 
 - `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_:
   Runs the unit tests, integration tests, and end-to-end tests on pull requests to the *main* branch.
-  *All* Python versions and *stable* Singularity as well as *stable* Apptainer versions are tested.
+  *All* Python versions and *relevant* Singularity-CE as well as *relevant* Apptainer versions are tested. For details of the exact test matrix see the `matrix.json <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/matrix.json>`_ file.
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
 - `CI_push.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml>`_:
-  Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions.
+  Runs the unit tests on pushes to all branches. Restricted to *stable* and *latest* Python versions. The same applies for Singularity-CE and Apptainer versions.
   Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run and enforced.
+- `CI_build_docker_images.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_build_docker_images.yml>`_:
+  Runs the docker build process. The Dockerfile used for the building can be found `here <https://github.com/DeiC-HPC/cotainr/actions/workflows/dockerfiles/Dockerfile>`_
+  We build docker images for *all* supported architectures (AMD64 & ARM), *relevant* Singularity-CE as well as *relevant* Apptainer versions. Python is not installed during the build process but is installed during the test process.
 
+The test suite in the CI on Pull Requests is very thorough, and so it is only launched for pull requests that are not in draft mode. Additionally, it is launched the moment when a pull request is taken out of draft mode. On development where end-to-end and singularity integration testing are critical, the test suite should be run locally through the docker containers.
 
-.. _continuous_delivery:
+The CI utilizes `reusable workflows <https://docs.github.com/en/actions/sharing-automations/reusing-workflows>`_ in frequently used helper scripts and in other workflows that has multiple use-cases.
+
+- `Container-inputs.yml`: Extracts the required variables for running jobs on the correct docker image. This extracts the relevant part from the single source `matrix.json` to be used in the other workflows. Additionally, the workflow returns the GitHub repository name in lowercase as required by the GHCR repository and the SHA of `matrix.json`, `Dockerfile` and `CI_Build_docker_images.yml` to ensure the correctness of the container version.
+- `CI_push.yml`: The push tests are both utilized by itself on the push action and in `CI_build_docker_images.yml` after a new docker build.
+
+Note on reusable workflows in contrast with `composite workflows <https://docs.github.com/en/actions/sharing-automations/creating-actions/creating-a-composite-action>`_. The composite actions are useful when another workflow is run as part of another workflow step. However, this is not the case of `Container-inputs.yml` where the matrix is needed before the 'another workflow step' is even executed. And so it is more suitable to use reusable workflows because the job is run as its own pre-processing step, thus providing the matrix input to the subsequent job steps that require it.
 
 Continuous Delivery (CD)
 ------------------------
 Continuous Delivery (CD) is handled partly via `GitHub Actions <https://docs.github.com/en/actions>`_, partly via the a `Read the Docs webhook integration <https://docs.readthedocs.io/en/stable/continuous-deployment.html>`_ to the `cotainr` GitHub repository: https://github.com/DeiC-HPC/cotainr/.
+
+CD workflows
+~~~~~~~~~~~~
+The following CD `workflow <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ is implemented:
+
+- `CD_release.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CD_release.yml>`_: Creates GitHub and PyPI releases when new tags following the :ref:`versioning scheme <version-scheme>` are committed to the main branch.
+
+  The GitHub release job is run independently and does not have deployment protection rules as it can easily be undone by first removing the release through the GitHub UI and then remove the tag if something goes wrong.
+
+  The PyPI release process goes as following:
+
+  - Build the Python Wheel
+  - Publish to TestPyPI index
+  - In a clean environment, download and install from TestPyPI and run basic CLI functionality
+  - Publish to PyPI.
+
+  The testPyPI and PyPI index locations are both implemented as `GitHub environments <https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment>`_ attached to the DeiC-HPC account. These environments have deployment protection rules which require review from a member of the HPC-developers team before the action is executed. This ensures protection against accidental tag pushes which is needed since removal of releases from TestPyPI and PyPI is difficult.
 
 Read the Docs continuous documentation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -108,4 +147,4 @@ Currently, the following scheduled `workflows <https://docs.github.com/en/action
 
 - `SCHED_docs_linkcheck <https://github.com/DeiC-HPC/cotainr/actions/workflows/SCHED_docs_linkcheck.yml>`_: Builds the documentation and checks for any broken hyperlinks.
 
-Additionally, we currently also schedule the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow which tests the most recent point releases of Python (as provided by GitHub Actions) as well as the most recent Conda version. Ideally, this should be separated into its own workflow that also includes the *latest* versions of Python and Singularity/Apptainer in the test matrix.
+Additionally, we currently also schedule the `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_ workflow which tests the most recent point release of Python in the :ref:`CI test matrix <continuous_integration>`.
