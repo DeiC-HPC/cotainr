@@ -80,9 +80,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: uv run make -C doc linkcheck
 
-  build:
+  build-pypi-package:
     needs: [container-inputs]
-    name: Build package
+    name: Build PyPI package
     runs-on: ${{ matrix.os.runs-on }}
     permissions:
       packages: read
@@ -101,7 +101,7 @@ jobs:
           fetch-depth: 0 # Needed for hatch-vcs versioning
       - name: Build the Python Package
         run: uv build
-      - name: Upload build artifacts for subsequent workflow steps
+      - name: Save build artifacts for the record
         uses: actions/upload-artifact@v4
         with:
           name: dist
