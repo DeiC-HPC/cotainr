@@ -5,7 +5,7 @@ Getting Started
 
 `cotainr` makes it easy to build `Singularity`_/`Apptainer`_ containers for certain :ref:`use cases <use_cases>`. If this is your first time learning about `cotainr`, we encourage you to read the :ref:`motivation for using cotainr <why_cotainr>`.
 
-In order to get started, you can install `cotainr` directly using pip.
+In order to get started, you can install the :ref:`cotainr PyPI package <pypi_package>` directly using pip.
 
 .. code-block:: console
 
