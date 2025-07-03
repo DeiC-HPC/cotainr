@@ -2,7 +2,7 @@
 
 Technical motivation
 ====================
-`Singularity`_/`Apptainer`_ are High Performance Computing (HPC) user space container technologies, i.e. you can run your container as a normal user without root privileges. However, `you still need root privileges to be able to build containers from singularity definition files <https://github.com/apptainer/singularity/issues/5941#issuecomment-821409323>`_ - or `fake such privileges <https://apptainer.org/docs/user/1.0/fakeroot.html>`_. Unfortunately, on some HPC systems such fakeroot functionality is disabled due to security concerns, thus, making it impossible to build containers from singularity definitions files *on* the HPC system. This is undesirable since not all users are able to build their containers elsewhere.
+`Singularity`_/`Apptainer`_ are High Performance Computing (HPC) user space container runtimes, i.e. they are designed to run containers as a normal user without root privileges on shared systems like HPC clusters. However, `you still need root privileges to be able to build containers from singularity definition files <https://github.com/apptainer/singularity/issues/5941#issuecomment-821409323>`_ - or fake such privileges `one way <https://apptainer.org/docs/user/latest/fakeroot.html>`_ or `the other <https://docs.sylabs.io/guides/3.11/user-guide/build_a_container.html#unprivilged-proot-builds>`_. Unfortunately, on some HPC systems such fakeroot functionality is disabled due to security concerns, thus, making it difficult if not impossible to build containers from singularity definitions files *on* the HPC system. This is undesirable since not all users are able to build their containers elsewhere.
 
 Despite not being able to build containers from definition files without root privileges, you are able to convert between various container formats as an unprivileged user, e.g. convert a docker container to a singularity container. Among the possible container conversions are conversions to/from the `sandbox format <http://apptainer.org/docs/user/main/build_a_container.html#creating-writable-sandbox-directories>`_. The `sandbox format` technically lets you build containers in user space by:
 
@@ -17,7 +17,7 @@ However, this comes at the cost of both a much more manual and tedious build pro
 
 Container sandbox design
 ------------------------
-When using :code:`cotainr build`, containers are built using a sandbox, for now a `Singularity`_/`Apptainer`_ sandbox, i.e. a temporary folder is created containing the base container content. The sandbox is created using the `--fix-perms` option to ensure owner rwX permissions for all files in the container. The requested software and its configuration, e.g. a :ref:`conda environment <conda_environments>` is then packed into this sandbox using `Singularity`_/`Apptainer`_  as a chroot bootstrapper. Once everything is in place in the sandbox, it is converted to a SIF image file. Finally, everything is cleaned-up and the sandbox directory is removed.
+When using :code:`cotainr build`, containers are built using a sandbox, for now a `Singularity`_/`Apptainer`_ sandbox, i.e. a temporary folder is created containing the base container content. The sandbox is created using the `--fix-perms <https://apptainer.org/docs/user/main/cli/apptainer_build.html#options>`_ and `--no-umask <https://apptainer.org/docs/user/main/cli/apptainer_exec.html#options>`_ options to ensure owner read-write permissions for all files in the container. The requested software and its configuration, e.g. a :ref:`conda environment <conda_environments>` is then packed into this sandbox using `Singularity`_/`Apptainer`_  as a chroot bootstrapper. Once everything is in place in the sandbox, it is converted to a SIF image file. Finally, everything is cleaned-up and the sandbox directory is removed.
 
 
 `cotainr` specific implementation details
@@ -31,7 +31,7 @@ Limitations
 -----------
 Building containers in user space comes with the following limitations:
 
-- We are unable to correctly handle file permissions that should be set with root privileges. We are forcing owner rwX permission on all files using the `--fix-perms` option to `singularity build`, `as is also implied in the most basic Apptainer fakeroot builds <https://apptainer.org/docs/user/latest/fakeroot.html#build>`_.
+- We are unable to correctly handle file permissions that must be set with root privileges. We are forcing owner rwX permission on all files using the `--fix-perms` option to `singularity build`, `as is also implied in the most basic Apptainer fakeroot builds <https://apptainer.org/docs/user/latest/fakeroot.html#build>`_.
 - You can only install software in user space in the container, i.e. there is no :code:`sudo apt install` or the like.
 
 
