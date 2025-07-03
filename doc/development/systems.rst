@@ -2,22 +2,15 @@
 
 Predefining systems
 ===================
-
-To make `cotainr` easier to use, you can predefine systems.
-This currently means specifying a base image for a part of your HPC system.
-This can be done by creating a `JSON <https://www.json.org/>_` file named `systems.json` in the project root folder.
+To make `cotainr` easier to use, you can predefine systems. This currently means specifying a base image for a part of your HPC system. This can be done by creating a `JSON <https://www.json.org/>`_ file named `systems.json` in the project root folder.
 
 Why should I do this?
 ---------------------
-
 If it is not trivial for the users to get MPI or GPU access working in containers on your system, then a predefined base image with support for this will help your users tremendously.
-
 
 File format
 -----------
-
-The file format is relatively simple. For each you give it a name and then add a base image.
-The base image path can be one of the support targets for `apptainer/singularity build <https://apptainer.org/docs/user/latest/build_a_container.html#overview>`_.
+The `systems.json` file format is relatively simple. For each system entry, you give it a name and then add a base image. The base image path can be one of the supported targets for `apptainer/singularity build <https://apptainer.org/docs/user/latest/build_a_container.html#overview>`_, e.g.
 
 .. code-block:: json
 
@@ -26,6 +19,6 @@ The base image path can be one of the support targets for `apptainer/singularity
         "base-image": "docker://ubuntu:24.04"
       },
       "another-system-name": {
-        "base-image": "/path/to/file/on/system"
+        "base-image": "/path/to/SIF/file/on/system"
       }
     }
