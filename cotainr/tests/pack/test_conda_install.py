@@ -135,7 +135,7 @@ class TestAddEnvironment:
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
                 # We expect to find a line in the list of environments similar to:
-                # some_env_name_6021         /opt/conda/envs/some_env_name_6021
+                # some_env_name_6021         /opt/cotainr/conda/envs/some_env_name_6021
                 rf"^{conda_env_name}(\s)+{prefix}/envs/{conda_env_name}$",
                 process.stdout,
                 flags=re.MULTILINE,
@@ -156,7 +156,7 @@ class TestAddEnvironment:
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
                 # We expect to find a line in the list of environments similar to:
-                # some_env_name_6021         /opt/conda/envs/some_env_name_6021
+                # some_env_name_6021         /opt/cotainr/conda/envs/some_env_name_6021
                 rf"^{conda_env_name}(\s)+{prefix}/envs/{conda_env_name}$",
                 process.stdout,
                 flags=re.MULTILINE,
