@@ -45,6 +45,10 @@ The conda environment is automatically activated when the container is run, allo
 
   Bootstrapping of the conda environment in the container is done using `Miniforge <https://github.com/conda-forge/miniforge>`_. As part of the bootstrap process, you must accept the `Miniforge license terms <https://github.com/conda-forge/miniforge/blob/main/LICENSE>`_. This can be done either by accepting them during the container build process, or by specifying the :code:`--accept-licenses` option when invoking :code:`cotainr build`.
 
+.. admonition:: Iterate on the conda environment before building the container
+  :class: tip
+
+  If you are unsure about what needs to go into your `my_conda_env.yml` file for `conda` to correctly resolve your environment, you may want to iterate on the content of the `my_conda_env.yml` file by updating it and using :code:`conda env create --file my_conda_env.yml` to test that it resolves and installs correctly outside of the container. Only once it installs correctly, should you proceed to building the container with :code:`cotainr build`. That way to potentially save a lot of time by not having to rebuild the container multiple times while iterating on your conda environment.
 
 Pip packages
 ------------
