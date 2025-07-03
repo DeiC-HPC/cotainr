@@ -2,7 +2,7 @@
 
 Tracing & logging
 =================
-As `cotainr` is a tools that wraps other tools, e.g. Singularity and Conda, quite a lot of text messages are passed around. In particular, we handle:
+As `cotainr` is a tool that wraps other tools, e.g. Singularity and Conda, quite a lot of text messages are passed around. In particular, we handle:
 
 - Printed information from `cotainr`.
 - Logging information from `cotainr`.
@@ -68,7 +68,13 @@ Similarly to the setup done by :class:`~cotainr.tracing.LogDispatcher` for subpr
 
 Cotainr tracing log levels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Within `cotainr`, we map the subcommand `--verbose` / `--quiet` flags to a `verbosity` level, one of the `standard Python logging levels <https://docs.python.org/3/library/logging.html#logging-levels>`_ (independently for `cotainr` and :class:`~cotainr.tracing.LogDispatcher`s), and `--verbose` / `--quiet` levels for subprocesses, e.g. Singularity or Conda. Specifically the mapping is as shown in the below table:
+Within `cotainr`, we map the `cotainr` subcommand `--verbose` / `--quiet` flags to
+
+- a `verbosity` level, i.e. an integer representation of the level of verbosity.
+- one of the `standard Python logging levels <https://docs.python.org/3/library/logging.html#logging-levels>`_ (independently for `cotainr` itself and the :class:`~cotainr.tracing.LogDispatcher` used in subprocesses).
+- the `--silent` / `--quiet` / `--verbose` / `--debug` levels for subprocesses, e.g. Singularity or Conda.
+
+Specifically the mapping is as shown in the below table:
 
 ===================  =====================  ====================  ===========================  =======================  =================
   cotainr verbose      cotainr verbosity     cotainr log level      LogDispatcher log level      Singularity verbose      Conda verbose
@@ -81,7 +87,9 @@ Within `cotainr`, we map the subcommand `--verbose` / `--quiet` flags to a `verb
 -vvvv                4                      DEBUG                 DEBUG                        -v                       -vvv
 ===================  =====================  ====================  ===========================  =======================  =================
 
-The subcommand `--verbose` / `--quiet` flags are mapped to a `verbosity` level as part of the parsing of the CLI arguments, e.g. as in :class:`cotainr.CLI.build.add_arguments`. Based on the `verbosity` level,
+The subcommand `--verbose` / `--quiet` flags are mapped to a `verbosity` level as part of the parsing of the CLI arguments, e.g. as in :class:`cotainr.CLI.build.add_arguments`.
+
+Based on the `verbosity` level,
 
 - the `cotainr` log level (as used for filtering messages in loggers and handlers) is set in the :meth:`cotainr.cli.CotainrCLI._setup_cotainr_cli_logging` method.
 - the :class:`~cotainr.tracing.LogDispatcher` log level (as used for filtering messages in loggers and handlers) is set as part of its construction, i.e. in :meth:`cotainr.tracing.LogDispatcher._determine_log_level` method.
