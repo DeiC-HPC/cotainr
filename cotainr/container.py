@@ -262,14 +262,21 @@ class SingularitySandbox:
                     ]
                 ),
             )
-        except subprocess.CalledProcessError as e:
-            singularity_fatal_error = "\n".join(
-                [line for line in e.stderr.split("\n") if line.startswith("FATAL")]
-            )
-            raise ValueError(
-                f"Invalid command {cmd=} passed to Singularity "
-                f"resulted in the FATAL error: {singularity_fatal_error}"
-            ) from e
+        except subprocess.CalledProcessError:
+            if custom_log_dispatcher is not None:
+                error_log_dispatcher = custom_log_dispatcher
+            else:
+                error_log_dispatcher = self.log_dispatcher
+
+            if error_log_dispatcher.verbosity < 4:
+                error_log_dispatcher.logger_stderr.critical(
+                    "A subprocess failed unexpectedly, increase verbosity for more information"
+                )
+            else:
+                error_log_dispatcher.logger_stderr.critical(
+                    f"A subprocess failed unexpectedly from command: {cmd}"
+                )
+            sys.exit(0)
 
         return process
 
