@@ -4,7 +4,14 @@ Containerized development environment
 =====================================
 The `cotainr` project provides a containerized development environment that can be used to develop and test `cotainr` itself. The containerized development environment is defined in the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_ included in the https://github.com/DeiC-HPC/cotainr repository.
 
-Developers that are part of the https://github.com/DeiC-HPC organization may pull the development containers from the https://github.com/orgs/DeiC-HPC/packages `GitHub Container Registry (GHCR) <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry>`_. This requires logging into GHCR using the `GitHub gh CLI tool <https://cli.github.com/manual/>`_ or the `docker login <https://docs.docker.com/reference/cli/docker/login/>`_ / `podman login <https://docs.podman.io/en/stable/markdown/podman-login.1.html>`_ CLI tool with a `personal access token (classic) <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic>`_ that has at least the `read:packages` scope.
+Developers that are part of the https://github.com/DeiC-HPC organization may pull the development containers from the https://github.com/orgs/DeiC-HPC/packages `GitHub Container Registry (GHCR) <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry>`_. This requires logging into GHCR using the `docker login <https://docs.docker.com/reference/cli/docker/login/>`_ / `podman login <https://docs.podman.io/en/stable/markdown/podman-login.1.html>`_ CLI tool with a `personal access token (classic) <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic>`_ that has at least the `read:packages` scope. Using the `GitHub gh CLI tool <https://cli.github.com/manual/>`_ this may be achieved by running:
+
+.. code-block:: console
+
+    $ gh auth login --scopes read:packages
+    $ gh auth token | podman login ghcr.io --username $(gh api user --jq '.login') --password-stdin
+
+Replace `podman` with `docker` in the above command if you use `docker` instead of `podman`.
 
 Automated building of the containers
 ------------------------------------
