@@ -162,7 +162,7 @@ class CondaInstall:
         """
         # Run Conda installer
         self._run_command_in_sandbox(
-            cmd=f"bash --norc --noprofile {installer_path.name} -b -s -p {self.prefix}"
+            cmd=f"env -i bash --norc --noprofile {installer_path.name} -b -s -p {self.prefix}"
         )
 
         # Add Conda to container sandbox env
