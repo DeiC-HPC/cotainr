@@ -19,7 +19,7 @@ Bumping `matrix.json` dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We aim to test `cotainr` against versions of its dependencies that we expect to be used in production on HPC systems. Thus, the `matrix.json <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_ should regularity be updated to reflect this. Specifically it should be updated to include:
 
-- All `fully released and still supported versions <https://devguide.python.org/versions/>`_ of Python. Note, the minimum Python version is also specified in `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_. When removing the minimum Python version from the `matrix.json`, updates should also be made to the `pyproject.toml` file to reflect this as described in `section covering updates to pyproject.toml dependencies <bumping-pyproject-toml-dependencies>`_.
+- All `fully released and still supported versions <https://devguide.python.org/versions/>`_ of Python. Note, the minimum Python version is also specified in `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_. When removing the minimum Python version from the `matrix.json`, updates should also be made to the `pyproject.toml` file to reflect this as described in :ref:`section covering updates to pyproject.toml dependencies <bumping-pyproject-toml-dependencies>`.
 - SingularityCE and Apptainer versions from the oldest version that is still in use in production on HPC systems, that we aim to support, up to the latest fully released version. We aim to test all MAJOR and MINOR versions, but only the most recent PATCH (as defined by `SemVer <https://semver.org/>`_ versioning), of SingularityCE and Apptainer within this span.
 
 .. _bumping-pyproject-toml-dependencies:
