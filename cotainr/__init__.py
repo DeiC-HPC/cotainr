@@ -16,21 +16,21 @@ __all__ = ["__version__"]
 _minimum_dependency_version = {
     # Versions must be specified as a (major, minor, patchlevel) tuple of
     # integers
-    "python": (
+    "python": (  # MARK_PYTHON_VERSION: Update this to reflect the minimum supported Python version.
         3,
         9,
         0,
-    ),  # MARK_PYTHON_VERSION: Update this to reflect the minimum supported Python version.
-    "apptainer": (
+    ),
+    "apptainer": (  # MARK_APPTAINER_VERSION: Update this to reflect the minimum supported Apptainer version.
         1,
         3,
         4,
-    ),  # MARK_APPTAINER_VERSION: Update this to reflect the minimum supported Apptainer version.
-    "singularity-ce": (
+    ),
+    "singularity-ce": (  # MARK_APPTAINER_VERSION: Update this to reflect the minimum supported SingularityCE version.
         3,
         9,
         2,
-    ),  # MARK_APPTAINER_VERSION: Update this to reflect the minimum supported SingularityCE version.
+    ),
 }
 
 # Error early on too old Python version

@@ -20,7 +20,7 @@ Bumping `matrix.json` dependencies
 We aim to test `cotainr` against versions of its dependencies that we expect to be used in production on HPC systems. Thus, the `matrix.json <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_ should regularity be updated to reflect this. Specifically it should be updated to include:
 
 - All `fully released and still supported versions <https://devguide.python.org/versions/>`_ of Python. Note, the minimum Python version is also specified in `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_. When removing the minimum Python version from the `matrix.json`, updates should also be made to the `pyproject.toml` file to reflect this as described in `section covering updates to pyproject.toml dependencies <bumping-pyproject-toml-dependencies>`_.
-- SingularityCE and Apptainer versions from the oldest version that is still in use in production on HPC systems that we aim to support up to the latest fully released version. We aim to test all MAJOR and MINOR versions, but only the most recent PATCH, (as defined by `SemVer <https://semver.org/>`_ versioning) of SingularityCE and Apptainer within this span.
+- SingularityCE and Apptainer versions from the oldest version that is still in use in production on HPC systems, that we aim to support, up to the latest fully released version. We aim to test all MAJOR and MINOR versions, but only the most recent PATCH (as defined by `SemVer <https://semver.org/>`_ versioning), of SingularityCE and Apptainer within this span.
 
 .. _bumping-pyproject-toml-dependencies:
 
@@ -46,12 +46,12 @@ Additional infrastructure updates
 In addition to updating the dependencies, the following should also regularly be updated:
 
 - The OS and Python version for the Read the Docs configuration in `.readthedocs.yaml <https://github.com/DeiC-HPC/cotainr/blob/main/.readthedocs.yaml>`_.
-- The actions used in the GitHub workflows in `.github/workflows/`.
+- The versions of the actions used in the GitHub workflows in `.github/workflows/`.
 - The ARM64 `os.runs-on` target in the `matrix.json <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_ file. As of July 2025, you must specify a specific Ubuntu version for the ARM64 target, e.g. `ubuntu-24.04-arm` whereas the x86_64 target can be set to `ubuntu-latest`.
 
 Maintenance MARKs
 -----------------
-To make it easier to keep track of the places in the code that require maintenance when `cotainr` dependencies are updated, we use :code:`MARK`'s in the code. Specifically, we use the following marks:
+To make it easier to keep track of the places in the code and documentation that require maintenance when `cotainr` dependencies are updated, we use :code:`MARK`'s in the code. Specifically, we use the following marks:
 
 - :code:`MARK_PYTHON_VERSION`: Indicates that the code needs to be updated when changes are made to the tested Python versions.
 - :code:`MARK_APPTAINER_VERSION`: Indicates that the code needs to be updated when changes are made to the tested  Apptainer/SingularityCE versions.
