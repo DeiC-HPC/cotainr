@@ -96,6 +96,7 @@ class TestHelpMessage:
 class Test_check_python_dependency:
     def test_formatting(self):
         # Check for formatting like "Running python 3.11.0 >= 3.9.0, OK"
+        # MARK_PYTHON_VERSION: Update this comment to reflect the minimum supported Python version.
         assert re.match(
             (
                 r"^Running python \d+\.\d+\.\d+ (>=)|(<) \d+\.\d+\.\d+, "
@@ -107,17 +108,19 @@ class Test_check_python_dependency:
 
 class Test_check_singularity_dependency:
     def test_found_apptainer(self, monkeypatch):
+        # MARK_APPTAINER_VERSION: Update this to monkeypatch the minimum supported Apptainer version.
         monkeypatch.setattr(
             subprocess,
             "check_output",
-            lambda *args, **kwargs: "apptainer version 1.0.0",
+            lambda *args, **kwargs: "apptainer version 1.3.4",
         )
         assert (
             Info()._check_singularity_dependency()
-            == "Found apptainer 1.0.0 >= 1.0.0, \x1b[38;5;2mOK\x1b[0m"
+            == "Found apptainer 1.3.4 >= 1.3.4, \x1b[38;5;2mOK\x1b[0m"
         )
 
     def test_found_singularity_ce(self, monkeypatch):
+        # MARK_APPTAINER_VERSION: Update this to monkeypatch the minimum supported SingularityCE version.
         monkeypatch.setattr(
             subprocess,
             "check_output",

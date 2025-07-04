@@ -22,9 +22,13 @@ Dependencies
 ------------
 Since `cotainr` is a tool, written in `Python`_, for building `SingularityCE`_/`Apptainer`_ containers, you need the following to be able to use `cotainr`:
 
+..
+  MARK_PYTHON_VERSION: Update this to reflect the minimum supported Python version.
+  MARK_APPTAINER_VERSION: Update this to reflect the minimum supported SingularityCE/Apptainer version.
+
 - A Linux OS [1]_
 - `Python`_ >=3.9 [2]_
-- `SingularityCE`_ >=3.9.2 or `Apptainer`_ >=1.0.0 [3]_
+- `SingularityCE`_ >=3.9.2 or `Apptainer`_ >=1.3.4 [3]_
 - A CPU architecture that is either `x86_64 <https://en.wikipedia.org/wiki/X86-64>`_ or `ARM64/AArch64 <https://en.wikipedia.org/wiki/AArch64>`_
 
 Additionally, some features provided by `cotainr` may impose requirements on the base images you use when building containers, e.g. when including a :ref:`conda environment <conda_environments>` the base container must have `bash <https://www.gnu.org/software/bash/>`_ installed in it.
@@ -74,6 +78,10 @@ System information
 ~~~~~~~~~~~~~~~~~~
 To make sure that everything is in your environment for using `cotainr`, you can run the :code:`cotainr info` subcommand.
 This will provide you information about the system and also providing you with names of predefined systems.
+
+..
+  MARK_PYTHON_VERSION: Update this to reflect the minimum supported Python version.
+  MARK_APPTAINER_VERSION: Update this to reflect the minimum supported SingularityCE version.
 
 .. code-block:: console
 

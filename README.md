@@ -8,7 +8,7 @@ cotainr - a user space [Apptainer](https://apptainer.org/)/[Singularity](https:/
 cotainr makes it easy to build Singularity/Apptainer containers for certain use cases.
 
 ```shell
-$ cotainr build --base-image docker://ubuntu:24.04 --conda-env <YOUR_CONDA_ENV.yml>
+cotainr build --base-image docker://ubuntu:24.04 --conda-env <YOUR_CONDA_ENV.yml>
 ```
 
 ## Installation
@@ -35,4 +35,4 @@ Your use of cotainr is subject to the terms of the applicable component licenses
 
 |Component|License|URL|Cotainr use|
 |---------|-------|---|-----------|
-|Miniforge|BSD 3-clause|[Miniforge License](https://github.com/conda-forge/miniforge/blob/main/LICENSE)|Miniforge is used to bootstrap conda environments when running `cotainr build --conda-env...`
+|Miniforge|BSD 3-clause|[Miniforge License](https://github.com/conda-forge/miniforge/blob/main/LICENSE)|Miniforge is used to bootstrap conda environments when running `cotainr build --conda-env...`|

@@ -91,10 +91,10 @@ CI workflows
 The following CI `workflows <https://docs.github.com/en/actions/using-workflows/about-workflows>`_ are implemented:
 
 - `CI_pull_requests.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_pull_request.yml>`_:
-  Runs the unit tests, integration tests, and end-to-end tests on pull requests (*not* draft pull requests) to the *main* branch. *All* Python versions and *all* Singularity-CE as well as *all* Apptainer versions are tested.
+  Runs the unit tests, integration tests, and end-to-end tests on pull requests (*not* draft pull requests) to the *main* branch. *All* Python versions and *all* SingularityCE as well as *all* Apptainer versions are tested.
   Additionally, lint and formatting checks (as described in the :ref:`style guide <style_guide>`) as well as a build of the :ref:`cotainr wheel and sdist packages <pypi_package>`, a build of :ref:`HTML documentation <building_the_html_docs>`, and checks for any broken documentation hyperlinks are also run. Runs on both x86_64 and ARM64 architectures (except for the build and lint parts that only run on x86_64) in the :ref:`containerized development environment <containerized_development_environment>`.
 - `CI_push.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_push.yml>`_:
-  Runs the unit tests on pushes to all branches. Restricted to *minimum* and *latest* Python versions as well as *minimum* and *latest* Singularity-CE and Apptainer versions. Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run. Runs on both x86_64 and ARM64 architectures in the :ref:`containerized development environment <containerized_development_environment>`.
+  Runs the unit tests on pushes to all branches. Restricted to *minimum* and *latest* Python versions as well as *minimum* and *latest* SingularityCE and Apptainer versions. Lint and formatting checks (as described in the :ref:`style guide <style_guide>`) are also run. Runs on both x86_64 and ARM64 architectures in the :ref:`containerized development environment <containerized_development_environment>`.
 - `CI_build_docker_images.yml <https://github.com/DeiC-HPC/cotainr/actions/workflows/CI_build_docker_images.yml>`_:
   Runs the automated process for building the containers used in the :ref:`containerized development environment <containerized_development_environment>` whenever changes are made to the files defining the development environment on the *main* branch or development branches starting with *docker_dev_env*.
 

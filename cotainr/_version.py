@@ -45,6 +45,7 @@ def _get_cotainr_calver_tag_pattern():
     """
     pyproject_toml_path = Path(__file__).resolve().parents[1] / "pyproject.toml"
 
+    # MARK_PYTHON_VERSION: Update this code when we stop supporting Python < 3.11.
     # The tomllib module is only available in Python 3.11 and later.
     # Until we only support Python 3.11 and later, we use this custom code to
     # read the pyproject.toml file. It attempts to do the same thing as:

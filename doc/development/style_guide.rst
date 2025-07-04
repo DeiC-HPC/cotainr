@@ -28,7 +28,7 @@ Specifically, we use the following conventions:
 pre-commit
 ----------
 
-If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automatically check and format your code using a `git pre-commit hook <https://git-scm.com/book/ms/v2/Customizing-Git-Git-Hooks>`_. The pre-commit tool is included in the `lint` dependency group (which is also part of the `dev` dependency group) in the cotainr `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file. Thus, an easy way to install pre-commit and setup up the pre-commit hooks for cotainr using the `uv package manager <https://docs.astral.sh/uv/>`_ is to run the following commands in the checked out cotainr git repository root directory:
+If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automatically check and format your code using a `git pre-commit hook <https://git-scm.com/book/ms/v2/Customizing-Git-Git-Hooks>`_. The pre-commit tool is included in the `lint` dependency group (which is also part of the `dev` dependency group) in the cotainr `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file. Thus, an easy way to install pre-commit and set up the pre-commit hooks for cotainr using the `uv package manager <https://docs.astral.sh/uv/>`_ is to run the following commands in the checked out cotainr git repository root directory:
 
 .. code-block:: bash
 
@@ -36,5 +36,3 @@ If you like, you can use `pre-commit <https://pre-commit.com/>`_ to automaticall
     uv run pre-commit install
 
 This will install the pre-commit hooks defined in the `.pre-commit-config.yaml <https://github.com/DeiC-HPC/cotainr/blob/main/.pre-commit-config.yaml>`_. The pre-commit hooks will then automatically run when you run :code:`git commit` in the repository. The  :ref:`CI/CD workflow <continuous_integration>` uses the same pre-commit configuration for linting and formatting.
-
-The pre-commit hooks may be updated by running :code:`pre-commit autoupdate` which will update the `.pre-commit-config.yaml` to use the latest versions of the pre-commit hooks. The next time you run :code:`git commit`, the installed hooks will be automatically updated to the new versions.
