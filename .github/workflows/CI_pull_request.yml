@@ -51,9 +51,38 @@ jobs:
         env:
           PRE_COMMIT_HOME: ${{ github.workspace }}/.pre-commit-cache
 
-  build:
+  check-docs-links:
     needs: [container-inputs]
-    name: Build package
+    name: Check for broken links in documentation
+    runs-on: ${{ matrix.os.runs-on }}
+    permissions:
+      packages: read
+    strategy:
+      matrix: ${{ fromJson(needs.container-inputs.outputs.matrix_single_default) }}
+    container:
+      image: ghcr.io/${{ needs.container-inputs.outputs.lowercase_repo_name }}-dev_env-${{ matrix.singularity.provider }}-${{ matrix.singularity.version }}:${{ needs.container-inputs.outputs.input_trigger_files_sha256 }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        run: uv sync --python ${{ matrix.python-version }} --managed-python --group=docs --frozen
+      - name: Build documentation
+        run: |
+          uv run make -C doc apidoc
+          uv run make -C doc relnotes
+          uv run make -C doc html
+      - name: Run Sphinx linkcheck on documentation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run make -C doc linkcheck
+
+  build-pypi-package:
+    needs: [container-inputs]
+    name: Build PyPI package
     runs-on: ${{ matrix.os.runs-on }}
     permissions:
       packages: read
@@ -72,7 +101,7 @@ jobs:
           fetch-depth: 0 # Needed for hatch-vcs versioning
       - name: Build the Python Package
         run: uv build
-      - name: Upload build artifacts for subsequent workflow steps
+      - name: Save build artifacts for the record
         uses: actions/upload-artifact@v4
         with:
           name: dist

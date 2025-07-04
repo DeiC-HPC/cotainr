@@ -5,7 +5,7 @@ Getting Started
 
 `cotainr` makes it easy to build `Singularity`_/`Apptainer`_ containers for certain :ref:`use cases <use_cases>`. If this is your first time learning about `cotainr`, we encourage you to read the :ref:`motivation for using cotainr <why_cotainr>`.
 
-In order to get started, you can install `cotainr` directly using pip.
+In order to get started, you can install the :ref:`cotainr PyPI package <pypi_package>` directly using pip.
 
 .. code-block:: console
 
@@ -22,25 +22,21 @@ Alternatively, if you are using an HPC system, you may be in luck that `cotainr`
 
         On some HPC systems, `cotainr` is already installed. If your HPC system of choice is mentioned in the instructions list below, you may follow those instructions to get started using `cotainr` on that system.
 
-        .. dropdown:: HPC systems instructions
-            :animate: fade-in
-            :color: secondary
+        .. tab-set::
 
-            .. tab-set::
+            .. tab-item:: LUMI
 
-                .. tab-item:: LUMI
+                `cotainr` may be loaded as a module from the `CrayEnv software stack <https://docs.lumi-supercomputer.eu/runjobs/lumi_env/softwarestacks/#crayenv>`_. It includes :ref:`system information <hpc_systems_information>`.
 
-                    `cotainr` may be loaded as a module from the `CrayEnv software stack <https://docs.lumi-supercomputer.eu/runjobs/lumi_env/softwarestacks/#crayenv>`_. It includes :ref:`system information <hpc_systems_information>`.
+                For instance, building a container for LUMI-G:
 
-                    For instance, building a container for LUMI-G:
+                .. code-block:: console
 
-                    .. code-block:: console
+                    $ module load CrayEnv
+                    $ module load cotainr
+                    $ cotainr build my_container.sif --system=lumi-g <...>
 
-                        $ module load CrayEnv
-                        $ module load cotainr
-                        $ cotainr build my_container.sif --system=lumi-g <...>
-
-                    More details may be found in the :ref:`section_user_guide`. For details about LUMI, see the `LUMI documentation <https://docs.lumi-supercomputer.eu/>`_.
+                More details may be found in the :ref:`section_user_guide`. For details about LUMI, see the `LUMI documentation <https://docs.lumi-supercomputer.eu/>`_.
 
 .. _Apptainer: https://apptainer.org/
 .. _Python: https://www.python.org/

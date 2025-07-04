@@ -12,20 +12,24 @@ Why would I want to use `cotainr`?
 The two main reasons to use `cotainr` are:
 
 1. It runs entirely in :ref:`user space <cotainr_technical_motivation>`, i.e. you don't need root/sudo privileges (or `fake them <https://apptainer.org/docs/user/1.0/fakeroot.html>`_) to use `cotainr`.
-2. It makes it a lot easier to build `Singularity`_/`Apptainer`_ containers for certain :ref:`HPC use cases <use_cases>`.
+2. It makes it a lot easier to build `SingularityCE`_/`Apptainer`_ containers for certain :ref:`HPC use cases <use_cases>`.
 
-In order to achieve this, the scope of `cotainr` is deliberately limited - focus is on making it easy to build reasonably performant containers for :ref:`common HPC use cases <use_cases>`. If you need a general purpose solution for building containers that achieve the absolute maximum performance, you should stick with `Apptainer`_/`Singularity`_ instead of `cotainr`.
+In order to achieve this, the scope of `cotainr` is deliberately limited - focus is on making it easy to build reasonably performant containers for :ref:`common HPC use cases <use_cases>`. If you need a general purpose solution for building containers that achieve the absolute maximum performance, you should stick with `Apptainer`_/`SingularityCE`_ instead of `cotainr`.
 
 .. _cotainr_dependencies:
 
 Dependencies
 ------------
-Since `cotainr` is a tool, written in `Python`_, for building `Singularity`_/`Apptainer`_ containers, you need the following to be able to use `cotainr`:
+Since `cotainr` is a tool, written in `Python`_, for building `SingularityCE`_/`Apptainer`_ containers, you need the following to be able to use `cotainr`:
 
-- A Linux OS (since `Singularity`_/`Apptainer`_ `only runs on Linux <https://apptainer.org/docs/admin/main/installation.html#installation-on-linux>`_)
-- `Python`_ >=3.9
-- `Singularity`_ >=3.7.4 [#]_ or `Apptainer`_ >=1.0.0
-- An architecture that is either `x86_64 <https://en.wikipedia.org/wiki/X86-64>`_ or `ARM64/AArch64 <https://en.wikipedia.org/wiki/AArch64>`_
+..
+  MARK_PYTHON_VERSION: Update this to reflect the minimum supported Python version.
+  MARK_APPTAINER_VERSION: Update this to reflect the minimum supported SingularityCE/Apptainer version.
+
+- A Linux OS [1]_
+- `Python`_ >=3.9 [2]_
+- `SingularityCE`_ >=3.9.2 or `Apptainer`_ >=1.3.4 [3]_
+- A CPU architecture that is either `x86_64 <https://en.wikipedia.org/wiki/X86-64>`_ or `ARM64/AArch64 <https://en.wikipedia.org/wiki/AArch64>`_
 
 Additionally, some features provided by `cotainr` may impose requirements on the base images you use when building containers, e.g. when including a :ref:`conda environment <conda_environments>` the base container must have `bash <https://www.gnu.org/software/bash/>`_ installed in it.
 
@@ -46,9 +50,9 @@ Containers are built using the :code:`cotainr build` subcommand, e.g.
 
 .. code-block:: console
 
-    $ cotainr build my_container.sif --base-image=docker://ubuntu:22.04
+    $ cotainr build my_container.sif --base-image=docker://ubuntu:24.04
 
-which would create the container `my_container.sif` based on the official `Ubuntu 22.04 DockerHub image <https://hub.docker.com/_/ubuntu>`_.
+which would create the container `my_container.sif` based on the official `Ubuntu 24.04 DockerHub image <https://hub.docker.com/_/ubuntu>`_.
 The same could be achieved with:
 
 .. code-block:: console
@@ -56,7 +60,7 @@ The same could be achieved with:
     $ cotainr build my_container.sif --system some-system
 
 if the system :code:`some-system` was defined to use the same docker image.
-These predefined systems can be listed with the info command, and will be defined by your system administrator to help you create containers.
+These predefined systems can be listed with the :code:`cotainr info` command, and are defined in the :ref:`system.json <systems>` file which is typically managed by system administrators who install `cotainr` on their HPC system.
 
 Not specifying any further options to :code:`cotainr build` than above, provides no more than what can be achieved with a :code:`singularity pull`.
 In order to add software and files to the container, you need to use the options available with :code:`cotainr build`.
@@ -72,16 +76,20 @@ Also, take a look at the :ref:`list of use cases <use_cases>` for further inspir
 
 System information
 ~~~~~~~~~~~~~~~~~~
-To make sure that everything is in your environment, you can run the :code:`cotainr info` subcommand.
+To make sure that everything is in your environment for using `cotainr`, you can run the :code:`cotainr info` subcommand.
 This will provide you information about the system and also providing you with names of predefined systems.
+
+..
+  MARK_PYTHON_VERSION: Update this to reflect the minimum supported Python version.
+  MARK_APPTAINER_VERSION: Update this to reflect the minimum supported SingularityCE version.
 
 .. code-block:: console
 
     $ cotainr info
     Dependency report
     -------------------------------------------------------------------------------
-        - Running python 3.10.8 >= 3.9.0, OK
-        - Found singularity 3.8.7 >= 3.7.4, OK
+        - Running python 3.11.7 >= 3.9.0, OK
+        - Found singularity-ce 4.1.3-150500.10.7 >= 3.9.2, OK
 
     System info
     -------------------------------------------------------------------------------
@@ -121,7 +129,10 @@ Further examples of using `cotainr` are included with the source code, https://g
 
 .. _Apptainer: https://apptainer.org/
 .. _Python: https://www.python.org/
-.. _Singularity: https://sylabs.io/singularity/
+.. _SingularityCE: https://sylabs.io/singularity/
+.. _test matrix.json file: https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/matrix.json
 
 .. rubric:: Footnotes
-.. [#] As of version 3.8.0, Sylabs have changed the name of their version to SingularityCE. However, we only officially support their version from 3.9.2.
+.. [1] Since `SingularityCE`_/`Apptainer`_ `only runs on Linux <https://apptainer.org/docs/admin/main/installation.html#installation-on-linux>`_
+.. [2] See the `test matrix.json file`_ for the exact `Python`_ versions that we actively test with `cotainr`.
+.. [3] See the `test matrix.json file`_ for the exact `SingularityCE`_/`Apptainer`_ versions that we actively test with `cotainr`.
