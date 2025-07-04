@@ -303,9 +303,12 @@ class SingularitySandbox:
         elif self._verbosity == 0:
             # --quiet (-q)
             args.insert(1, "-q")
-        elif self._verbosity >= 3:
-            # Assume --verbose (-v) is a debug level
+        elif self._verbosity == 3:
+            # --verbose (-v); limited debug information
             args.insert(1, "-v")
+        elif self._verbosity >= 4:
+            # --debug (-d); all debug information
+            args.insert(1, "-d")
 
         return args
 
