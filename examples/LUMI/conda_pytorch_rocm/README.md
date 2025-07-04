@@ -1,15 +1,15 @@
 # Conda PyTorch ROCm example
 
-This is an example of a container that includes a ROCm compatible PyTorch Conda environment for use with the GPU nodes on LUMI. It uses the official PyTorch ROCm pip wheels from <https://download.pytorch.org/whl/rocm5.4.2/>.
+This is an example of a container that includes a ROCm compatible PyTorch Conda environment for use with the GPU nodes on LUMI. It uses the official PyTorch ROCm pip wheels from <https://download.pytorch.org/whl/>.
 
 ## Building the container
 
 On LUMI, the container may be built using:
 
 ```bash
-module load LUMI
+module load CrayEnv
 module load cotainr
-cotainr build lumi_pytorch_rocm_demo.sif --system=lumi-g --conda-env py311_rocm542_pytorch.yml
+cotainr build lumi_pytorch_rocm_demo.sif --system=lumi-g --conda-env minimal_pytorch.yml
 ```
 
 ## Running the PyTorch examples on LUMI using the built container

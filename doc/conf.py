@@ -19,7 +19,7 @@ from pathlib import Path
 import sys
 import time
 
-sys.path.insert(0, f'{Path("..").resolve()}')
+sys.path.insert(0, f"{Path('..').resolve()}")
 
 import cotainr
 
@@ -45,6 +45,32 @@ templates_path = ["_templates"]
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 numpydoc_class_members_toctree = False
 
+# -- Options for linkcheck ---------------------------------------------------
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-the-linkcheck-builder
+linkcheck_retries = 3  # Retry 3 times before considering a link broken
+linkcheck_workers = 1  # Limit the number of workers to avoid hitting rate limits
+linkcheck_ignore = [
+    # It is easy to hit the rate limit of stackoverflow
+    # Let's assume that stackoverflows does not move its supposedly permanent links
+    "https://stackoverflow.com",
+    # Its also easy to hit the rate limit of github
+    # We do have quite a lot of links to our own github repo
+    # For now, let's avoid checking these
+    "https://github.com/DeiC-HPC/cotainr",
+    # Also ignore everything on the gnu domain via regex.
+    r"https://.*\.gnu\.org/.*",
+]
+linkcheck_anchors_ignore_for_url = [
+    # Ignore GitHub issue comment anchors that apparently fails
+    "https://github.com/apptainer/singularity/issues/5941"
+]
+if "GITHUB_TOKEN" in os.environ:
+    # Authenticate with GitHub token in GitHub Actions to avoid hitting rate limits
+    # It is not entirely clear if this has any effect outside of api.github.com, though...
+    linkcheck_request_headers = {
+        "https://github.com": {"Authorization": f"token {os.environ['GITHUB_TOKEN']}"}
+    }
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
@@ -68,7 +94,6 @@ html_context = {
     "doc_path": "doc",
 }
 html_theme_options = {
-    "github_url": f"https://github.com/{html_context['github_user']}/{html_context['github_repo']}",
     "use_edit_page_button": True,
     "navbar_start": ["navbar-logo", "version-switcher"],
     "footer_start": ["cotainr_footer"],
@@ -76,6 +101,20 @@ html_theme_options = {
         "json_url": switcher_json,
         "version_match": switcher_version,
     },
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": f"https://github.com/{html_context['github_user']}/{html_context['github_repo']}",
+            "icon": "fa-brands fa-github",
+            "type": "fontawesome",
+        },
+        {
+            "name": "PyPI",
+            "url": f"https://pypi.org/project/{project}/",
+            "icon": "fa-brands fa-python",
+            "type": "fontawesome",
+        },
+    ],
     # We only set "navigation_with_keys = False" to explicitly remove the
     # warning introduced in pydata-sphinx-theme v0.14.2:
     # "WARNING: The default value for `navigation_with_keys` will change to
@@ -92,15 +131,12 @@ html_theme_options = {
 
 
 def add_api_headline_to_module_docs(app, what, name, obj, options, lines):
-    """
-    Event for adding a 'API reference' headline before showing API content in
-    auto modules.
-    """
+    """Add an 'API reference' headline before showing API content in auto modules."""
     if what == "module":
         lines.append("\n")
         lines.append("API reference")
         lines.append("-------------")
 
 
-def setup(app):
+def setup(app):  # noqa: D103
     app.connect("autodoc-process-docstring", add_api_headline_to_module_docs)

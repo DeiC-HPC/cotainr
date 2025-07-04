@@ -8,6 +8,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 """
 
 import logging
+import platform
 import re
 import subprocess
 import urllib.error
@@ -17,13 +18,14 @@ import pytest
 from cotainr.container import SingularitySandbox
 from cotainr.pack import CondaInstall
 from cotainr.tracing import LogSettings
+
+from ..container.data import data_cached_ubuntu_sif
+from ..container.patches import patch_disable_singularity_sandbox_subprocess_runner
 from .patches import (
     patch_disable_conda_install_bootstrap_conda,
     patch_disable_conda_install_download_miniforge_installer,
 )
 from .stubs import StubEmptyLicensePopen, StubShowLicensePopen
-from ..container.data import data_cached_ubuntu_sif
-from ..container.patches import patch_disable_singularity_sandbox_subprocess_runner
 
 
 class TestConstructor:
@@ -36,7 +38,7 @@ class TestConstructor:
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
         assert conda_install.sandbox == sandbox
-        assert conda_install.prefix == "/opt/conda"
+        assert conda_install.prefix == "/opt/cotainr/conda"
         assert conda_install.license_accepted
         assert conda_install.log_dispatcher is None
         assert conda_install._verbosity == 0
@@ -55,6 +57,7 @@ class TestConstructor:
         # beforehand is shown
         (
             _sandbox_create_cmd,
+            _sandbox_uname_cmd,
             miniforge_license_accept_cmd,
             _conda_bootstrap_cmd,
             _conda_bootstrap_clean_cmd,
@@ -81,10 +84,11 @@ class TestConstructor:
 
         (
             _sandbox_create_cmd,
+            _sandbox_uname_cmd,
             _miniforge_license_accept_cmd,
             bootstrap_cmd,
             clean_cmd,
-            _,
+            _empty_string,
         ) = capsys.readouterr().out.split("\n")
 
         # Check that installer (mock) was created in the first place
@@ -120,6 +124,7 @@ class TestConstructor:
 class TestAddEnvironment:
     def test_env_creation(self, tmp_path, data_cached_ubuntu_sif):
         conda_env_path = tmp_path / "conda_env.yml"
+        prefix = "/opt/cotainr/conda"
         conda_env_path.write_text(
             "channels:\n  - conda-forge\ndependencies:\n  - python"
         )
@@ -130,8 +135,8 @@ class TestAddEnvironment:
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
                 # We expect to find a line in the list of environments similar to:
-                # some_env_name_6021         /opt/conda/envs/some_env_name_6021
-                rf"^{conda_env_name}(\s)+/opt/conda/envs/{conda_env_name}$",
+                # some_env_name_6021         /opt/cotainr/conda/envs/some_env_name_6021
+                rf"^{conda_env_name}(\s)+{prefix}/envs/{conda_env_name}$",
                 process.stdout,
                 flags=re.MULTILINE,
             )
@@ -139,6 +144,7 @@ class TestAddEnvironment:
     def test_other_conda_channels_than_condaforge(
         self, tmp_path, data_cached_ubuntu_sif
     ):
+        prefix = "/opt/cotainr/conda"
         conda_env_path = tmp_path / "conda_env.yml"
         conda_env_path.write_text(
             "channels:\n  - bioconda\ndependencies:\n  - samtools"
@@ -150,8 +156,8 @@ class TestAddEnvironment:
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
                 # We expect to find a line in the list of environments similar to:
-                # some_env_name_6021         /opt/conda/envs/some_env_name_6021
-                rf"^{conda_env_name}(\s)+/opt/conda/envs/{conda_env_name}$",
+                # some_env_name_6021         /opt/cotainr/conda/envs/some_env_name_6021
+                rf"^{conda_env_name}(\s)+{prefix}/envs/{conda_env_name}$",
                 process.stdout,
                 flags=re.MULTILINE,
             )
@@ -164,14 +170,12 @@ class TestCleanupUnusedFiles:
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
             CondaInstall(sandbox=sandbox, license_accepted=True)
             process = sandbox.run_command_in_container(cmd="conda clean -d -a")
-            clean_msg = "\n".join(
-                [
-                    "There are no unused tarball(s) to remove.",
-                    "There are no index cache(s) to remove.",
-                    "There are no unused package(s) to remove.",
-                    "There are no tempfile(s) to remove.",
-                    "There are no logfile(s) to remove.",
-                ]
+            clean_msg = (
+                "There are no unused tarball(s) to remove.\n"
+                "There are no index cache(s) to remove.\n"
+                "There are no unused package(s) to remove.\n"
+                "There are no tempfile(s) to remove.\n"
+                "There are no logfile(s) to remove."
             )
             assert process.stdout.strip() == clean_msg
 
@@ -181,7 +185,8 @@ class TestCleanupUnusedFiles:
 class Test_BootstrapConda:
     def test_correct_conda_installer_bootstrap(self, data_cached_ubuntu_sif):
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
-            conda_install_dir = sandbox.sandbox_dir / "opt/conda"
+            prefix = "opt/cotainr/conda"
+            conda_install_dir = sandbox.sandbox_dir / prefix
             assert not conda_install_dir.exists()
             CondaInstall(sandbox=sandbox, license_accepted=True)
 
@@ -190,7 +195,7 @@ class Test_BootstrapConda:
 
             # Check that we are using our installed conda
             process = sandbox.run_command_in_container(cmd="conda info --base")
-            assert process.stdout.strip() == "/opt/conda"
+            assert process.stdout.strip() == "/" + prefix
 
             # Check that the installed conda is up-to-date
             process = sandbox.run_command_in_container(
@@ -393,6 +398,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
     ):
         monkeypatch.setattr("builtins.input", factory_mock_input("yes"))
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.architecture = platform.machine()
             CondaInstall(sandbox=sandbox)
 
         stdout = capsys.readouterr().out.strip()
@@ -421,6 +427,8 @@ class Test_DownloadMiniforgeInstaller:
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            # Just needs some supported architecture
+            sandbox.architecture = "x86_64"
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
             conda_installer_path = (
                 conda_install.sandbox.sandbox_dir / "conda_installer_download"
@@ -428,10 +436,13 @@ class Test_DownloadMiniforgeInstaller:
             conda_install._download_miniforge_installer(
                 installer_path=conda_installer_path
             )
-            assert conda_installer_path.read_bytes() == (
-                b"PATCH: Bytes returned by urlopen for url="
-                b"'https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh'"
-            )
+            conda_installer_strings = [
+                b"PATCH: Bytes returned by urlopen for url=",
+                b"'https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-",
+            ]
+            conda_installer_bytes_string = conda_installer_path.read_bytes()
+            for installer_string in conda_installer_strings:
+                assert installer_string in conda_installer_bytes_string
 
     @pytest.mark.conda_integration  # technically not a test that depends on Conda - but a very slow one...
     def test_installer_download_fail(
@@ -440,16 +451,83 @@ class Test_DownloadMiniforgeInstaller:
         patch_disable_singularity_sandbox_subprocess_runner,
     ):
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            # Just needs some supported architecture
+            sandbox.architecture = "x86_64"
             with pytest.raises(
                 urllib.error.URLError, match="PATCH: urlopen error forced for url="
             ):
                 CondaInstall(sandbox=sandbox)
 
+    def test_unknown_architecture(
+        self, patch_disable_singularity_sandbox_subprocess_runner
+    ):
+        with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
+            sandbox.architecture = None
+            with pytest.raises(
+                RuntimeError,
+                match=(
+                    r".*"
+                    r"Cotainr.*"
+                    r"CondaInstall.*"
+                    r"which indicates that it is not running in a container sandbox context"
+                ),
+            ):
+                CondaInstall(sandbox=sandbox, license_accepted=True)
+
+
+class Test_GetInstallScript:
+    @pytest.mark.parametrize("arch", ["arm64", "aarch64"])
+    def test_arm_success(self, arch):
+        assert CondaInstall._get_install_script(arch) == "Miniforge3-Linux-aarch64.sh"
+
+    def test_x86_success(self):
+        assert (
+            CondaInstall._get_install_script("x86_64") == "Miniforge3-Linux-x86_64.sh"
+        )
+
+    @pytest.mark.parametrize(
+        "arch",
+        [
+            "test",
+            "arms64",
+            "aarchs64",
+            "None",
+            "Weird",
+            "WINDOWS",
+            "icecream",
+            "86_64",
+            "pc",
+        ],
+    )
+    def test_unknown_arch_error(self, arch):
+        with pytest.raises(
+            ValueError,
+            match=(
+                r".*"
+                r"Cotainr.*"
+                r"CondaInstall.*"
+                r"supports.*"
+                r"x86_64.*"
+                r"arm64.*"
+                r"aarch64.*"
+                rf"{arch}.*"
+            ),
+        ):
+            CondaInstall._get_install_script(arch)
+
 
 class Test_CondaVerbosityArg:
     @pytest.mark.parametrize(
         ["verbosity", "verbosity_arg"],
-        [(-1, " -q"), (0, " -q"), (1, ""), (2, " -v"), (3, " -vv"), (4, " -vvv")],
+        [
+            (-1, " -q"),
+            (0, " -q"),
+            (1, ""),
+            (2, " -v"),
+            (3, " -vv"),
+            (4, " -vv"),
+            (5, " -vvv"),
+        ],
     )
     def test_correct_mapping_of_verbosity(
         self,

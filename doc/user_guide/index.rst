@@ -23,8 +23,9 @@ Dependencies
 Since `cotainr` is a tool, written in `Python`_, for building `Singularity`_/`Apptainer`_ containers, you need the following to be able to use `cotainr`:
 
 - A Linux OS (since `Singularity`_/`Apptainer`_ `only runs on Linux <https://apptainer.org/docs/admin/main/installation.html#installation-on-linux>`_)
-- `Python`_ >=3.8
+- `Python`_ >=3.9
 - `Singularity`_ >=3.7.4 [#]_ or `Apptainer`_ >=1.0.0
+- An architecture that is either `x86_64 <https://en.wikipedia.org/wiki/X86-64>`_ or `ARM64/AArch64 <https://en.wikipedia.org/wiki/AArch64>`_
 
 Additionally, some features provided by `cotainr` may impose requirements on the base images you use when building containers, e.g. when including a :ref:`conda environment <conda_environments>` the base container must have `bash <https://www.gnu.org/software/bash/>`_ installed in it.
 
@@ -79,7 +80,7 @@ This will provide you information about the system and also providing you with n
     $ cotainr info
     Dependency report
     -------------------------------------------------------------------------------
-        - Running python 3.10.8 >= 3.8.0, OK
+        - Running python 3.10.8 >= 3.9.0, OK
         - Found singularity 3.8.7 >= 3.7.4, OK
 
     System info
