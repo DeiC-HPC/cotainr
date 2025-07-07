@@ -78,6 +78,8 @@ def context_reload_logging():
     out that this simpler approach does not work for some tests where multiple
     test cases use the caplog fixture. For those cases, only the first test
     case would actually capture the log messages - the others would be empty.
+    See this GH PR comment for an in-depth discussion of the issue:
+    https://github.com/DeiC-HPC/cotainr/pull/154#discussion_r2166428044
     """
     yield
     loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
@@ -89,6 +91,7 @@ def context_reload_logging():
         logger.setLevel(logging.NOTSET)
         logger.propagate = True
         logger.manager.loggerDict = {}
+
 
 @pytest.fixture
 def context_set_umask():
