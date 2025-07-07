@@ -88,7 +88,7 @@ def context_reload_logging():
             handler.close()
         logger.setLevel(logging.NOTSET)
         logger.propagate = True
-
+        logger.manager.loggerDict = {}
 
 @pytest.fixture
 def context_set_umask():
