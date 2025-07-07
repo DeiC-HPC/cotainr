@@ -38,7 +38,7 @@ class TestConstructor:
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox, license_accepted=True)
         assert conda_install.sandbox == sandbox
-        assert conda_install.prefix == "/opt/conda"
+        assert conda_install.prefix == "/opt/cotainr/conda"
         assert conda_install.license_accepted
         assert conda_install.log_dispatcher is None
         assert conda_install._verbosity == 0
@@ -124,6 +124,7 @@ class TestConstructor:
 class TestAddEnvironment:
     def test_env_creation(self, tmp_path, data_cached_ubuntu_sif):
         conda_env_path = tmp_path / "conda_env.yml"
+        prefix = "/opt/cotainr/conda"
         conda_env_path.write_text(
             "channels:\n  - conda-forge\ndependencies:\n  - python"
         )
@@ -134,8 +135,8 @@ class TestAddEnvironment:
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
                 # We expect to find a line in the list of environments similar to:
-                # some_env_name_6021         /opt/conda/envs/some_env_name_6021
-                rf"^{conda_env_name}(\s)+/opt/conda/envs/{conda_env_name}$",
+                # some_env_name_6021         /opt/cotainr/conda/envs/some_env_name_6021
+                rf"^{conda_env_name}(\s)+{prefix}/envs/{conda_env_name}$",
                 process.stdout,
                 flags=re.MULTILINE,
             )
@@ -143,6 +144,7 @@ class TestAddEnvironment:
     def test_other_conda_channels_than_condaforge(
         self, tmp_path, data_cached_ubuntu_sif
     ):
+        prefix = "/opt/cotainr/conda"
         conda_env_path = tmp_path / "conda_env.yml"
         conda_env_path.write_text(
             "channels:\n  - bioconda\ndependencies:\n  - samtools"
@@ -154,8 +156,8 @@ class TestAddEnvironment:
             process = sandbox.run_command_in_container(cmd="conda info -e")
             assert re.search(
                 # We expect to find a line in the list of environments similar to:
-                # some_env_name_6021         /opt/conda/envs/some_env_name_6021
-                rf"^{conda_env_name}(\s)+/opt/conda/envs/{conda_env_name}$",
+                # some_env_name_6021         /opt/cotainr/conda/envs/some_env_name_6021
+                rf"^{conda_env_name}(\s)+{prefix}/envs/{conda_env_name}$",
                 process.stdout,
                 flags=re.MULTILINE,
             )
@@ -183,7 +185,8 @@ class TestCleanupUnusedFiles:
 class Test_BootstrapConda:
     def test_correct_conda_installer_bootstrap(self, data_cached_ubuntu_sif):
         with SingularitySandbox(base_image=data_cached_ubuntu_sif) as sandbox:
-            conda_install_dir = sandbox.sandbox_dir / "opt/conda"
+            prefix = "opt/cotainr/conda"
+            conda_install_dir = sandbox.sandbox_dir / prefix
             assert not conda_install_dir.exists()
             CondaInstall(sandbox=sandbox, license_accepted=True)
 
@@ -192,7 +195,7 @@ class Test_BootstrapConda:
 
             # Check that we are using our installed conda
             process = sandbox.run_command_in_container(cmd="conda info --base")
-            assert process.stdout.strip() == "/opt/conda"
+            assert process.stdout.strip() == "/" + prefix
 
             # Check that the installed conda is up-to-date
             process = sandbox.run_command_in_container(
