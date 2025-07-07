@@ -94,7 +94,7 @@ class TestConstructor:
         with pytest.raises(KeyError, match="System does not exist"):
             Build(image_path=image_path, system=system)
 
-    @pytest.mark.parametrize("answer", ["no", "No", "", "n", "N"])
+    @pytest.mark.parametrize("answer", ["no", "No", "nO", "NO"])
     def test_already_existing_file_but_no(
         self, answer, factory_mock_input, monkeypatch
     ):
@@ -105,7 +105,7 @@ class TestConstructor:
         with pytest.raises(SystemExit):
             Build(image_path=image_path, base_image=base_image)
 
-    @pytest.mark.parametrize("answer", ["yes", "Yes"])
+    @pytest.mark.parametrize("answer", ["yes", "Yes", "yEs", "YES"])
     def test_already_existing_file(self, answer, factory_mock_input, monkeypatch):
         monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         image_path = "some_image_path_6021"

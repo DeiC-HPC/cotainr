@@ -120,20 +120,42 @@ def data_log_level_names_mapping():
 @pytest.fixture
 def factory_mock_input():
     """
-    Create mock of the builtins `input` function that returns an "input".
+    Create mock of the builtins `input` function that returns a fixed "input".
 
     Returns a factory for creating mocked versions of the builtin `input`
     function to be used with the `monkeypatch` fixture to replace
     `builtins.input` with a function that prints the prompt (its argument, if
-    provided) and returns the next "user input", provided as argument to the
+    provided) and returns a "fixed user input", provided as argument to the
     factory.
     """
 
-    def create_mock_input(fixed_user_input=""):
-        if isinstance(fixed_user_input, list):
-            inputs = iter(fixed_user_input)
-        else:
-            inputs = iter([fixed_user_input])
+    def create_mock_input(fixed_user_input=None):
+        def mock_input(prompt):
+            print(prompt, end="")
+            return fixed_user_input
+
+        return mock_input
+
+    return create_mock_input
+
+
+@pytest.fixture
+def factory_mock_input_sequence():
+    """
+    Create mock of the builtins `input` function that returns a sequence of "inputs".
+
+    Returns a factory for creating mocked versions of the builtin `input`
+    function to be used with the `monkeypatch` fixture to replace
+    `builtins.input` with a function that prints the prompt (its argument, if
+    provided) and returns the "next user input" from a sequence, provided as
+    argument to the factory.
+
+    If more inputs are requested than provided in the sequence, a
+    `StopIteration` exception is raised.
+    """
+
+    def create_mock_input(user_input_sequence=(None,)):
+        inputs = iter(user_input_sequence)
 
         def mock_input(prompt):
             print(prompt, end="")
