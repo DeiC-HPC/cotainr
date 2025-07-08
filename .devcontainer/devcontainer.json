@@ -5,7 +5,7 @@
 
 	// Default image to use as a base for the dev container.
 	// If you don't have access to this registry, you can build the container locally from the ./github/dockerfiles/Dockerfile.
-	"image": "ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.4:main",
+	"image": "ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.6:main",
 
 	// Set security options needed to run Apptainer/SingularityCE in the container.
 	// These should be sufficient for running the container using rootless Podman.
@@ -18,8 +18,8 @@
 	// Mounts to persist select data between container restarts and rebuilds.
 	"mounts": [
 		{// Persist the virtual environment (with paths relative to the dev container setup)
-			"source": "uv-venv",
-			"target": "/uv-venv",
+			"source": "uv-env",
+			"target": "/uv-env",
 			"type": "volume"
 		},
 		{// Persist the pre-commit environment
@@ -40,10 +40,17 @@
 
 	// Set environment variables to use in IDE processes in the container.
 	"remoteEnv": {
-		"UV_PROJECT_ENVIRONMENT": "/uv-venv", // Set the uv virtual environment path to a persisted mounted volume
-		"PRE_COMMIT_HOME": "/pre-commit-env", // Set the pre-commit env path to a persisted mounted volume
-		"HISTFILE": "/commandhistory/.bash_history", // Set the history file to a persisted mounted volume
-		"PROMPT_COMMAND": "history -a" // Append to the history file after each command
+		// Set the uv cache and project environment paths to a persisted mounted volume
+		"UV_CACHE_DIR": "/uv-env/cache",
+		"UV_PROJECT_ENVIRONMENT": "/uv-env/venv/",
+		"UV_PYTHON_BIN_DIR": "/uv-env/bin",
+		"UV_PYTHON_CACHE_DIR": "/uv-env/cache",
+		"UV_PYTHON_INSTALL_DIR": "/uv-env/python",
+		// Set the pre-commit env path to a persisted mounted volume
+		"PRE_COMMIT_HOME": "/pre-commit-env",
+		// Set the history file to a persisted mounted volume and append to it after each command
+		"HISTFILE": "/commandhistory/.bash_history",
+		"PROMPT_COMMAND": "history -a"
 	},
 
 	// Run container as non-root user. More info: https://aka.ms/dev-containers-non-root.
@@ -61,8 +68,10 @@
 				"terminal.integrated.env.linux": {
 					"GIT_EDITOR": "code --wait" // Use VS Code when editing commit messages
 				},
-				"python.defaultInterpreterPath": "/uv-venv/bin/python", // Set the default Python interpreter to the uv virtual environment
+				"python.defaultInterpreterPath": "/uv-env/venv/bin/python3", // Set the default Python interpreter to the uv virtual environment
 				"python.terminal.activateEnvironment": true, // Activate the uv virtual environment in the terminal
+				"python.testing.pytestEnabled": true, // Enable pytest integration
+				"python.languageServer": "Pylance", // Use Pylance as Python language server
 				"github.copilot.chat.codeGeneration.instructions": [
 					{
 						"text": "This dev container is used for developing and testing Cotainr. Cotainr is a tool for building Singularity / Apptainer containers in a rootless setting. It is written in pure Python and uses pytest for testing as well as sphinx for building the documentation. The documentation is written as restructured text."
@@ -72,15 +81,17 @@
 			// VS Code extensions to install in the dev container.
 			// https://code.visualstudio.com/docs/devcontainers/containers#_managing-extensions
 			"extensions": [
-				"ms-python.python",
-				"ms-azuretools.vscode-containers",
-				"ms-vscode.makefile-tools",
-				"github.vscode-github-actions",
-				"streetsidesoftware.code-spell-checker",
-				"tamasfe.even-better-toml",
-				"redhat.vscode-yaml",
-				"DavidAnson.vscode-markdownlint",
-				"trond-snekvik.simple-rst"
+				"charliermarsh.ruff", // Ruff formatter integration
+				"DavidAnson.vscode-markdownlint", // Markdown linting (for release notes)
+				"ms-python.python",  // General Python integration
+				"ms-python.vscode-pylance", // Python intelligence, e.g. autocompletion, type checking
+				"ms-azuretools.vscode-containers", // Container management, incl. Dockerfile syntax highlighting
+				"ms-vscode.makefile-tools", // Makefile support, incl. syntax highlighting
+				"github.vscode-github-actions", // GitHub Actions support, incl. syntax highlighting
+				"streetsidesoftware.code-spell-checker", // Spell checker for code comments and documentation
+				"redhat.vscode-yaml", // YAML support, incl. syntax highlighting
+				"tamasfe.even-better-toml", // TOML support, incl. syntax highlighting
+				"trond-snekvik.simple-rst" // reStructuredText syntax highlighting (for documentation)
 			]
 		}
 	}
