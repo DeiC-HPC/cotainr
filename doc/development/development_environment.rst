@@ -27,24 +27,20 @@ A SHA256 checksum of these files, as calculated by the `hashFiles <https://docs.
 
 Manually building the containers
 --------------------------------
-If you do not have access to the `cotainr` GHCR or want to build the containers locally, you can do so using the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_. When building the containers locally, you need to provide the SINGULARITY_PROVIDER (`apptainer` or `singularity-ce``) and SINGULARITY_VERSION build arguments to the `docker build <https://docs.docker.com/reference/cli/docker/buildx/build/>`_ / `podman build <https://docs.podman.io/en/stable/markdown/podman-build.1.html>`_ command, e.g. from the `cotainr` repository root directory:
+If you do not have access to the `cotainr` GHCR or want to build the containers locally, you can do so using the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_. When building the containers locally, you need to provide the SINGULARITY_PROVIDER (`apptainer` or `singularity-ce``) and SINGULARITY_VERSION build arguments to the `docker build <https://docs.docker.com/reference/cli/docker/buildx/build/>`_ / `podman build <https://docs.podman.io/en/stable/markdown/podman-build.1.html>`_ command, e.g. from the `cotainr` repository root directory, when using `docker`:
 
 .. code-block:: console
 
     $ docker build --build-arg SINGULARITY_PROVIDER=apptainer --build-arg SINGULARITY_VERSION=1.3.6 -t cotainr-dev-env:local -f .github/workflows/dockerfiles/Dockerfile .
 
-When using `podman` the command is as follows:
+Or when using `podman`:
 
 .. code-block:: console
 
     $ podman build --format=docker --build-arg SINGULARITY_PROVIDER=apptainer --build-arg SINGULARITY_VERSION=1.3.6 -t cotainr-dev-env:local -f .github/workflows/dockerfiles/Dockerfile .
 
-<<<<<<< Updated upstream
-The `--format=docker` is needed as the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_ contains bash commands that are not supported by the OCI image format.
-=======
-The :code:`--format=docker` is needed as the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_ contains bash commands that are not supported by the OCI image format.
+The :code:`--format=docker` is needed as the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_ contains instructions and bash commands that are not supported by the OCI image format.
 
->>>>>>> Stashed changes
 Running in the containerized development environment
 ----------------------------------------------------
 The containerized development environment includes a singularity container runtime (`apptainer` or `singularity-ce`) and the `uv <https://docs.astral.sh/uv/>`_ Python package manager. At runtime, you need to run :code:`uv sync` to install/update the Python environment to include the dependencies specified in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file to get a fully working development environment.
