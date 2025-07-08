@@ -155,6 +155,33 @@ def factory_mock_input():
 
 
 @pytest.fixture
+def factory_mock_input_sequence():
+    """
+    Create mock of the builtins `input` function that returns a sequence of "inputs".
+
+    Returns a factory for creating mocked versions of the builtin `input`
+    function to be used with the `monkeypatch` fixture to replace
+    `builtins.input` with a function that prints the prompt (its argument, if
+    provided) and returns the "next user input" from a sequence, provided as
+    argument to the factory.
+
+    If more inputs are requested than provided in the sequence, a
+    `StopIteration` exception is raised.
+    """
+
+    def create_mock_input(user_input_sequence=(None,)):
+        inputs = iter(user_input_sequence)
+
+        def mock_input(prompt):
+            print(prompt, end="")
+            return next(inputs)
+
+        return mock_input
+
+    return create_mock_input
+
+
+@pytest.fixture
 def patch_urllib_urlopen_as_bytes_stream(monkeypatch):
     """
     Disable urllib.request.urlopen(...).

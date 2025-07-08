@@ -33,9 +33,11 @@ If you would like to contribute changes to the `cotainr` codebase or documentati
     style_guide
     test_suite_ci_cd
     documentation
+    development_environment
     technical_motivation
+    pypi_package
+    systems
     cli_internals
     tracing_logging
     releasing
-    systems
     maintenance
