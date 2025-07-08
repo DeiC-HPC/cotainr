@@ -13,16 +13,6 @@ from cotainr.util import answer_is_yes
 
 
 class TestAnswerYes:
-    # @pytest.mark.parametrize("outp", ["Test!", "Test\nTest", "Whoop!", "\n", "\nTest!"])
-    # def test_output(self, capsys, outp, factory_mock_input, monkeypatch):
-    #     monkeypatch.setattr("builtins.input", factory_mock_input(""))
-    #     answer = answer_is_yes(outp)
-    #     stdout = capsys.readouterr().out
-
-    #     assert outp in stdout
-    #     assert not answer
-
-    # @pytest.mark.parametrize("input_text", [])
     @pytest.mark.parametrize("input_text", ["no", "No", "nO", "NO"])
     def test_answering_no(self, input_text, factory_mock_input, monkeypatch):
         monkeypatch.setattr("builtins.input", factory_mock_input(input_text))
