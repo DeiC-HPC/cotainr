@@ -9,10 +9,12 @@ This module implements utility functions.
 
 Functions
 ---------
-stream_subprocess(\*, args, \*\*kwargs)
-    Run a the command described by `args` while streaming stdout and stderr.
+answer_is_yes()
+    Ask user for confirmation ("yes") of `input_text`.
 get_systems()
     Get a dictionary of predefined systems, defined in systems.json
+stream_subprocess(\*, args, \*\*kwargs)
+    Run a the command described by `args` while streaming stdout and stderr.
 
 Attributes
 ----------
@@ -30,6 +32,39 @@ import sys
 
 logger = logging.getLogger(__name__)
 systems_file = (Path(__file__) / "../../systems.json").resolve()
+
+
+def answer_is_yes(input_text, max_attempts=1000):
+    """
+    Ask user for confirmation ("yes") of `input_text`.
+
+    Parameters
+    ----------
+    input_text : str
+        The prompt to be printed for verification by the user.
+    max_attempts : int, optional
+        The maximum number of attempts to get a valid answer from the user before giving up. The default is 1000.
+
+    Returns
+    -------
+    answer_is_yes : bool
+        The indicator of whether or not the answer is yes.
+    """
+    answer_prompt = input_text + " [yes/no]\n>>> "
+    for _ in range(max_attempts):
+        answer = input(answer_prompt)
+        if answer.lower() == "yes":
+            return True
+        elif answer.lower() == "no":
+            return False
+        else:
+            answer_prompt = f'You answered "{answer}". Please answer yes or no.\n>>> '
+    else:
+        logger.error(
+            'You provided an invalid answer %d times in a row. Now assuming you meant "no".',
+            max_attempts,
+        )
+        return False
 
 
 def get_systems():
@@ -112,16 +147,20 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
             stdout_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stdout,
-                print_dispatch=log_dispatcher.log_to_stdout
-                if log_dispatcher is not None
-                else functools.partial(print, end="", file=sys.stdout),
+                print_dispatch=(
+                    log_dispatcher.log_to_stdout
+                    if log_dispatcher is not None
+                    else functools.partial(print, end="", file=sys.stdout)
+                ),
             )
             stderr_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stderr,
-                print_dispatch=log_dispatcher.log_to_stderr
-                if log_dispatcher is not None
-                else functools.partial(print, end="", file=sys.stderr),
+                print_dispatch=(
+                    log_dispatcher.log_to_stderr
+                    if log_dispatcher is not None
+                    else functools.partial(print, end="", file=sys.stderr)
+                ),
             )
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()

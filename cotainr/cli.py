@@ -126,11 +126,13 @@ class Build(CotainrSubcommand):
         )
         self.image_path = Path(image_path).resolve()
         if self.image_path.exists():
-            val = input(
-                f"{self.image_path} already exists. "
-                "Would you like to overwrite it? (y/N) "
-            ).lower()
-            if val != "y":
+            overwrite_text = (
+                f"{self.image_path} already exists. Would you like to overwrite it?"
+            )
+            if not util.answer_is_yes(overwrite_text):
+                logger.critical(
+                    "You have chosen not to overwrite %s. Exiting.", self.image_path
+                )
                 sys.exit(0)
 
         self.accept_licenses = accept_licenses
