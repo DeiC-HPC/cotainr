@@ -75,7 +75,7 @@ Continuous Integration (CI) is handled via `GitHub Actions <https://docs.github.
 
 Single sourced dependency matrix
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The versions of the :ref:`cotainr dependencies <cotainr_dependencies>` used in the CI pipelines are single sourced from the `matrix.json <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_ file. In addition to the cotainr dependencies, the matrix also defines the Github Runners and the corresponding architectures on which we test `cotainr`. For details of the runners see the `github hosted runner documentation <https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources>`_. When running the CI test matrix, we differentiate between the following (meta)versions of dependencies:
+The versions of the :ref:`cotainr dependencies <cotainr_dependencies>` used in the CI pipelines are single sourced from the `matrix.json <https://github.com/DeiC-HPC/cotainr/actions/workflows/matrix.json>`_ file. In addition to the cotainr dependencies, the matrix also defines the Github Runners and the corresponding architectures on which we test `cotainr`. For details of the runners see the `github hosted runner overview <https://github.com/actions/runner-images>`_. When running the CI test matrix, we differentiate between the following (meta)versions of dependencies:
 
 - *minimum*: The minimum supported version of the dependency.
 - *latest*: The newest tested version of the dependency.
