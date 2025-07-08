@@ -33,6 +33,12 @@ If you do not have access to the `cotainr` GHCR or want to build the containers 
 
     $ docker build --build-arg SINGULARITY_PROVIDER=apptainer --build-arg SINGULARITY_VERSION=1.3.6 -t cotainr-dev-env:local -f .github/workflows/dockerfiles/Dockerfile .
 
+When using `podman` the command is as follows:
+
+.. code-block:: console
+    $ podman build --format=docker --build-arg SINGULARITY_PROVIDER=apptainer --build-arg SINGULARITY_VERSION=1.3.6 -t cotainr-dev-env:local -f .github/workflows/dockerfiles/Dockerfile .
+
+The `--format=docker` is needed as the `Dockerfile <https://github.com/DeiC-HPC/cotainr/blob/main/.github/workflows/dockerfiles/Dockerfile>`_ contains bash commands that are not supported by the OCI image format. 
 Running in the containerized development environment
 ----------------------------------------------------
 The containerized development environment includes a singularity container runtime (`apptainer` or `singularity-ce`) and the `uv <https://docs.astral.sh/uv/>`_ Python package manager. At runtime, you need to run :code:`uv sync` to install/update the Python environment to include the dependencies specified in the `pyproject.toml <https://github.com/DeiC-HPC/cotainr/blob/main/pyproject.toml>`_ file to get a fully working development environment.

@@ -48,7 +48,7 @@ The conda environment is automatically activated when the container is run, allo
 .. admonition:: Iterate on the conda environment before building the container
   :class: tip
 
-  If you are unsure about what needs to go into your `my_conda_env.yml` file for `conda` to correctly resolve your environment, you may want to iterate on the content of the `my_conda_env.yml` file by updating it and using :code:`conda env create --file my_conda_env.yml` to test that it resolves and installs correctly outside of the container. Only once it installs correctly, should you proceed to building the container with :code:`cotainr build`. That way to potentially save a lot of time by not having to rebuild the container multiple times while iterating on your conda environment.
+  If you are unsure about what needs to go into your `my_conda_env.yml` file for `conda` to correctly resolve your environment, you may want to iterate on the content of the `my_conda_env.yml` file by updating it and using :code:`conda env create --file my_conda_env.yml` to test that it resolves and installs correctly outside of the container. Only once it installs correctly, should you proceed to building the container with :code:`cotainr build`. That way you can potentially save a lot of time by not having to rebuild the container multiple times while iterating on your conda environment.
 
 Pip packages
 ------------
@@ -70,7 +70,7 @@ allows for installing SciPy via pip.
 
 Pip packages from private repositories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A pip package from a private GitHub repository accessible using an ssh key may be installed by enabling `ssh-agent forwarding to GitHub <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/using-ssh-agent-forwarding>`_ on the host machine on which `cotainr` is used.
+Pip packages from a private GitHub repository are accessible using an ssh key. You can use this option by enabling `ssh-agent forwarding to GitHub <https://docs.github.com/en/authentication/connecting-to-github-with-ssh/using-ssh-agent-forwarding>`_ on the host machine on which `cotainr` is used.
 
 For example, with `my_conda_env.yml` containing the following:
 
