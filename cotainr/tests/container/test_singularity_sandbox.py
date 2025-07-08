@@ -295,13 +295,15 @@ class TestRunCommandInContainer:
                 test_file_permissions = test_file_mode & 0o777
                 assert oct(test_file_permissions) == "0o644"
 
-    def test_error_handling(self, data_cached_alpine_sif):
+    def test_error_handling(self, data_cached_alpine_sif, capsys):
         cmd = "some6021 non-meaningful command"
-        with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
-            with pytest.raises(
-                ValueError, match=f"^Invalid command {cmd=} passed to Singularity"
-            ):
+        with SingularitySandbox(
+            base_image=data_cached_alpine_sif, log_settings=LogSettings()
+        ) as sandbox:
+            with pytest.raises(SystemExit):
                 sandbox.run_command_in_container(cmd=cmd)
+            stderr = capsys.readouterr().err
+            assert '"some6021": executable file not found in $PATH' in stderr
 
     def test_no_home(self, data_cached_alpine_sif):
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:
