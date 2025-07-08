@@ -13,9 +13,15 @@ CONTAINER_USER_ID=1000
 CONTAINER_SECURITY_OPTIONS=--security-opt label=disable --security-opt systempaths=unconfined --security-opt seccomp=unconfined --security-opt apparmor=unconfined
 CONTAINER_OPTIONS=--rm -it --user=$(CONTAINER_USER_ID) $(CONTAINER_SECURITY_OPTIONS) $(CONTAINER_ENTRYPOINT) $(CONTAINER_INTERNAL_PYTHON_VENV) $(CONTAINER_ENVIRONMENT) $(CONTAINER_VOLUME_MOUNT) $(OPTIONAL)
 
+# If the apptainer or singularity-ce version is not set via terminal (e.g. `make APPTAINER_VERSION=1.3.6 podman apptainer test`) override it with the latest version.
 # grabs the singularity field from the matrix.json | unpacks the array | grabs all apptainer/singularity fields | grabs all versions | sorts versions | grabs the latest/last version | remove "
-LATEST_APPTAINER_VERSION = $(shell jq '.singularity | .[] | select(.provider=="apptainer") | .version' .github/workflows/matrix.json | sort -V | tail -1 | tr -d '"')
-LATEST_SINGULARITY_VERSION = $(shell jq '.singularity | .[] | select(.provider=="singularity-ce") | .version' .github/workflows/matrix.json | sort -V | tail -1 | tr -d '"')
+ifndef APPTAINER_VERSION
+APPTAINER_VERSION = $(shell jq '.singularity | .[] | select(.provider=="apptainer") | .version' .github/workflows/matrix.json | sort -V | tail -1 | tr -d '"')
+endif
+
+ifndef SINGULARITY_VERSION
+SINGULARITY_VERSION = $(shell jq '.singularity | .[] | select(.provider=="singularity-ce") | .version' .github/workflows/matrix.json | sort -V | tail -1 | tr -d '"')
+endif
 
 APPTAINER_URL=ghcr.io/deic-hpc/cotainr-dev_env-apptainer-$(LATEST_APPTAINER_VERSION):main
 SINGULARITY_URL=ghcr.io/deic-hpc/cotainr-dev_env-singularity-ce-$(LATEST_SINGULARITY_VERSION):main
@@ -42,6 +48,9 @@ apptainer: changes the container to one containing apptainer (default)\n\
 \n\
 Runtime environment flags can be provided in any order\n\
 TESTFLAGS: string that is parsed to pytest, e.g. TESTFLAGS='-k test_info.py'\n\
+\n\
+Set your own apptainer/singularity version with: \n\
+make APPTAINER_VERSION=X.Y.Z etc.\n\
 "
 
 .PHONY:default help podman login singularity apptainer test docs
