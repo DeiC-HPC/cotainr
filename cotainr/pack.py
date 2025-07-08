@@ -266,8 +266,9 @@ class CondaInstall:
                 "Please, press ENTER to continue\n>>> ",
                 "\n",
             )
-            # Remove [yes|no] from license text as answer_is_yes adds this itself
-            license_text = license_text.replace(" [yes|no]", "")
+            # Remove "[yes|no]"" and ">>>" from license text as answer_is_yes
+            # adds them as part of the input handling
+            license_text = license_text.replace(" [yes|no]\n>>> ", "")
             logger.debug(f"The Miniforge displayed license is: {license_text}")
             # prompt user for acceptance of license terms
             if not util.answer_is_yes(license_text):

@@ -94,7 +94,7 @@ class TestConstructor:
         with pytest.raises(KeyError, match="System does not exist"):
             Build(image_path=image_path, system=system)
 
-    @pytest.mark.parametrize("answer", ["no", "No", "", "n", "N"])
+    @pytest.mark.parametrize("answer", ["no", "No", "NO"])
     def test_already_existing_file_but_no(
         self, answer, factory_mock_input, monkeypatch
     ):
@@ -105,7 +105,7 @@ class TestConstructor:
         with pytest.raises(SystemExit):
             Build(image_path=image_path, base_image=base_image)
 
-    @pytest.mark.parametrize("answer", ["yes", "Yes"])
+    @pytest.mark.parametrize("answer", ["yes", "Yes", "YES"])
     def test_already_existing_file(self, answer, factory_mock_input, monkeypatch):
         monkeypatch.setattr("builtins.input", factory_mock_input(answer))
         image_path = "some_image_path_6021"
@@ -113,6 +113,25 @@ class TestConstructor:
         Path(image_path).touch()
         build = Build(image_path=image_path, base_image=base_image)
         assert build.base_image == base_image
+
+    @pytest.mark.parametrize(
+        "answer_sequence", [["blahblah", "yes"], ["1", "2", "", "True", "False", "yes"]]
+    )
+    def test_already_existing_file_initial_invalid_answer(
+        self, answer_sequence, factory_mock_input_sequence, monkeypatch, capsys
+    ):
+        monkeypatch.setattr(
+            "builtins.input", factory_mock_input_sequence(answer_sequence)
+        )
+        image_path = "some_image_path_6021"
+        base_image = "some_base_image_6021"
+        Path(image_path).touch()
+        build = Build(image_path=image_path, base_image=base_image)
+        stdout = capsys.readouterr().out
+        assert build.base_image == base_image
+        assert all(  # Should print error message about invalid input for each invalid answer
+            answer in stdout for answer in answer_sequence[:-1]
+        )
 
     def test_specifying_accept_licenses(self):
         # See also the matching TestAddArguments test below

@@ -9,12 +9,12 @@ This module implements utility functions.
 
 Functions
 ---------
-stream_subprocess(\*, args, \*\*kwargs)
-    Run a the command described by `args` while streaming stdout and stderr.
+answer_is_yes()
+    Ask user for confirmation ("yes") of `input_text`.
 get_systems()
     Get a dictionary of predefined systems, defined in systems.json
-answer_is_yes()
-    Pass text to the terminal and verify that the answer is yes, only terminates on "yes" or "no"
+stream_subprocess(\*, args, \*\*kwargs)
+    Run a the command described by `args` while streaming stdout and stderr.
 
 Attributes
 ----------
@@ -32,6 +32,39 @@ import sys
 
 logger = logging.getLogger(__name__)
 systems_file = (Path(__file__) / "../../systems.json").resolve()
+
+
+def answer_is_yes(input_text, max_attempts=1000):
+    """
+    Ask user for confirmation ("yes") of `input_text`.
+
+    Parameters
+    ----------
+    input_text : str
+        The prompt to be printed for verification by the user.
+    max_attempts : int, optional
+        The maximum number of attempts to get a valid answer from the user before giving up. The default is 1000.
+
+    Returns
+    -------
+    answer_is_yes : bool
+        The indicator of whether or not the answer is yes.
+    """
+    answer_prompt = input_text + " [yes/no]\n>>> "
+    for _ in range(max_attempts):
+        answer = input(answer_prompt)
+        if answer.lower() == "yes":
+            return True
+        elif answer.lower() == "no":
+            return False
+        else:
+            answer_prompt = f'You answered "{answer}". Please answer yes or no.\n>>> '
+    else:
+        logger.error(
+            'You provided an invalid answer %d times in a row. Now assuming you meant "no".',
+            max_attempts,
+        )
+        return False
 
 
 def get_systems():
@@ -142,32 +175,6 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
     completed_process.check_returncode()
 
     return completed_process
-
-
-def answer_is_yes(input_text):
-    """
-    Print text and compare the input given to "yes".
-
-    Parameters
-    ----------
-    input_text : str
-        a string to be printed for verification by the user
-
-    Returns
-    -------
-    answer_is_yes : boolean
-        A boolean indicating whether or not the answer is yes
-    """
-    answer_prompt = input_text + " yes/[N]o\n"
-    while True:
-        answer = input(answer_prompt).lower()
-        answer_yes = answer == "yes"
-        answer_no = answer.startswith("n") or answer == ""
-        if answer_yes:
-            return True
-        if answer_no:
-            return False
-        answer_prompt = "Did not understand your input. Please answer yes/[N]o\n"
 
 
 def _print_and_capture_stream(*, stream_handle, print_dispatch):
