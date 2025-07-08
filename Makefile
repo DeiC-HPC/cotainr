@@ -23,8 +23,8 @@ ifndef SINGULARITY_VERSION
 SINGULARITY_VERSION = $(shell jq '.singularity | .[] | select(.provider=="singularity-ce") | .version' .github/workflows/matrix.json | sort -V | tail -1 | tr -d '"')
 endif
 
-APPTAINER_URL=ghcr.io/deic-hpc/cotainr-dev_env-apptainer-$(LATEST_APPTAINER_VERSION):main
-SINGULARITY_URL=ghcr.io/deic-hpc/cotainr-dev_env-singularity-ce-$(LATEST_SINGULARITY_VERSION):main
+APPTAINER_URL=ghcr.io/deic-hpc/cotainr-dev_env-apptainer-$(APPTAINER_VERSION):main
+SINGULARITY_URL=ghcr.io/deic-hpc/cotainr-dev_env-singularity-ce-$(SINGULARITY_VERSION):main
 
 CONTAINER_URL=$(APPTAINER_URL)
 
