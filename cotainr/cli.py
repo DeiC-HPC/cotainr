@@ -318,7 +318,6 @@ class Info(CotainrSubcommand):
         Notes
         -----
         Assumes that "singularity --version" returns a format like:
-          - singularity version 3.7.4-1  (for singularity)
           - singularity-ce version 3.11.4-1 (for singularity community edition)
           - apptainer version 1.0.3      (for apptainer)
         """

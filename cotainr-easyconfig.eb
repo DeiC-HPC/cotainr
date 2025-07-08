@@ -15,10 +15,10 @@ toolchain = SYSTEM
 
 systems = """{
   "lumi-g": {
-    "base-image": "docker://rocm/dev-ubuntu-22.04:5.5.1-complete"
+    "base-image": "docker://rocm/dev-ubuntu-24.04:6.2.2-complete"
   },
   "lumi-c": {
-    "base-image": "docker://ubuntu:22.04"
+    "base-image": "docker://ubuntu:24.04"
   }
 }"""
 

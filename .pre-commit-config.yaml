@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.9
+    rev: v0.12.0
     hooks:
       - id: ruff
         args:
@@ -8,10 +8,10 @@ repos:
       - id: ruff-format
         args:
           - -v
-      - id: ruff-format
-        name: ruff-format-diff
-        args:
-          - --diff
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.7.13
+    hooks:
+      - id: uv-lock  # Ensure uv.lock is up to date
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
