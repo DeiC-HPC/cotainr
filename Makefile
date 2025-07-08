@@ -13,9 +13,9 @@ CONTAINER_USER_ID=1000
 CONTAINER_SECURITY_OPTIONS=--security-opt label=disable --security-opt systempaths=unconfined --security-opt seccomp=unconfined --security-opt apparmor=unconfined
 CONTAINER_OPTIONS=--rm -it --user=$(CONTAINER_USER_ID) $(CONTAINER_SECURITY_OPTIONS) $(CONTAINER_ENTRYPOINT) $(CONTAINER_INTERNAL_PYTHON_VENV) $(CONTAINER_ENVIRONMENT) $(CONTAINER_VOLUME_MOUNT) $(OPTIONAL)
 
-# grabs the singularity field from the matrix.json | unpacks the array | grabs all apptainer/singularity fields | grabs all versions | sorts versions | grabs the latest/last version
-LATEST_APPTAINER_VERSION = $(shell jq '.singularity | .[] | select(.provider=="apptainer") | .version' .github/workflows/matrix.json | sort -V | tail -1)
-LATEST_SINGULARITY_VERSION = $(shell jq '.singularity | .[] | select(.provider=="singularity-ce") | .version' .github/workflows/matrix.json | sort -V | tail -1)
+# grabs the singularity field from the matrix.json | unpacks the array | grabs all apptainer/singularity fields | grabs all versions | sorts versions | grabs the latest/last version | remove "
+LATEST_APPTAINER_VERSION = $(shell jq '.singularity | .[] | select(.provider=="apptainer") | .version' .github/workflows/matrix.json | sort -V | tail -1 | tr -d '"')
+LATEST_SINGULARITY_VERSION = $(shell jq '.singularity | .[] | select(.provider=="singularity-ce") | .version' .github/workflows/matrix.json | sort -V | tail -1 | tr -d '"')
 
 APPTAINER_URL=ghcr.io/deic-hpc/cotainr-dev_env-apptainer-$(LATEST_APPTAINER_VERSION):main
 SINGULARITY_URL=ghcr.io/deic-hpc/cotainr-dev_env-singularity-ce-$(LATEST_SINGULARITY_VERSION):main
