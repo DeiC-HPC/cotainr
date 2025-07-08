@@ -321,7 +321,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
         with SingularitySandbox(base_image="my_base_image_6021") as sandbox:
             conda_install = CondaInstall(sandbox=sandbox)
 
-        stdout_lines = capsys.readouterr().out.strip().split("\n")
+        stdout_lines = capsys.readouterr().out.replace(">>> ", "").strip().split("\n")
         assert "You have accepted the Miniforge installer license." in stdout_lines
         assert conda_install.license_accepted
 
@@ -342,7 +342,7 @@ class Test_DisplayMiniforgeLicenseForAcceptance:
             with pytest.raises(SystemExit):
                 CondaInstall(sandbox=sandbox)
 
-        stdout_lines = capsys.readouterr().out.strip().split("\n")
+        stdout_lines = capsys.readouterr().out.replace(">>> ", "").strip().split("\n")
         assert (
             "You have not accepted the Miniforge installer license. Aborting!"
         ) in stdout_lines

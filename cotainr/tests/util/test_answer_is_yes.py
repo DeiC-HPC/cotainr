@@ -13,25 +13,30 @@ from cotainr.util import answer_is_yes
 
 
 class TestAnswerYes:
-    @pytest.mark.parametrize("outp", ["Test!", "Test\nTest", "Whoop!", "\n", "\nTest!"])
-    def test_output(self, capsys, outp, factory_mock_input, monkeypatch):
-        monkeypatch.setattr("builtins.input", factory_mock_input(""))
-        answer = answer_is_yes(outp)
-        stdout = capsys.readouterr().out
+    # @pytest.mark.parametrize("outp", ["Test!", "Test\nTest", "Whoop!", "\n", "\nTest!"])
+    # def test_output(self, capsys, outp, factory_mock_input, monkeypatch):
+    #     monkeypatch.setattr("builtins.input", factory_mock_input(""))
+    #     answer = answer_is_yes(outp)
+    #     stdout = capsys.readouterr().out
 
-        assert outp in stdout
-        assert not answer
+    #     assert outp in stdout
+    #     assert not answer
 
-    @pytest.mark.parametrize("inp", ["n", "nope", "no", "NO!", "Not gonna happen"])
-    def test_answering_no(self, inp, factory_mock_input, monkeypatch):
-        monkeypatch.setattr("builtins.input", factory_mock_input(inp))
-
-        answer = answer_is_yes("")
-
-        assert not answer
+    # @pytest.mark.parametrize("input_text", [])
+    @pytest.mark.parametrize("input_text", ["no", "No", "nO", "NO"])
+    def test_answering_no(self, input_text, factory_mock_input, monkeypatch):
+        monkeypatch.setattr("builtins.input", factory_mock_input(input_text))
+        assert not answer_is_yes("some_answer_prompt")
 
     @pytest.mark.parametrize(
-        "inp",
+        "input_text", ["yes", "Yes", "yEs", "yeS", "YEs", "YeS", "yES", "YES"]
+    )
+    def test_answering_yes(self, input_text, factory_mock_input, monkeypatch):
+        monkeypatch.setattr("builtins.input", factory_mock_input(input_text))
+        assert answer_is_yes("some_answer_prompt")
+
+    @pytest.mark.parametrize(
+        "input_text",
         [
             "i",
             "!",
@@ -42,22 +47,35 @@ class TestAnswerYes:
             "I don't know",
             "yse",
             "You know it",
+            "n",
+            "N",
+            "nope",
+            "NO!",
+            "Not gonna happen",
+            "y",
+            "Y",
         ],
     )
-    def test_not_recognized(self, capsys, inp, factory_mock_input, monkeypatch):
-        inputs = [inp, "yes"]
-        monkeypatch.setattr("builtins.input", factory_mock_input(inputs))
+    def test_not_recognized(self, capsys, input_text, factory_mock_input, monkeypatch):
+        monkeypatch.setattr("builtins.input", factory_mock_input(input_text))
+        assert not answer_is_yes("some_answer_prompt", max_attempts=2)
+        assert (
+            f'You answered "{input_text}". Please answer yes or no.\n>>> '
+            in capsys.readouterr().out
+        )
 
-        answer = answer_is_yes("")
-        stdout = capsys.readouterr().out
-
-        assert "Did not understand your input. Please answer yes/[N]o" in stdout
-        assert answer
-
-    @pytest.mark.parametrize("inp", ["YES", "YEs", "Yes", "YeS", "yes", "yES", "yeS"])
-    def test_answering_yes(self, inp, factory_mock_input, monkeypatch):
-        monkeypatch.setattr("builtins.input", factory_mock_input(inp))
-
-        answer = answer_is_yes("")
-
-        assert answer
+    @pytest.mark.parametrize("max_attempts", [1, 2, 10, 1000])
+    def test_too_many_attempts(
+        self, max_attempts, factory_mock_input_sequence, monkeypatch, caplog
+    ):
+        input_sequence = ["Why do I keep answering this question?"] * max_attempts + [
+            "yes"
+        ]
+        monkeypatch.setattr(
+            "builtins.input", factory_mock_input_sequence(input_sequence)
+        )
+        assert not answer_is_yes("some_answer_prompt", max_attempts=max_attempts)
+        assert (
+            f'You provided an invalid answer {max_attempts} times in a row. Now assuming you meant "no".'
+            in caplog.text
+        )

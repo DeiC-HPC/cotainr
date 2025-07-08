@@ -41,7 +41,7 @@ def answer_is_yes(input_text, max_attempts=1000):
     Parameters
     ----------
     input_text : str
-        A string to be printed for verification by the user.
+        The prompt to be printed for verification by the user.
     max_attempts : int, optional
         The maximum number of attempts to get a valid answer from the user before giving up. The default is 1000.
 
@@ -52,10 +52,10 @@ def answer_is_yes(input_text, max_attempts=1000):
     """
     answer_prompt = input_text + " [yes/no]\n>>> "
     for _ in range(max_attempts):
-        answer = input(answer_prompt).lower()
-        if answer == "yes":
+        answer = input(answer_prompt)
+        if answer.lower() == "yes":
             return True
-        elif answer == "no":
+        elif answer.lower() == "no":
             return False
         else:
             answer_prompt = f'You answered "{answer}". Please answer yes or no.\n>>> '
