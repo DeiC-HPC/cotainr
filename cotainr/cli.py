@@ -624,17 +624,25 @@ def _extract_help_from_docstring(*, arg, docstring):
     arg_desc = []
     for line in docstring.splitlines():
         if arg_found:
+            # MARK_FIX:
+            # new command or empty line = end of file.
+            # As of Python 3.13 the trailing whitespace is cut and
+            # the end of file is not recognized anymore.
+            # Therefore, the return is done outside the loop.
+            # MARK_PYTHON_VERSION: Revisit once Python 3.12 is deprecated.
             if " : " in line or line.strip() == "":
-                # No more description lines, return the description
-                arg_description = "".join(arg_desc).strip().rstrip(".")
-                arg_description = arg_description[0].lower() + arg_description[1:]
-                return arg_description
+                break
             else:
                 # Extract line as part of arg description
                 arg_desc.extend([line.strip(), " "])
         elif f"{arg} : " in line:
             # We found the requested arg in the docstring
             arg_found = True
+
+    if arg_found:
+        arg_description = "".join(arg_desc).strip().rstrip(".")
+        arg_description = arg_description[0].lower() + arg_description[1:]
+        return arg_description
     else:
         # We didn't find the arg in the docstring
         raise KeyError(f"The docstring does not include {arg=}")
