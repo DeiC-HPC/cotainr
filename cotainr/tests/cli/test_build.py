@@ -469,7 +469,7 @@ class TestHelpMessage:
         # whitespaces in the formatting often leads to failed tests.
         # especially true when doing this test for Python =< 3.12 and >=3.13 due to differences in whitespace trimming.
         # thus remove all \\n \\r \\t \\f and spaces.
-        stdout = ' '.join(stdout.split())
+        stdout = " ".join(stdout.split())
         target = (
             # Capsys apparently assumes an 80 char terminal (?) - thus extra '\n'
             "usage: cotainr build [-h] (--base-image BASE_IMAGE | --system SYSTEM)\n"
@@ -505,5 +505,5 @@ class TestHelpMessage:
             "                        on stdout/stderr\n"
             "  --no-color            do not use colored console output\n"
         )
-        target = ' '.join(target.split())
+        target = " ".join(target.split())
         assert target == stdout
