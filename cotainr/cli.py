@@ -624,7 +624,6 @@ def _extract_help_from_docstring(*, arg, docstring):
     arg_desc = []
     for line in docstring.splitlines():
         if arg_found:
-            # MARK_FIX:
             # new command or empty line = end of file.
             # As of Python 3.13 the trailing whitespace is cut and
             # the end of file is not recognized anymore.
