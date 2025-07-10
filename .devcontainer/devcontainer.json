@@ -85,6 +85,7 @@
 				"DavidAnson.vscode-markdownlint", // Markdown linting (for release notes)
 				"ms-python.python",  // General Python integration
 				"ms-python.vscode-pylance", // Python intelligence, e.g. autocompletion, type checking
+				"ms-python.debugpy", // Python debugging support
 				"ms-azuretools.vscode-containers", // Container management, incl. Dockerfile syntax highlighting
 				"ms-vscode.makefile-tools", // Makefile support, incl. syntax highlighting
 				"github.vscode-github-actions", // GitHub Actions support, incl. syntax highlighting
