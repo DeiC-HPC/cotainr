@@ -38,7 +38,7 @@ The cotainr version (in code and docs) is single-sourced using the logic in the 
 
 1. If the cotainr git history is available and the `hatch-vcs package <https://pypi.org/project/hatch-vcs/>`_ is installed, the version number is generated from the latest `YYYY.MM.MICRO` release tag in the git history.
 
-   - If additional commits since the latest release tag are present in the git history, the version number is suffixed with a `.dev<N>+g<commit_sha>` string, where `<N>` is the number of commits since the latest release tag and `<commit_sha>` is the short hash of the latest commit in the git history.
+   - If additional commits since the latest release tag are present in the git history, the MICRO version is incremented and the version number is suffixed with a `.dev<N>+g<commit_sha>` string, where `<N>` is the number of commits since the latest release tag and `<commit_sha>` is the short hash of the latest commit in the git history.
    - If uncommitted changes are present in the working directory, the version number is further suffixed with a `.d<YYYYMMDD>` string, where `<YYYYMMDD>` is the current date.
 
 2. If the cotainr git history is not available, but cotainr wheel/sdist package metadata is available, i.e., cotainr is installed from a wheel, the `YYYY.MM.MICRO` version number is read from the package metadata.
