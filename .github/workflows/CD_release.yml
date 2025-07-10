@@ -85,6 +85,9 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash # important for using source! source is bash only. default is sh.
 
     steps:
     - name: Test TestPyPI build

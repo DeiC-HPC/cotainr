@@ -140,7 +140,8 @@ class Test_create_release_notes:
 
 
 class Test_format_release_version_and_date:
-    def test_correctly_formatted_date(self):
+    def test_correctly_formatted_date(self, monkeypatch):
+        monkeypatch.setattr("cotainr.__version__", "2025.03.0")
         _, formatted_release_date = format_release_version_and_date(
             release_date="2025-04-01"
         )
@@ -149,10 +150,10 @@ class Test_format_release_version_and_date:
     @pytest.mark.parametrize(
         ["current_release_version", "release_date", "new_formatted_release_version"],
         [
-            ("2025.1.0", "2025-01-15", "2025.1.1"),
-            ("2025.1.1", "2025-01-16", "2025.1.2"),
+            ("2025.1.1", "2025-01-15", "2025.1.1"), # would be automatically set to 2025.1.1 by hatch-vcs
+            ("2025.1.2", "2025-01-16", "2025.1.2"), # would be automatically set to 2025.1.1 by hatch-vcs
             ("2025.1.2", "2025-03-17", "2025.3.0"),
-            ("2025.12.2", "2025-12-22", "2025.12.3"),
+            ("2025.12.3", "2025-12-22", "2025.12.3"), # would be automatically set to 2025.1.1 by hatch-vcs
             ("2025.12.3", "2026-01-23", "2026.1.0"),
             ("2025.1.0", "2026-11-20", "2026.11.0"),
         ],
