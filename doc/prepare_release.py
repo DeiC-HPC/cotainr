@@ -236,7 +236,7 @@ def format_release_version_and_date(*, release_date: Optional[str] = None):
         micro_release_ver = 0
     else:
         # Same year/month as last release, set MICRO += 1
-        micro_release_ver = int(micro) # micro release is already updated by hatch-vcs.
+        micro_release_ver = int(micro)  # micro release is already updated by hatch-vcs.
 
     # Format the full new version number
     formatted_release_ver = (
