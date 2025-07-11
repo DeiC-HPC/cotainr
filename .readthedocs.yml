@@ -7,7 +7,7 @@ build:
   tools:
     python: "3"
   jobs:
-    # We need to unshallow fetch all branches to determine the correct version number for the documentation build. 
+    # We need to unshallow fetch all branches to determine the correct version number for the documentation build.
     post_checkout:
       - git fetch --unshallow || true
       - git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*' || true
