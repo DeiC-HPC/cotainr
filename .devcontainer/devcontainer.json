@@ -5,6 +5,7 @@
 
 	// Default image to use as a base for the dev container.
 	// If you don't have access to this registry, you can build the container locally from the ./github/dockerfiles/Dockerfile.
+	// MARK_APPTAINER_VERSION: Update this to match the newest apptainer version in matrix.json
 	"image": "ghcr.io/deic-hpc/cotainr-dev_env-apptainer-1.3.6:main",
 
 	// Set security options needed to run Apptainer/SingularityCE in the container.
@@ -33,6 +34,9 @@
 			"type": "volume"
 		}
 	],
+
+	// Force enabling git bash completion in the container
+	"postCreateCommand": "echo \"source /usr/share/bash-completion/completions/git\" >> ~/.bashrc",
 
 	// Sync the uv python venv on startup
 	// https://code.visualstudio.com/remote/advancedcontainers/start-processes
