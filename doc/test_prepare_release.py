@@ -140,31 +140,32 @@ class Test_create_release_notes:
 
 
 class Test_format_release_version_and_date:
-    def test_correctly_formatted_date(self):
+    def test_correctly_formatted_date(self, monkeypatch):
+        monkeypatch.setattr("cotainr.__version__", "2025.03.0")
         _, formatted_release_date = format_release_version_and_date(
             release_date="2025-04-01"
         )
         assert formatted_release_date == "April 1st, 2025"
 
     @pytest.mark.parametrize(
-        ["current_release_version", "release_date", "new_formatted_release_version"],
-        [
-            ("2025.1.0", "2025-01-15", "2025.1.1"),
-            ("2025.1.1", "2025-01-16", "2025.1.2"),
+        ["current_hatch_vcs_version", "release_date", "new_formatted_release_version"],
+        [  # Note: The MICRO version number is automatically incremented by hatch-vcs in pre-release versions.
+            ("2025.1.1.dev0+g53bb14c", "2025-01-15", "2025.1.1"),
+            ("2025.1.2.d20250116", "2025-01-16", "2025.1.2"),
             ("2025.1.2", "2025-03-17", "2025.3.0"),
-            ("2025.12.2", "2025-12-22", "2025.12.3"),
+            ("2025.12.3.dev54+g53bb14c.d20251222", "2025-12-22", "2025.12.3"),
             ("2025.12.3", "2026-01-23", "2026.1.0"),
             ("2025.1.0", "2026-11-20", "2026.11.0"),
         ],
     )
     def test_correctly_formatted_version(
         self,
-        current_release_version,
+        current_hatch_vcs_version,
         release_date,
         new_formatted_release_version,
         monkeypatch,
     ):
-        monkeypatch.setattr("cotainr.__version__", current_release_version)
+        monkeypatch.setattr("cotainr.__version__", current_hatch_vcs_version)
         formatted_release_version, _ = format_release_version_and_date(
             release_date=release_date
         )
@@ -172,7 +173,7 @@ class Test_format_release_version_and_date:
         assert formatted_release_version == new_formatted_release_version
 
     @pytest.mark.parametrize(
-        ["current_release_version", "release_date"],
+        ["current_hatch_vcs_version", "release_date"],
         [
             ("2025.1.0", "2024-01-01"),
             ("2025.2.0", "2025-01-31"),
@@ -180,14 +181,14 @@ class Test_format_release_version_and_date:
         ],
     )
     def test_invalid_release_date(
-        self, current_release_version, release_date, monkeypatch
+        self, current_hatch_vcs_version, release_date, monkeypatch
     ):
-        monkeypatch.setattr("cotainr.__version__", current_release_version)
+        monkeypatch.setattr("cotainr.__version__", current_hatch_vcs_version)
         with pytest.raises(
             ValueError,
             match=(
                 f"New release date {release_date} is before the current version "
-                f"{current_release_version}."
+                f"{current_hatch_vcs_version}."
             ),
         ):
             format_release_version_and_date(release_date=release_date)

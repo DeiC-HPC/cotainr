@@ -213,7 +213,8 @@ def format_release_version_and_date(*, release_date: Optional[str] = None):
     else:
         date_release = datetime.date.fromisoformat(release_date)
 
-    # Extract the current version number from the cotainr module
+    # Extract the current development version number from the cotainr module.
+    # Note: The MICRO version number is automatically increment by hatch-vcs.
     try:
         yyyy, mm, micro = cotainr.__version__.split(".")[:3]
     except ValueError as e:
@@ -234,8 +235,8 @@ def format_release_version_and_date(*, release_date: Optional[str] = None):
         # New year or month since last release, set MICRO to 0
         micro_release_ver = 0
     else:
-        # Same year/month as last release, set MICRO += 1
-        micro_release_ver = int(micro) + 1
+        # Same year/month as last release, use MICRO as already updated by hatch-vcs
+        micro_release_ver = int(micro)
 
     # Format the full new version number
     formatted_release_ver = (

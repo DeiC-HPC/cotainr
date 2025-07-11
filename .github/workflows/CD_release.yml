@@ -85,6 +85,9 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    defaults:
+      run:
+        shell: bash # "source .venv/bin/activate" is bash only. Container uses "sh" by default.
 
     steps:
     - name: Test TestPyPI build
