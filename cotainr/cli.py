@@ -221,34 +221,43 @@ class Build(CotainrSubcommand):
             with container.SingularitySandbox(
                 base_image=self.base_image, log_settings=self.log_settings
             ) as sandbox:
-                if self.conda_env is not None:
-                    # Install supplied conda env
-                    logger.info("Installing Conda environment: %s", self.conda_env)
-                    conda_env_name = "conda_container_env"
-                    conda_env_file = sandbox.sandbox_dir / self.conda_env.name
-                    shutil.copyfile(self.conda_env, conda_env_file)
-                    conda_install = pack.CondaInstall(
-                        sandbox=sandbox,
-                        license_accepted=self.accept_licenses,
-                        log_settings=self.log_settings,
-                    )
-                    conda_install.add_environment(
-                        path=conda_env_file, name=conda_env_name
-                    )
+                try:
+                    if self.conda_env is not None:
+                        # Install supplied conda env
+                        logger.info("Installing Conda environment: %s", self.conda_env)
+                        conda_env_name = "conda_container_env"
+                        conda_env_file = sandbox.sandbox_dir / self.conda_env.name
+                        shutil.copyfile(self.conda_env, conda_env_file)
+                        conda_install = pack.CondaInstall(
+                            sandbox=sandbox,
+                            license_accepted=self.accept_licenses,
+                            log_settings=self.log_settings,
+                        )
+                        conda_install.add_environment(
+                            path=conda_env_file, name=conda_env_name
+                        )
 
-                    sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
+                        sandbox.add_to_env(
+                            shell_script=f"conda activate {conda_env_name}"
+                        )
 
-                    # Clean-up unused files
-                    logger.info("Cleaning up unused Conda files")
-                    conda_install.cleanup_unused_files()
-                    logger.info(
-                        "Finished installing conda environment: %s", self.conda_env
-                    )
+                        # Clean-up unused files
+                        logger.info("Cleaning up unused Conda files")
+                        conda_install.cleanup_unused_files()
+                        logger.info(
+                            "Finished installing conda environment: %s", self.conda_env
+                        )
 
-                logger.info("Adding metadata to container")
-                sandbox.add_metadata()
-                logger.info("Building container image")
-                sandbox.build_image(path=self.image_path)
+                    logger.info("Adding metadata to container")
+                    sandbox.add_metadata()
+                    logger.info("Building container image")
+                    sandbox.build_image(path=self.image_path)
+                except subprocess.CalledProcessError:
+                    if self.log_settings.verbosity < 5:
+                        logger.error(
+                            "Tip: Attempt the cotainer build with increased verbosity using -v(vvvv) for more information"
+                        )
+                    sys.exit(0)
 
             t_end_build = time.time()
             logger.info(

@@ -296,14 +296,16 @@ class TestRunCommandInContainer:
                 assert oct(test_file_permissions) == "0o644"
 
     def test_error_handling(self, data_cached_alpine_sif, capsys):
+        from subprocess import CalledProcessError
+
         cmd = "some6021 non-meaningful command"
         with SingularitySandbox(
             base_image=data_cached_alpine_sif, log_settings=LogSettings()
         ) as sandbox:
-            with pytest.raises(SystemExit):
+            with pytest.raises(CalledProcessError):
                 sandbox.run_command_in_container(cmd=cmd)
             stderr = capsys.readouterr().err
-            assert '"some6021": executable file not found in $PATH' in stderr
+            assert '"some6021": executable file not found in $PATH\n' in stderr
 
     def test_no_home(self, data_cached_alpine_sif):
         with SingularitySandbox(base_image=data_cached_alpine_sif) as sandbox:

@@ -263,20 +263,18 @@ class SingularitySandbox:
                 ),
             )
         except subprocess.CalledProcessError:
-            if custom_log_dispatcher is not None:
-                error_log_dispatcher = custom_log_dispatcher
-            else:
-                error_log_dispatcher = self.log_dispatcher
+            if custom_log_dispatcher is None:
+                error_logger = self.log_dispatcher.logger_stderr
 
-            if error_log_dispatcher.verbosity < 4:
-                error_log_dispatcher.logger_stderr.critical(
-                    "A subprocess failed unexpectedly, increase verbosity for more information"
-                )
             else:
-                error_log_dispatcher.logger_stderr.critical(
-                    f"A subprocess failed unexpectedly from command: {cmd}"
-                )
-            sys.exit(0)
+                error_logger = custom_log_dispatcher.logger_stderr
+
+            name = error_logger.name.split(".")[0]
+            logger.error(
+                f"An error occurred in the {name} subprocess when running cmd:"
+            )
+            logger.error(cmd)
+            raise
 
         return process
 
