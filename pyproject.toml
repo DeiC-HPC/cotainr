@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "cotainr"
 dynamic = ["version"]
 dependencies = []
-requires-python = ">=3.9"
+requires-python = ">=3.9" # MARK_PYTHON_VERSION: Update this to reflect the minimum supported Python version.
 authors = [
     {name = "Christian Schou Oxvig"},
     {name = "René Løwe Jacobsen"},
@@ -30,13 +30,13 @@ keywords = ["hpc", "container", "singularity", "apptainer", "conda"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: End Users/Desktop",
-    #"Topic :: Software Development :: HPC Tools",
     "License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)",
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3", # MARK_PYTHON_VERSION: Update list to reflect supported Python versions.
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 [project.scripts]
@@ -71,7 +71,7 @@ dev = [{include-group = "tests"}, {include-group = "lint"}, {include-group = "do
 
 [tool.hatch.version]
 source = "vcs"
-tag-pattern = '(?P<version>^20[0-9]{2}\.(0*[1-9]|10|11|12)\.(0|[1-9][0-9]*)$)' # cotainr YYYY.MM.MICRO version format (as well as wrong YYYY.0M.MICRO format)
+tag-pattern = '(?P<version>^20[0-9]{2}\.([1-9]|10|11|12)\.(0|[1-9][0-9]*)$)' # cotainr YYYY.MM.MICRO version format
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -99,7 +99,7 @@ url = "https://test.pypi.org/simple/"
 publish-url = "https://test.pypi.org/legacy/"
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py39" # MARK_PYTHON_VERSION: Update this to reflect the minimum supported Python version.
 line-length = 88
 
 lint.extend-select = [

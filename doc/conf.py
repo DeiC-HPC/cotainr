@@ -59,6 +59,10 @@ linkcheck_ignore = [
     "https://github.com/DeiC-HPC/cotainr",
     # Also ignore everything on the gnu domain via regex.
     r"https://.*\.gnu\.org/.*",
+    # Ignore the links to specific versions of the cotainr docs.
+    # This is required because otherwise the link checking fails on releasing a new version of cotainr,
+    # as the docs are not yet available when doing the pull request.
+    r"https:\/\/cotainr\.readthedocs\.org\/en\/([0-9]+(\.[0-9]+)*)\/",
 ]
 linkcheck_anchors_ignore_for_url = [
     # Ignore GitHub issue comment anchors that apparently fails
