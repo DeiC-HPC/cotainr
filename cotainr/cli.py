@@ -80,9 +80,14 @@ class Build(CotainrSubcommand):
         Base image to use for the container which may be any valid
         Apptainer/Singularity <BUILD SPEC>.
     conda_env : :class:`os.PathLike`, optional
-        Path to a Conda environment.yml file to install and activate in the
+        Path(s) to a Conda environment.yml file to install and activate in the
         container. When installing a Conda environment, you must accept the
-        Miniforge license terms, as specified during the build process.
+        Miniforge license terms, as specified during the build process. If
+        multiple paths are provided the first path is used as the main environment
+        file and any additional file paths are used to extend the main environment.
+        This is handy to install packages that need other packages to be installed/compiled
+        and where the automatic dependency resolution does not work (e.g., nvidia-apex
+        needs pytorch and cuda before compilation).
     system : str
         Which system/partition you will be running the container on. This sets
         base image and other parameters for a simpler container creation.
@@ -145,11 +150,13 @@ class Build(CotainrSubcommand):
             else:
                 raise KeyError("System does not exist")
         if conda_env is not None:
-            self.conda_env = Path(conda_env).resolve()
-            if not self.conda_env.exists():
-                raise FileNotFoundError(
-                    f"The provided Conda env file '{self.conda_env}' does not exist."
-                )
+            self.conda_env = []
+            for conda_env_file in conda_env:
+                self.conda_env.append(Path(conda_env_file).resolve())
+                if not self.conda_env[-1].exists():
+                    raise FileNotFoundError(
+                        f"The provided Conda env file '{self.conda_env}' does not exist."
+                    )
         else:
             self.conda_env = None
 
@@ -173,6 +180,7 @@ class Build(CotainrSubcommand):
         parser.add_argument(
             "--conda-env",
             help=_extract_help_from_docstring(arg="conda_env", docstring=cls.__doc__),
+            nargs="+",
             type=Path,
         )
         parser.add_argument(
@@ -227,16 +235,26 @@ class Build(CotainrSubcommand):
                     # Install supplied conda env
                     logger.info("Installing Conda environment: %s", self.conda_env)
                     conda_env_name = "conda_container_env"
-                    conda_env_file = sandbox.sandbox_dir / self.conda_env.name
-                    shutil.copyfile(self.conda_env, conda_env_file)
                     conda_install = pack.CondaInstall(
                         sandbox=sandbox,
                         license_accepted=self.accept_licenses,
                         log_settings=self.log_settings,
                     )
-                    conda_install.add_environment(
-                        path=conda_env_file, name=conda_env_name
-                    )
+                    for index, conda_env in enumerate(self.conda_env):
+                        conda_env_file = sandbox.sandbox_dir / conda_env.name
+                        shutil.copyfile(conda_env, conda_env_file)
+
+                        # base environment
+                        if index == 0:
+                            conda_install.add_environment(
+                                path=conda_env_file, name=conda_env_name
+                            )
+                        # extensions that need to be installed after the base environment in case of compilation that depends on packages installed in step 1
+                        # e.g., nvidia-apex depends on the pytorch installation from the base environment
+                        else:
+                            conda_install.extend_environment(
+                                path=conda_env_file, name=conda_env_name
+                            )
 
                     sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 

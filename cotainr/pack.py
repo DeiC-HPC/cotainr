@@ -141,6 +141,24 @@ class CondaInstall:
             cmd=f"conda env create -f {path} -n {name}" + self._conda_verbosity_arg
         )
 
+    def extend_environment(self, *, path, name):
+        """
+        Extend an existing conda environment with an additional packages.
+
+        Equivalent to calling "conda env update -f `path` -n `name`".
+
+        Parameters
+        ----------
+        path : :class:`os.PathLike`
+            The path to the exported env.yml file describing the Conda
+            environment extensions.
+        name : str
+            The name to use for the Conda environment that needs to be extended.
+        """
+        self._run_command_in_sandbox(
+            cmd=f"conda env update -f {path} -n {name} " + self._conda_verbosity_arg
+        )
+
     def cleanup_unused_files(self):
         """
         Remove all unused Conda files.
