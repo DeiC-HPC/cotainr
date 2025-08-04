@@ -156,7 +156,7 @@ class CondaInstall:
             The name to use for the Conda environment that needs to be extended.
         """
         self._run_command_in_sandbox(
-            cmd=f"conda env update -f {path} -n {name} " + self._conda_verbosity_arg
+            cmd=f"/bin/bash {path}"
         )
 
     def cleanup_unused_files(self):
