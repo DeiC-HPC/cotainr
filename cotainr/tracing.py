@@ -386,6 +386,14 @@ class LogDispatcher:
         """
         self.logger_stdout.log(level=self.map_log_level(msg), msg=msg)
 
+    def log_exception(self, err):
+        msg_out = (f"A command \"{' '.join([str(c) for c in err.cmd])}\" "
+               f"has failed with returncode {err.returncode}\n"
+               f"{err.stdout}")
+        self.logger_stdout.log(level=logging.CRITICAL, msg=msg_out)
+        msg_err = f"\n{err.stderr}"
+        self.logger_stderr.log(level=logging.CRITICAL, msg=msg_err)
+
     @contextlib.contextmanager
     def prefix_stderr_name(self, *, prefix):
         """
