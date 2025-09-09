@@ -33,7 +33,6 @@ import logging
 from pathlib import Path
 import platform
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -223,12 +222,16 @@ class Build(CotainrSubcommand):
             with container.SingularitySandbox(
                 base_image=self.base_image, log_settings=self.log_settings
             ) as sandbox:
+                comm = sandbox.comm
+
                 if self.conda_env is not None:
                     # Install supplied conda env
                     logger.info("Installing Conda environment: %s", self.conda_env)
                     conda_env_name = "conda_container_env"
                     conda_env_file = sandbox.sandbox_dir / self.conda_env.name
-                    shutil.copyfile(self.conda_env, conda_env_file)
+
+                    comm.copy_file(self.conda_env, conda_env_file)
+
                     conda_install = pack.CondaInstall(
                         sandbox=sandbox,
                         license_accepted=self.accept_licenses,
@@ -238,7 +241,9 @@ class Build(CotainrSubcommand):
                         path=conda_env_file, name=conda_env_name
                     )
 
-                    sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
+                    comm.write_to_file(
+                        sandbox.env_file, f"conda activate {conda_env_name}"
+                    )
 
                     # Clean-up unused files
                     logger.info("Cleaning up unused Conda files")
@@ -248,7 +253,12 @@ class Build(CotainrSubcommand):
                     )
 
                 logger.info("Adding metadata to container")
-                sandbox.add_metadata()
+                metadata = {
+                    "cotainr.command": " ".join(sys.argv),
+                    "cotainr.version": _cotainr_version,
+                    "cotainr.url": "https://github.com/DeiC-HPC/cotainr",
+                }
+                comm.write_to_file(sandbox.metadata_file, data=metadata, mode="r+")
                 logger.info("Building container image")
                 sandbox.build_image(path=self.image_path)
 

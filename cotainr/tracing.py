@@ -29,7 +29,6 @@ console_lock
 """
 
 import builtins
-import contextlib
 import copy
 import dataclasses
 import functools
@@ -386,23 +385,25 @@ class LogDispatcher:
         """
         self.logger_stdout.log(level=self.map_log_level(msg), msg=msg)
 
-    @contextlib.contextmanager
-    def prefix_stderr_name(self, *, prefix):
-        """
-        Manage a context to prefix the `stderr` logger name.
+    # This was used to change CondaInstall _subprocess_runner() calls to log as
+    # SingularitySandbox / CondaInstall instead
+    # @contextlib.contextmanager
+    # def prefix_stderr_name(self, *, prefix):
+    #     """
+    #     Manage a context to prefix the `stderr` logger name.
 
-        When inside the context, the name of the `stderr` logger is changed to
-        be prefixed by "`prefix`/".
+    #     When inside the context, the name of the `stderr` logger is changed to
+    #     be prefixed by "`prefix`/".
 
-        Parameters
-        ----------
-        prefix : str
-            The prefix add to the `stderr` logger name.
-        """
-        logger_stderr_name = self.logger_stderr.name
-        self.logger_stderr.name = prefix + "/" + logger_stderr_name
-        yield
-        self.logger_stderr.name = logger_stderr_name
+    #     Parameters
+    #     ----------
+    #     prefix : str
+    #         The prefix add to the `stderr` logger name.
+    #     """
+    #     logger_stderr_name = self.logger_stderr.name
+    #     self.logger_stderr.name = prefix + "/" + logger_stderr_name
+    #     yield
+    #     self.logger_stderr.name = logger_stderr_name
 
     @staticmethod
     def _determine_log_level(*, verbosity):
