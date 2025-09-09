@@ -17,7 +17,6 @@ import logging
 from pathlib import Path
 import random
 import re
-import subprocess
 import sys
 import time
 import urllib.error
@@ -39,8 +38,8 @@ class CondaInstall:
 
     Parameters
     ----------
-    sandbox : :class:`~cotainr.container.SingularitySandbox`
-        The sandbox in which Conda should be installed.
+    comm : :class:`~cotainr.container.CommunicationInterface`
+        The communicator interface to the sandbox.
     prefix : str
         The Conda prefix to use for the Conda install.
     license_accepted : bool, default=False
@@ -75,13 +74,17 @@ class CondaInstall:
     def __init__(
         self,
         *,
-        sandbox,
+        comm,
+        env_file,
+        architecture,
         prefix="/opt/cotainr/conda",
         license_accepted=False,
         log_settings=None,
     ):
         """Bootstrap a conda installation."""
-        self.sandbox = sandbox
+        self.comm = comm
+        self.env_file = env_file
+        self.architecture = architecture
         self.prefix = prefix
         self.license_accepted = license_accepted
         if log_settings is not None:
@@ -98,7 +101,7 @@ class CondaInstall:
 
         # Download Miniforge installer
         conda_installer_path = (
-            Path(self.sandbox.sandbox_dir).resolve() / "conda_installer.sh"
+            Path(self.comm.directory).resolve() / "conda_installer.sh"
         )
         self._download_miniforge_installer(installer_path=conda_installer_path)
 
@@ -108,12 +111,12 @@ class CondaInstall:
                 installer_path=conda_installer_path
             )
         else:
-            self._display_message(
+            self.log_dispatcher.logger_stderr.log(
                 msg=(
                     "You have accepted the Miniforge installer license via the command "
                     "line option '--accept-licenses'."
                 ),
-                log_level=logging.WARNING,
+                level=logging.WARNING,
             )
 
         # Bootstrap Conda environment in container
@@ -137,8 +140,9 @@ class CondaInstall:
         name : str
             The name to use for the installed Conda environment.
         """
-        self._run_command_in_sandbox(
-            cmd=f"conda env create -f {path} -n {name}" + self._conda_verbosity_arg
+        self.comm.run_command_in_sandbox(
+            cmd=f"conda env create -f {path} -n {name}" + self._conda_verbosity_arg,
+            log_dispatcher=self.log_dispatcher,
         )
 
     def cleanup_unused_files(self):
@@ -147,8 +151,9 @@ class CondaInstall:
 
         Equivalent to calling "conda clean -a".
         """
-        self._run_command_in_sandbox(
-            cmd="conda clean -y -a" + self._conda_verbosity_arg
+        self.comm.run_command_in_sandbox(
+            cmd="conda clean -y -a" + self._conda_verbosity_arg,
+            log_dispatcher=self.log_dispatcher,
         )
 
     def _bootstrap_conda(self, *, installer_path):
@@ -161,62 +166,37 @@ class CondaInstall:
             The path of the Conda installer to run to bootstrap Conda.
         """
         # Run Conda installer
-        self._run_command_in_sandbox(
-            cmd=f"bash {installer_path.name} -b -s -p {self.prefix}"
+        self.comm.run_command_in_sandbox(
+            cmd=f"bash {installer_path.name} -b -s -p {self.prefix}",
+            log_dispatcher=self.log_dispatcher,
         )
 
         # Add Conda to container sandbox env
-        self.sandbox.add_to_env(
-            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}"
+        self.comm.write_to_file(
+            self.env_file, f"source {self.prefix + '/etc/profile.d/conda.sh'}"
         )
 
         # Check that we correctly use the newly installed Conda from now on
         self._check_conda_bootstrap_integrity()
 
         # Update the installed Conda package manager to the latest version
-        self._run_command_in_sandbox(
+        self.comm.run_command_in_sandbox(
             cmd=(
                 "conda update -y -n base -c conda-forge conda"
                 + self._conda_verbosity_arg
-            )
+            ),
+            log_dispatcher=self.log_dispatcher,
         )
 
     def _check_conda_bootstrap_integrity(self):
         """Raise RuntimeError if multiple interfering Conda installs are found."""
-        source_check_process = self._run_command_in_sandbox(cmd="conda info --base")
+        source_check_process = self.comm.run_command_in_sandbox(cmd="conda info --base")
         if source_check_process.stdout.strip() != f"{self.prefix}":
             raise RuntimeError(
                 "Multiple Conda installs interfere. "
                 "We risk destroying the Conda install in "
                 f"{source_check_process.stdout.strip()}. Aborting!"
             )
-
-    def _display_message(self, *, msg, log_level=None):
-        """
-        Display a message to the user.
-
-        Displays the message using the `log_dispatcher` if `log_level` is not
-        `None` and a `log_dispatcher` is defined for the `CondaInstall`.
-        Otherwise prints the message on stdout. When the `log_dispatcher` is
-        used, messages with `log_levels` of WARNING or above are sent to stderr
-        whereas massages with with `log_level` below WARNING are sent to
-        stdout.
-
-        Parameters
-        ----------
-        msg : str
-            The message to display to the user.
-        log_level : int, optional
-            The logging level to use for the message, e.g. `logging.INFO` or
-            `logging.WARNING`.
-        """
-        if self.log_dispatcher is None or log_level is None:
-            print(msg)
-        else:
-            if log_level >= logging.WARNING:
-                self.log_dispatcher.logger_stderr.log(level=log_level, msg=msg)
-            else:
-                self.log_dispatcher.logger_stdout.log(level=log_level, msg=msg)
 
     def _display_miniforge_license_for_acceptance(self, *, installer_path):
         """
@@ -247,18 +227,10 @@ class CondaInstall:
         when running the installer and pressing ENTER. We then prompt for a
         "yes" to the license terms.
         """
-        with subprocess.Popen(
-            ["bash", f"{installer_path.name}"],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            text=True,
-        ) as process:
-            license_text, _ = process.communicate(
-                # "press" ENTER to display the license and capture it
-                "\n"
-            )
-            process.kill()  # We only use this process to extract the license
-
+        process = self.comm._subprocess_runner(
+            ["bash", f"{installer_path.name}"], self.log_dispatcher, input="\n"
+        )
+        license_text = process.stdout
         util._flush_stdin_buffer()
         if license_text:
             license_text = license_text.replace(
@@ -269,19 +241,22 @@ class CondaInstall:
             # Remove "[yes|no]"" and ">>>" from license text as answer_is_yes
             # adds them as part of the input handling
             license_text = license_text.replace(" [yes|no]\n>>> ", "")
-            logger.debug(f"The Miniforge displayed license is: {license_text}")
+            self.log_dispatcher.logger_stdout.log(
+                f"The Miniforge displayed license is: {license_text}",
+                level=logging.DEBUG,
+            )
             # prompt user for acceptance of license terms
             if not util.answer_is_yes(license_text):
-                self._display_message(
+                self.log_dispatcher.logger_stderr.log(
                     msg="You have not accepted the Miniforge installer license. Aborting!",
-                    log_level=logging.CRITICAL,
+                    level=logging.CRITICAL,
                 )
                 sys.exit(0)
 
             self.license_accepted = True
-            self._display_message(
+            self.log_dispatcher.logger_stdout.log(
                 msg="You have accepted the Miniforge installer license.",
-                log_level=logging.INFO,
+                level=logging.INFO,
             )
         else:
             raise RuntimeError(
