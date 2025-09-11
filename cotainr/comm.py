@@ -13,7 +13,9 @@ CommunicationInterface
     A interface to communicate with the Singularity container.
 """
 
+from json import dump, load
 from pathlib import Path
+from shutil import copyfile
 import subprocess
 
 
@@ -44,6 +46,7 @@ class CommunicationInterface:
             The data that is written
         mode : str
             Default (a) appends data, alternatives are 'r+', 'a' for write, append
+        log_dispatcher : :class:`LogDispatcher`
         """
         if isinstance(filename, str):
             filename = Path(filename)
@@ -55,7 +58,6 @@ class CommunicationInterface:
         with open(filename, mode) as fd:
             if filename.suffix == ".json":
                 assert isinstance(data, dict)
-                from json import dump, load
 
                 new_data = load(fd)
                 for key, value in data.items():
@@ -65,7 +67,7 @@ class CommunicationInterface:
             else:
                 fd.write(data)
 
-    def create_file(self, *, filename: Path | str, log_dispatcher):
+    def create_file(self, *, filename, log_dispatcher):
         """
         Create any file `f` in an existing folder in the Singularity container.
 
@@ -73,8 +75,9 @@ class CommunicationInterface:
 
         Parameters
         ----------
-        f : :class:`pathlib.PosixPath`
+        f : :class:`pathlib.PosixPath` or string
             For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
+        log_dispatcher : :class:`LogDispatcher`
         """
         # ensure that the file is created *within* the container to get correct permissions, et
         log_dispatcher.log_to_stdout(f"Creating file: {filename}")
@@ -85,7 +88,7 @@ class CommunicationInterface:
         if not filename.exists():
             raise FileNotFoundError(f"Creating file {filename} failed.")
 
-    def copy_file(self, src_fd: Path | str, dst_fd: Path | str, *, log_dispatcher):
+    def copy_file(self, src_fd, dst_fd, *, log_dispatcher):
         """
         Copy any file from `src_fd` from the filesystem to `dst_fd` in the container.
 
@@ -93,26 +96,20 @@ class CommunicationInterface:
 
         Parameters
         ----------
-        src_fd : PathLike
-        dst_fd : PathLike
+        src_fd : :class:`pathlib.PosixPath` or string
+        dst_fd : :class:`pathlib.PosixPath` or string
+        log_dispatcher : :class:`LogDispatcher`
         """
         if not src_fd.exists():
             raise FileNotFoundError
 
-        # ensure that the file is created *within* the container to get correct permissions, etc.
-        # self.run_command_in_container(cmd=f"ls '{src_fd.parent}'",
-        #                              log_dispatcher=log_dispatcher)
         log_dispatcher.log_to_stdout(f"Copying {src_fd} to {dst_fd}")
-        from shutil import copyfile
-
-        copyfile(src_fd, dst_fd)
-        # self.run_command_in_container(cmd=f"cp '{src_fd}' '{dst_fd}'",
-        #                              log_dispatcher=log_dispatcher)
+        copyfile(src_fd, dst_fd)  # shutil function, potential permission issue
 
         if not dst_fd.exists():
             raise FileNotFoundError
 
-    def run_command_in_container(self, cmd, log_dispatcher, **kwargs) -> list:
+    def run_command_in_container(self, cmd, log_dispatcher, **kwargs):
         """
         Wrap the subprocess runner with container information.
 
@@ -152,10 +149,8 @@ class CommunicationInterface:
             Information about the subprocess.
         """
         if isinstance(args, list):
-            # Convert PosixPath into string
-            args = [str(a) for a in args]
-            # filter empty strings
-            args = list(filter(None, args))
+            args = [str(a) for a in args]  # Convert PosixPath into string
+            args = list(filter(None, args))  # Filter empty strings
 
         log_dispatcher.log_to_stdout(f"Running command: {' '.join(args)}")
         try:

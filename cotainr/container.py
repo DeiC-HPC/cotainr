@@ -136,8 +136,6 @@ class SingularitySandbox:
             self.sandbox_dir,
         ]
         self.comm = comm.CommunicationInterface(exec_default)
-        self.comm_methods = [f for f in dir(self.comm) if not f.startswith("_")]
-
         self.env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
         self.metadata_file = self.sandbox_dir / ".singularity.d/labels.json"
 
