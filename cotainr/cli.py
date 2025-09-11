@@ -230,24 +230,23 @@ class Build(CotainrSubcommand):
                     conda_env_name = "conda_container_env"
                     conda_env_file = sandbox.sandbox_dir / self.conda_env.name
 
-                    comm.copy_file(self.conda_env, conda_env_file)
-
-                    conda_install = pack.CondaInstall(
-                        sandbox=sandbox,
+                    conda = pack.Conda(comm=comm, log_settings=self.log_settings)
+                    conda.copy_file(self.conda_env, conda_env_file)
+                    install_path = conda.download(
+                        location=sandbox.sandbox_dir,
+                        architecture=sandbox.architecture,
                         license_accepted=self.accept_licenses,
-                        log_settings=self.log_settings,
                     )
-                    conda_install.add_environment(
-                        path=conda_env_file, name=conda_env_name
-                    )
+                    conda.install(install_path=install_path, env_file=sandbox.env_file)
+                    conda.add_environment(path=conda_env_file, name=conda_env_name)
 
-                    comm.write_to_file(
+                    conda.write_to_file(
                         sandbox.env_file, f"conda activate {conda_env_name}"
                     )
 
                     # Clean-up unused files
                     logger.info("Cleaning up unused Conda files")
-                    conda_install.cleanup_unused_files()
+                    # conda.cleanup_unused_files()
                     logger.info(
                         "Finished installing conda environment: %s", self.conda_env
                     )
@@ -258,7 +257,7 @@ class Build(CotainrSubcommand):
                     "cotainr.version": _cotainr_version,
                     "cotainr.url": "https://github.com/DeiC-HPC/cotainr",
                 }
-                comm.write_to_file(sandbox.metadata_file, data=metadata, mode="r+")
+                sandbox.write_to_file(sandbox.metadata_file, data=metadata, mode="r+")
                 logger.info("Building container image")
                 sandbox.build_image(path=self.image_path)
 

@@ -65,25 +65,24 @@ class SingularitySandbox:
         self.env_file = None
         self.metadata_file = None
         self.comm = None
+        self.comm_methods = []
 
-        if log_settings is not None:
-            self._verbosity = log_settings.verbosity
-            self.log_dispatcher = tracing.LogDispatcher(
-                name=__class__.__name__,
-                map_log_level_func=self._map_log_level,
-                log_settings=log_settings,
-            )
-        else:
-            self._verbosity = 0
-            self.log_dispatcher = None
+        if log_settings is None:
+            log_settings = tracing.LogSettings()
 
-        if self._verbosity < 0:
+        self.log_dispatcher = tracing.LogDispatcher(
+            name=__class__.__name__,
+            map_log_level_func=self._map_log_level,
+            log_settings=log_settings,
+        )
+
+        if log_settings.verbosity < 0:
             self.ss_verbosity = "-s"  # --silent (-s)
-        elif self._verbosity == 0:
+        elif log_settings.verbosity == 0:
             self.ss_verbosity = "-q"  # --quiet (-q)
-        elif self._verbosity == 3:
+        elif log_settings.verbosity == 3:
             self.ss_verbosity = "-v"  # --verbose (-v); limited debug information
-        elif self._verbosity >= 4:
+        elif log_settings.verbosity >= 4:
             self.ss_verbosity = "-d"  # --debug (-d); all debug information
         else:
             self.ss_verbosity = ""
@@ -129,7 +128,6 @@ class SingularitySandbox:
         """
         exec_default = [
             "singularity",
-            self.ss_verbosity,
             "--nocolor",
             "exec",
             "--writable",
@@ -137,7 +135,9 @@ class SingularitySandbox:
             "--no-umask",
             self.sandbox_dir,
         ]
-        self.comm = comm.CommunicationInterface(self.sandbox_dir, exec_default)
+        self.comm = comm.CommunicationInterface(exec_default)
+        self.comm_methods = [f for f in dir(self.comm) if not f.startswith("_")]
+
         self.env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
         self.metadata_file = self.sandbox_dir / ".singularity.d/labels.json"
 
@@ -162,7 +162,9 @@ class SingularitySandbox:
         # Get the architecture of the sandbox if it is not already set
         # (should not be set in real world scenarios)
         if self.architecture is None:
-            arch_process = self.comm.run_command_in_container(cmd="uname -m")
+            arch_process = self.comm.run_command_in_container(
+                cmd="uname -m", log_dispatcher=self.log_dispatcher
+            )
             self.architecture = arch_process.stdout.strip()
 
         return self
@@ -172,6 +174,24 @@ class SingularitySandbox:
         os.chdir(self._origin)
         self._tmp_dir.cleanup()
         self.sandbox_dir = None
+
+    def __getattr__(self, func):
+        """
+        Wrap all methods of CommunicationInterface.
+
+        It is called as last resort after getattr(self, method) ie. self.method()
+        is not found.
+        """
+
+        def method(*args, **kwargs):
+            if func in dir(self.comm) and not func.startswith("_"):
+                return getattr(self.comm, func)(
+                    *args, **kwargs, log_dispatcher=self.log_dispatcher
+                )
+            else:
+                raise AttributeError
+
+        return method
 
     def build_image(self, *, path):
         """
@@ -185,7 +205,7 @@ class SingularitySandbox:
         path : :class:`os.PathLike`
             Path to the built container image.
         """
-        self._subprocess_runner(
+        self.comm._subprocess_runner(
             args=[
                 "singularity",
                 self.ss_verbosity,

@@ -23,17 +23,16 @@ class CommunicationInterface:
 
     Parameters
     ----------
-    directory : str
-        Location of sandbox in filesystem
     exec_default : list
         default arguments required to execute commands inside container
     """
 
-    def __init__(self, directory, exec_default):
-        self.directory = directory
+    def __init__(self, exec_default):
         self.exec_default = exec_default
 
-    def write_to_file(self, filename: Path | str, data: str | dict, mode: str = "a"):
+    def write_to_file(
+        self, filename: Path | str, data: str | dict, mode: str = "a", *, log_dispatcher
+    ):
         """
         Use to writing `data` into the file located at `filename`.
 
@@ -44,23 +43,29 @@ class CommunicationInterface:
         data : str
             The data that is written
         mode : str
-            Default (a) appends data, alternatives are 'r', 'w' for read/write
+            Default (a) appends data, alternatives are 'r+', 'a' for write, append
         """
         if isinstance(filename, str):
             filename = Path(filename)
 
         if not filename.exists():
-            self.create_file(filename)
+            self.create_file(filename=filename, log_dispatcher=log_dispatcher)
 
+        log_dispatcher.log_to_stdout(f"Writing to file: {filename}")
         with open(filename, mode) as fd:
-            if fd.suffix == ".json":
-                from json import dump
+            if filename.suffix == ".json":
+                assert isinstance(data, dict)
+                from json import dump, load
 
-                dump(data, fd)
+                new_data = load(fd)
+                for key, value in data.items():
+                    new_data[key] = value
+                fd.seek(0)  # Move cursor to start of file?
+                dump(new_data, fd)
             else:
                 fd.write(data)
 
-    def create_file(self, *, filename: Path | str):
+    def create_file(self, *, filename: Path | str, log_dispatcher):
         """
         Create any file `f` in an existing folder in the Singularity container.
 
@@ -71,13 +76,16 @@ class CommunicationInterface:
         f : :class:`pathlib.PosixPath`
             For example, Path("sandbox_dir/.singularity.d/env/92-cotainr-env.sh")
         """
-        # ensure that the file is created *within* the container to get correct permissions, etc.
-        self.run_command_in_container(cmd=f"touch '{filename}'")
+        # ensure that the file is created *within* the container to get correct permissions, et
+        log_dispatcher.log_to_stdout(f"Creating file: {filename}")
+        self.run_command_in_container(
+            cmd=f"touch {filename}", log_dispatcher=log_dispatcher
+        )
 
         if not filename.exists():
             raise FileNotFoundError(f"Creating file {filename} failed.")
 
-    def copy_file(self, src_fd: Path | str, *, dst_fd: Path | str):
+    def copy_file(self, src_fd: Path | str, dst_fd: Path | str, *, log_dispatcher):
         """
         Copy any file from `src_fd` from the filesystem to `dst_fd` in the container.
 
@@ -92,7 +100,14 @@ class CommunicationInterface:
             raise FileNotFoundError
 
         # ensure that the file is created *within* the container to get correct permissions, etc.
-        self.run_command_in_container(cmd=f"cp '{src_fd}' '{dst_fd}'")
+        # self.run_command_in_container(cmd=f"ls '{src_fd.parent}'",
+        #                              log_dispatcher=log_dispatcher)
+        log_dispatcher.log_to_stdout(f"Copying {src_fd} to {dst_fd}")
+        from shutil import copyfile
+
+        copyfile(src_fd, dst_fd)
+        # self.run_command_in_container(cmd=f"cp '{src_fd}' '{dst_fd}'",
+        #                              log_dispatcher=log_dispatcher)
 
         if not dst_fd.exists():
             raise FileNotFoundError
@@ -115,7 +130,9 @@ class CommunicationInterface:
         process : :class:`subprocess.CompletedProcess`
             Information about the process that ran in the container sandbox.
         """
-        singularity_args = kwargs.pop("exec", default=self.exec_default)
+        singularity_args = kwargs.pop("exec", self.exec_default)
+        if isinstance(cmd, str):
+            cmd = cmd.split(" ")
         return self._subprocess_runner(singularity_args + cmd, log_dispatcher)
 
     def _subprocess_runner(self, args, log_dispatcher, **kwargs):
@@ -134,13 +151,20 @@ class CommunicationInterface:
         process : :class:`subprocess.CompletedProcess`
             Information about the subprocess.
         """
+        if isinstance(args, list):
+            # Convert PosixPath into string
+            args = [str(a) for a in args]
+            # filter empty strings
+            args = list(filter(None, args))
+
+        log_dispatcher.log_to_stdout(f"Running command: {' '.join(args)}")
         try:
             completed_process = subprocess.run(
                 args, capture_output=True, text=True, check=True, **kwargs
             )
         except subprocess.CalledProcessError as e:
             raise ValueError(
-                f"Invalid command {args=}\n Captured error: {e.stderr}"
+                f"Invalid command: {' '.join(args)}\n Captured error: {e.stderr}"
             ) from e
 
         log_dispatcher.log_to_stdout(completed_process.stdout)

@@ -27,7 +27,7 @@ from . import tracing, util
 logger = logging.getLogger(__name__)
 
 
-class CondaInstall:
+class Conda:
     """
     A Conda installation in a container sandbox.
 
@@ -71,39 +71,40 @@ class CondaInstall:
     <https://www.anaconda.com/blog/anaconda-commercial-edition-faq>`_.
     """
 
-    def __init__(
-        self,
-        *,
-        comm,
-        env_file,
-        architecture,
-        prefix="/opt/cotainr/conda",
-        license_accepted=False,
-        log_settings=None,
-    ):
+    def __init__(self, *, comm, prefix="/opt/cotainr/conda", log_settings=None):
         """Bootstrap a conda installation."""
         self.comm = comm
-        self.env_file = env_file
-        self.architecture = architecture
+        self.comm_methods = [f for f in dir(comm) if not f.startswith("_")]
         self.prefix = prefix
-        self.license_accepted = license_accepted
-        if log_settings is not None:
-            self._verbosity = log_settings.verbosity
-            self.log_dispatcher = tracing.LogDispatcher(
-                name=__class__.__name__,
-                map_log_level_func=self._map_log_level,
-                filters=self._logging_filters,
-                log_settings=log_settings,
-            )
-        else:
-            self._verbosity = 0
-            self.log_dispatcher = None
 
-        # Download Miniforge installer
-        conda_installer_path = (
-            Path(self.comm.directory).resolve() / "conda_installer.sh"
+        if log_settings is None:
+            log_settings = tracing.LogSettings()
+
+        self.log_dispatcher = tracing.LogDispatcher(
+            name=__class__.__name__,
+            map_log_level_func=self._map_log_level,
+            filters=self._logging_filters,
+            log_settings=log_settings,
         )
-        self._download_miniforge_installer(installer_path=conda_installer_path)
+
+        if log_settings.verbosity == 2:
+            self._conda_verbosity_arg = " -v"  # Conda INFO
+        elif log_settings.verbosity == 3 or log_settings.verbosity == 4:
+            self._conda_verbosity_arg = " -vv"  # Conda DEBUG
+        elif log_settings.verbosity >= 5:
+            self._conda_verbosity_arg = " -vvv"  # Conda TRACE
+        else:
+            self._conda_verbosity_arg = ""
+
+    def download(self, location, architecture, license_accepted=False):
+        """Download the Miniforge installer."""
+        # Download Miniforge installer
+        conda_installer_path = Path(location).resolve() / "conda_installer.sh"
+        install_script = self._get_install_script(architecture)
+
+        self._download_miniforge_installer(
+            install_script=install_script, installer_path=conda_installer_path
+        )
 
         # Make sure the user has accepted the Miniforge installer license
         if not license_accepted:
@@ -118,12 +119,44 @@ class CondaInstall:
                 ),
                 level=logging.WARNING,
             )
+        return conda_installer_path
 
-        # Bootstrap Conda environment in container
-        self._bootstrap_conda(installer_path=conda_installer_path)
+    def install(self, install_path, env_file):
+        """Install the downloaded Miniforge conda."""
+        # Run Conda installer
+        self.comm.run_command_in_container(
+            cmd=f"bash {install_path.name} -b -s -p {self.prefix}",
+            log_dispatcher=self.log_dispatcher,
+        )
+
+        # Add Conda to container sandbox env
+        self.comm.write_to_file(
+            env_file,
+            f"source {self.prefix + '/etc/profile.d/conda.sh'}",
+            log_dispatcher=self.log_dispatcher,
+        )
+
+        # Check that we correctly use the newly installed Conda from now on
+        """Raise RuntimeError if multiple interfering Conda installs are found."""
+        source_check_process = self.comm.run_command_in_container(
+            cmd="conda info --base", log_dispatcher=self.log_dispatcher
+        )
+        if source_check_process.stdout.strip() != f"{self.prefix}":
+            raise RuntimeError(
+                "Multiple Conda installs interfere. "
+                "We risk destroying the Conda install in "
+                f"{source_check_process.stdout.strip()}. Aborting!"
+            )
+
+        # Update the installed Conda package manager to the latest version
+        self.comm.run_command_in_container(
+            cmd="conda update -y -n base -c conda-forge conda -q"
+            + self._conda_verbosity_arg,
+            log_dispatcher=self.log_dispatcher,
+        )
 
         # Remove unneeded files
-        conda_installer_path.unlink()
+        install_path.unlink()
         self.cleanup_unused_files()
 
     def add_environment(self, *, path, name):
@@ -140,8 +173,8 @@ class CondaInstall:
         name : str
             The name to use for the installed Conda environment.
         """
-        self.comm.run_command_in_sandbox(
-            cmd=f"conda env create -f {path} -n {name}" + self._conda_verbosity_arg,
+        self.comm.run_command_in_container(
+            cmd=f"conda env create -f {path} -n {name} -q" + self._conda_verbosity_arg,
             log_dispatcher=self.log_dispatcher,
         )
 
@@ -151,52 +184,10 @@ class CondaInstall:
 
         Equivalent to calling "conda clean -a".
         """
-        self.comm.run_command_in_sandbox(
-            cmd="conda clean -y -a" + self._conda_verbosity_arg,
+        self.comm.run_command_in_container(
+            cmd="conda clean -y -a -q" + self._conda_verbosity_arg,
             log_dispatcher=self.log_dispatcher,
         )
-
-    def _bootstrap_conda(self, *, installer_path):
-        """
-        Install Conda and at its source script to the sandbox env.
-
-        Parameters
-        ----------
-        installer_path : pathlib.Path
-            The path of the Conda installer to run to bootstrap Conda.
-        """
-        # Run Conda installer
-        self.comm.run_command_in_sandbox(
-            cmd=f"bash {installer_path.name} -b -s -p {self.prefix}",
-            log_dispatcher=self.log_dispatcher,
-        )
-
-        # Add Conda to container sandbox env
-        self.comm.write_to_file(
-            self.env_file, f"source {self.prefix + '/etc/profile.d/conda.sh'}"
-        )
-
-        # Check that we correctly use the newly installed Conda from now on
-        self._check_conda_bootstrap_integrity()
-
-        # Update the installed Conda package manager to the latest version
-        self.comm.run_command_in_sandbox(
-            cmd=(
-                "conda update -y -n base -c conda-forge conda"
-                + self._conda_verbosity_arg
-            ),
-            log_dispatcher=self.log_dispatcher,
-        )
-
-    def _check_conda_bootstrap_integrity(self):
-        """Raise RuntimeError if multiple interfering Conda installs are found."""
-        source_check_process = self.comm.run_command_in_sandbox(cmd="conda info --base")
-        if source_check_process.stdout.strip() != f"{self.prefix}":
-            raise RuntimeError(
-                "Multiple Conda installs interfere. "
-                "We risk destroying the Conda install in "
-                f"{source_check_process.stdout.strip()}. Aborting!"
-            )
 
     def _display_miniforge_license_for_acceptance(self, *, installer_path):
         """
@@ -292,7 +283,7 @@ class CondaInstall:
 
         return install_script
 
-    def _download_miniforge_installer(self, *, installer_path):
+    def _download_miniforge_installer(self, *, install_script, installer_path):
         """
         Download the Miniforge installer to `installer_path`.
 
@@ -308,14 +299,6 @@ class CondaInstall:
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
-        architecture = self.sandbox.architecture
-        if architecture is None:
-            raise RuntimeError(
-                f"Cotainr's CondaInstall got '{architecture=}' "
-                "which indicates that it is not running in a container sandbox context."
-            )
-
-        install_script = CondaInstall._get_install_script(architecture)
         miniforge_installer_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
             + install_script
@@ -338,56 +321,23 @@ class CondaInstall:
         else:
             raise url_error
 
-    def _run_command_in_sandbox(self, *, cmd):
+    def __getattr__(self, func):
         """
-        Wrap the sandbox command runner to use class specific log_dispatcher.
+        Wrap all methods of CommunicationInterface.
 
-        Wraps calls to `self.sandbox.run_command_in_container` to use
-        self.log_dispatcher for log handling instead of the sandbox's log
-        dispatcher.
-
-        Parameters
-        ----------
-        cmd : str
-            The command to run in the container sandbox.
-
-        Returns
-        -------
-        process : :class:`subprocess.CompletedProcess`
-            Information about the process that ran in the container sandbox.
+        It is called as last resort after getattr(self, method) ie. self.method()
+        is not found.
         """
-        return self.sandbox.run_command_in_container(
-            cmd=cmd, custom_log_dispatcher=self.log_dispatcher
-        )
 
-    @property
-    def _conda_verbosity_arg(self):
-        """
-        Get a verbosity level for Conda commands.
+        def method(*args, **kwargs):
+            if func in dir(self.comm) and not func.startswith("_"):
+                return getattr(self.comm, func)(
+                    *args, **kwargs, log_dispatcher=self.log_dispatcher
+                )
+            else:
+                raise AttributeError
 
-        A mapping of the internal cotainr verbosity level to `Conda verbosity
-        flags
-        <https://docs.conda.io/projects/conda/en/latest/commands/create.html#Output,%20Prompt,%20and%20Flow%20Control%20Options>`_.
-
-        Returns
-        -------
-        verbosity_arg : str
-            The verbosity arg ("-q", "-v", "-vv", etc.) to add to the Conda
-            command.
-        """
-        if self._verbosity <= 0:
-            return " -q"
-        elif self._verbosity == 2:
-            # Conda INFO
-            return " -v"
-        elif self._verbosity == 3 or self._verbosity == 4:
-            # Conda DEBUG
-            return " -vv"
-        elif self._verbosity >= 5:
-            # Conda TRACE
-            return " -vvv"
-        else:
-            return ""
+        return method
 
     @property
     def _logging_filters(self):
