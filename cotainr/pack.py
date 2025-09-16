@@ -15,16 +15,64 @@ CondaInstall
 
 import logging
 from pathlib import Path
-import random
 import re
 import sys
-import time
-import urllib.error
-import urllib.request
 
 from . import tracing, util
 
 logger = logging.getLogger(__name__)
+
+# class CondaRecipe:
+#     """
+#     Minimal library style conda install commands.
+#     """
+
+#     def __init__(self, log_settings=None):
+#         if log_settings is None:
+#             log_settings = tracing.LogSettings()
+
+#         self.log_dispatcher = tracing.LogDispatcher(
+#             name=__class__.__name__,
+#             map_log_level_func=self._map_log_level,
+#             filters=self._logging_filters,
+#             log_settings=log_settings,
+#         )
+
+#         if log_settings.verbosity == 2:
+#             _v = " -v"  # Conda INFO
+#         elif log_settings.verbosity == 3 or log_settings.verbosity == 4:
+#             _v = " -vv"  # Conda DEBUG
+#         elif log_settings.verbosity >= 5:
+#             _v = " -vvv"  # Conda TRACE
+#         else:
+#             _v = ""
+
+#         # Reference = [function, string, verification]
+#         download =       ['download', self.condaInstaller_sh, self.verify_license_accept]
+#         install =        ['run', f"bash {install_path.name} -b -s -p {self.prefix}", self.verify_correct_conda_runtime and install_path.unlink()]
+#         source_install = [f'write{source_file}', f"source {self.prefix + '/etc/profile.d/conda.sh'}", None]
+#         update =         ['run', "conda update -y -n base -c conda-forge conda -q" + _v, None]
+#         clean =          ['run', "conda clean -y -a -q" + _v, None]
+#         create_env =     ['run', f"conda env create -f {path} -n {name} -q" + _v, None]
+#         source_env =     [f'write{env_file}', f"conda activate {conda_env_name}", None]
+#         clean =          ['run', "conda clean -y -a -q" + _v, None]
+
+#         self.bootstrap = [install, source_install, update, (clean)]
+#         self.environment = [create_env, source_env, (clean)]
+
+
+#     def bootstrap_runtime(self):
+#         for recipe_step in self.bootstrap:
+#             dispatch(recipe_step)
+
+#     def build_environment(self):
+#         for recipe_step in self.environment:
+#             dispatch(recipe_step)
+
+# def dispatch(recipe_step, comm):
+#     execute, command, post_process = recipe_step
+#     getattr(comm, execute)(command)
+#     post_process()
 
 
 class Conda:
@@ -74,7 +122,6 @@ class Conda:
     def __init__(self, *, comm, prefix="/opt/cotainr/conda", log_settings=None):
         """Bootstrap a conda installation."""
         self.comm = comm
-        self.comm_methods = [f for f in dir(comm) if not f.startswith("_")]
         self.prefix = prefix
 
         if log_settings is None:
@@ -96,14 +143,20 @@ class Conda:
         else:
             self._conda_verbosity_arg = ""
 
-    def download(self, location, architecture, license_accepted=False):
+    def download_miniforge(self, location, architecture, license_accepted=False):
         """Download the Miniforge installer."""
         # Download Miniforge installer
         conda_installer_path = Path(location).resolve() / "conda_installer.sh"
         install_script = self._get_install_script(architecture)
+        miniforge_url = (
+            "https://github.com/conda-forge/miniforge/releases/latest/download/"
+            + install_script
+        )
 
-        self._download_miniforge_installer(
-            install_script=install_script, installer_path=conda_installer_path
+        self.comm.download(
+            src_url=miniforge_url,
+            dst_path=conda_installer_path,
+            log_dispatcher=self.log_dispatcher,
         )
 
         # Make sure the user has accepted the Miniforge installer license
@@ -282,44 +335,6 @@ class Conda:
             )
 
         return install_script
-
-    def _download_miniforge_installer(self, *, install_script, installer_path):
-        """
-        Download the Miniforge installer to `installer_path`.
-
-        Parameters
-        ----------
-        installer_path : pathlib.Path
-            The path to download the conda installer to.
-
-        Raises
-        ------
-        RuntimeError
-            If the container sandbox architecture is unknown.
-        urllib.error.URLError
-            If three attempts at downloading the installer all fail.
-        """
-        miniforge_installer_url = (
-            "https://github.com/conda-forge/miniforge/releases/latest/download/"
-            + install_script
-        )
-
-        # Make up to 3 attempts at downloading the installer
-        for retry in range(3):
-            try:
-                with urllib.request.urlopen(miniforge_installer_url) as url:  # nosec B310
-                    installer_path.write_bytes(url.read())
-
-                break
-
-            except urllib.error.URLError as e:
-                url_error = e
-
-                # Exponential back-off
-                time.sleep(2**retry + random.uniform(0.001, 1))  # nosec B311
-
-        else:
-            raise url_error
 
     def __getattr__(self, func):
         """

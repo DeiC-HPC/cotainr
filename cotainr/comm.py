@@ -15,8 +15,12 @@ CommunicationInterface
 
 from json import dump, load
 from pathlib import Path
+import random
 from shutil import copyfile
 import subprocess
+import time
+import urllib.error
+import urllib.request
 
 
 class CommunicationInterface:
@@ -45,7 +49,7 @@ class CommunicationInterface:
         data : str
             The data that is written
         mode : str
-            Default (a) appends data, alternatives are 'r+', 'a' for write, append
+            Default (a) appends data, alternatives are 'r+', 'wb', 'a' for write, append
         log_dispatcher : :class:`LogDispatcher`
         """
         if isinstance(filename, str):
@@ -108,6 +112,49 @@ class CommunicationInterface:
 
         if not dst_fd.exists():
             raise FileNotFoundError
+
+    def download(self, *, src_url, dst_path, log_dispatcher):
+        """
+        Download the installer_url to `installer_path`.
+
+        Parameters
+        ----------
+        src_url : str
+            The name of the url where the data is found
+        dst_path : pathlib.Path
+            The path where the downloaded file is stored.
+
+        Raises
+        ------
+        RuntimeError
+            If the container sandbox architecture is unknown.
+        urllib.error.URLError
+            If three attempts at downloading the installer all fail.
+        """
+        log_dispatcher.log_to_stdout(msg=f"Downloading {src_url}")
+
+        # Make up to 3 attempts at downloading the installer
+        for retry in range(3):
+            try:
+                with urllib.request.urlopen(src_url) as url:  # nosec B310
+                    self.write_to_file(
+                        filename=dst_path,
+                        data=url.read(),
+                        mode="wb",
+                        log_dispatcher=log_dispatcher,
+                    )
+                    # dst_path.write_bytes(url.read())
+
+                break
+
+            except urllib.error.URLError as e:
+                url_error = e
+
+                # Exponential back-off
+                time.sleep(2**retry + random.uniform(0.001, 1))  # nosec B311
+
+        else:
+            raise url_error
 
     def run_command_in_container(self, cmd, log_dispatcher, **kwargs):
         """

@@ -232,7 +232,7 @@ class Build(CotainrSubcommand):
 
                     conda = pack.Conda(comm=comm, log_settings=self.log_settings)
                     conda.copy_file(self.conda_env, conda_env_file)
-                    install_path = conda.download(
+                    install_path = conda.download_miniforge(
                         location=sandbox.sandbox_dir,
                         architecture=sandbox.architecture,
                         license_accepted=self.accept_licenses,
