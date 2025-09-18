@@ -48,7 +48,8 @@ logger = logging.getLogger(__name__)
 #             _v = ""
 
 #         # Reference = [function, string, verification]
-#         download =       ['download', self.condaInstaller_sh, self.verify_license_accept]
+#         download =       ['download', self.condaInstaller_sh, None]
+#         verify_license = ['subprocess', ["bash", f"{installer_path.name}"], self.verify_license_accept]
 #         install =        ['run', f"bash {install_path.name} -b -s -p {self.prefix}", self.verify_correct_conda_runtime and install_path.unlink()]
 #         source_install = [f'write{source_file}', f"source {self.prefix + '/etc/profile.d/conda.sh'}", None]
 #         update =         ['run', "conda update -y -n base -c conda-forge conda -q" + _v, None]
@@ -120,7 +121,6 @@ class Conda:
     """
 
     def __init__(self, *, comm, prefix="/opt/cotainr/conda", log_settings=None):
-        """Bootstrap a conda installation."""
         self.comm = comm
         self.prefix = prefix
 
@@ -143,54 +143,114 @@ class Conda:
         else:
             self._conda_verbosity_arg = ""
 
-    def download_miniforge(self, location, architecture, license_accepted=False):
-        """Download the Miniforge installer."""
-        # Download Miniforge installer
-        conda_installer_path = Path(location).resolve() / "conda_installer.sh"
-        install_script = self._get_install_script(architecture)
+    @staticmethod
+    def get_miniforge_url(architecture):
+        """Return the miniforge URL for a given CPU architecture (uname)."""
+        installer_name = {
+            "arm64": "Miniforge3-Linux-aarch64.sh",
+            "aarch64": "Miniforge3-Linux-aarch64.sh",
+            "x86_64": "Miniforge3-Linux-x86_64.sh",
+        }
+
         miniforge_url = (
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
-            + install_script
+            + installer_name.get(architecture)
+        )
+        return miniforge_url
+
+    def extract_license(self, installer_path):
+        """
+        Extract and display Miniforge installer license for acceptance.
+
+        Runs the Miniforge bootstrap installer to extract the license, displays
+        it to the user, and prompts for acceptance of the license terms. Exits
+        if the license terms are not accepted.
+
+        Parameters
+        ----------
+        installer_path : pathlib.Path
+                The path of the Miniforge installer to run to bootstrap Conda.
+
+        Raises
+        ------
+        RuntimeError
+                If unable to extract a license from the Miniforge installer.
+
+        Notes
+        -----
+        This assumes that the Miniforge installer, as it is run, prompts the
+        user for pressing ENTER to display the license, then displays the
+        license and prompts the user to answer "yes" to accept the license
+        terms.
+
+        We try to "forward" this flow to the user by extracting the text shown
+        when running the installer and pressing ENTER. We then prompt for a
+        "yes" to the license terms.
+        """
+        # process = self.comm._subprocess_runner(
+        #     ["bash", f"{installer_path.name}"], self.log_dispatcher, input="\n",
+        # )
+        import subprocess
+
+        with subprocess.Popen(
+            ["bash", f"{installer_path.name}"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True,
+        ) as process:
+            license_text, _ = process.communicate(
+                # "press" ENTER to display the license and capture it
+                "\n"
+            )
+            process.kill()  # We only use this process to extract the license
+
+        util._flush_stdin_buffer()
+        return license_text
+
+    def verify_license(self, license_text):
+        """Prompt user for acceptance of license terms."""
+        if not util.answer_is_yes(license_text):
+            self.log_dispatcher.log_to_stderr(
+                msg="You have not accepted the Miniforge installer license. Aborting!",
+            )
+            sys.exit(0)
+
+        self.license_accepted = True
+        self.log_dispatcher.log_to_stdout(
+            msg="You have accepted the Miniforge installer license.",
         )
 
+    def download_miniforge(self, location, architecture, license_accepted=False):
+        """Download the Miniforge installer."""
+        conda_installer_path = Path(location).resolve() / "conda_installer.sh"
         self.comm.download(
-            src_url=miniforge_url,
+            src_url=self.get_miniforge_url(architecture),
             dst_path=conda_installer_path,
             log_dispatcher=self.log_dispatcher,
         )
-
-        # Make sure the user has accepted the Miniforge installer license
-        if not license_accepted:
-            self._display_miniforge_license_for_acceptance(
-                installer_path=conda_installer_path
-            )
-        else:
-            self.log_dispatcher.logger_stderr.log(
-                msg=(
-                    "You have accepted the Miniforge installer license via the command "
-                    "line option '--accept-licenses'."
-                ),
-                level=logging.WARNING,
-            )
         return conda_installer_path
 
-    def install(self, install_path, env_file):
-        """Install the downloaded Miniforge conda."""
-        # Run Conda installer
+    def install(self, install_path):
+        """Install Miniforge conda using the .sh installer at install_path."""
         self.comm.run_command_in_container(
             cmd=f"bash {install_path.name} -b -s -p {self.prefix}",
             log_dispatcher=self.log_dispatcher,
         )
 
-        # Add Conda to container sandbox env
+    def source_install(self, env_file):
+        """Add source conda.sh to the container environment."""
         self.comm.write_to_file(
             env_file,
-            f"source {self.prefix + '/etc/profile.d/conda.sh'}",
+            f"source {self.prefix}/etc/profile.d/conda.sh",
             log_dispatcher=self.log_dispatcher,
         )
 
-        # Check that we correctly use the newly installed Conda from now on
-        """Raise RuntimeError if multiple interfering Conda installs are found."""
+    def verify_install(self):
+        """
+        Check that we correctly use the newly installed Conda.
+
+        Raise RuntimeError if multiple interfering Conda installs are found.
+        """
         source_check_process = self.comm.run_command_in_container(
             cmd="conda info --base", log_dispatcher=self.log_dispatcher
         )
@@ -201,16 +261,13 @@ class Conda:
                 f"{source_check_process.stdout.strip()}. Aborting!"
             )
 
-        # Update the installed Conda package manager to the latest version
+    def update_conda(self):
+        """Update the installed Conda package manager to the latest version."""
         self.comm.run_command_in_container(
             cmd="conda update -y -n base -c conda-forge conda -q"
             + self._conda_verbosity_arg,
             log_dispatcher=self.log_dispatcher,
         )
-
-        # Remove unneeded files
-        install_path.unlink()
-        self.cleanup_unused_files()
 
     def add_environment(self, *, path, name):
         """
@@ -241,100 +298,6 @@ class Conda:
             cmd="conda clean -y -a -q" + self._conda_verbosity_arg,
             log_dispatcher=self.log_dispatcher,
         )
-
-    def _display_miniforge_license_for_acceptance(self, *, installer_path):
-        """
-        Extract and display Miniforge installer license for acceptance.
-
-        Runs the Miniforge bootstrap installer to extract the license, displays
-        it to the user, and prompts for acceptance of the license terms. Exits
-        if the license terms are not accepted.
-
-        Parameters
-        ----------
-        installer_path : pathlib.Path
-            The path of the Miniforge installer to run to bootstrap Conda.
-
-        Raises
-        ------
-        RuntimeError
-            If unable to extract a license from the Miniforge installer.
-
-        Notes
-        -----
-        This assumes that the Miniforge installer, as it is run, prompts the
-        user for pressing ENTER to display the license, then displays the
-        license and prompts the user to answer "yes" to accept the license
-        terms.
-
-        We try to "forward" this flow to the user by extracting the text shown
-        when running the installer and pressing ENTER. We then prompt for a
-        "yes" to the license terms.
-        """
-        process = self.comm._subprocess_runner(
-            ["bash", f"{installer_path.name}"], self.log_dispatcher, input="\n"
-        )
-        license_text = process.stdout
-        util._flush_stdin_buffer()
-        if license_text:
-            license_text = license_text.replace(
-                # remove prompt for pressing enter (as we have already done this...)
-                "Please, press ENTER to continue\n>>> ",
-                "\n",
-            )
-            # Remove "[yes|no]"" and ">>>" from license text as answer_is_yes
-            # adds them as part of the input handling
-            license_text = license_text.replace(" [yes|no]\n>>> ", "")
-            self.log_dispatcher.logger_stdout.log(
-                f"The Miniforge displayed license is: {license_text}",
-                level=logging.DEBUG,
-            )
-            # prompt user for acceptance of license terms
-            if not util.answer_is_yes(license_text):
-                self.log_dispatcher.logger_stderr.log(
-                    msg="You have not accepted the Miniforge installer license. Aborting!",
-                    level=logging.CRITICAL,
-                )
-                sys.exit(0)
-
-            self.license_accepted = True
-            self.log_dispatcher.logger_stdout.log(
-                msg="You have accepted the Miniforge installer license.",
-                level=logging.INFO,
-            )
-        else:
-            raise RuntimeError(
-                "No license seems to be displayed by the Miniforge installer."
-            )
-
-    @staticmethod
-    def _get_install_script(architecture):
-        """
-        Determine the Miniforge installer to be downloaded based on system architecture.
-
-        Always downloads a Linux version as the container is expected to always be Linux.
-
-        Parameters
-        ----------
-        architecture : str
-            The container architecture as returned by "uname -m".
-
-        Raises
-        ------
-        ValueError
-            If the container sandbox architecture is not supported.
-        """
-        if architecture in ("arm64", "aarch64"):
-            install_script = "Miniforge3-Linux-aarch64.sh"
-        elif architecture == "x86_64":
-            install_script = "Miniforge3-Linux-x86_64.sh"
-        else:
-            raise ValueError(
-                "Cotainr's CondaInstall only supports x86_64 and arm64/aarch64. "
-                f'Cotainr got "{architecture=}" for your container'
-            )
-
-        return install_script
 
     def __getattr__(self, func):
         """

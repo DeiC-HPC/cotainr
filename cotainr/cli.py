@@ -235,18 +235,32 @@ class Build(CotainrSubcommand):
                     install_path = conda.download_miniforge(
                         location=sandbox.sandbox_dir,
                         architecture=sandbox.architecture,
-                        license_accepted=self.accept_licenses,
                     )
-                    conda.install(install_path=install_path, env_file=sandbox.env_file)
+                    if not self.accept_licenses:
+                        license_text = conda.extract_license(install_path)
+                        conda.verify_license(license_text)
+                    else:
+                        conda.log_dispatcher.logger_stderr.log(
+                            msg=(
+                                "You have accepted the Miniforge installer license via the command "
+                                "line option '--accept-licenses'."
+                            ),
+                            level=logging.WARNING,
+                        )
+                    conda.install(install_path=install_path)
+                    conda.source_install(env_file=sandbox.env_file)
+                    conda.verify_install()
+                    conda.update_conda()
                     conda.add_environment(path=conda_env_file, name=conda_env_name)
 
                     conda.write_to_file(
-                        sandbox.env_file, f"conda activate {conda_env_name}"
+                        sandbox.env_file, f"\nconda activate {conda_env_name}"
                     )
 
                     # Clean-up unused files
                     logger.info("Cleaning up unused Conda files")
-                    # conda.cleanup_unused_files()
+                    install_path.unlink()
+                    conda.cleanup_unused_files()
                     logger.info(
                         "Finished installing conda environment: %s", self.conda_env
                     )

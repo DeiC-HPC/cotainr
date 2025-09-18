@@ -145,7 +145,7 @@ class CommunicationInterface:
                     )
                     # dst_path.write_bytes(url.read())
 
-                break
+                return dst_path
 
             except urllib.error.URLError as e:
                 url_error = e
