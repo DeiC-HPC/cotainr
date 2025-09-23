@@ -9,6 +9,7 @@ Licensed under the European Union Public License (EUPL) 1.2
 
 import builtins
 import contextlib
+from contextlib import contextmanager
 import io
 import logging
 import os
@@ -16,6 +17,7 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
+from time import sleep
 import urllib.error
 import urllib.request
 
@@ -262,3 +264,147 @@ def singularity_inspect():
         check=True,
         text=True,
     )
+
+
+@pytest.fixture(scope="session")
+def files(request):
+    """
+    Reuse files using the PyTest cache.
+
+    Clear cache using `pytest --cache-clear`.
+
+    Usage::
+
+        def test_conda(files):
+            path = files['conda_installer']
+            ...
+    """
+    cache = request.config.cache
+    cache_dir = cache.mkdir("test_files")
+
+    allfiles = fileFactory(cache_dir)
+    yield allfiles
+
+
+class fileFactory:
+    def __init__(self, folder):
+        self.folder = folder
+
+        self.cached_files = {}
+        for fil in folder.glob("**/*.*"):
+            self.cached_files[fil.name] = fil
+
+    def __getitem__(self, name):
+        if name in self.cached_files:
+            return self.cached_files[name]
+
+        # Each cached object has its own filepath in .pytest_cache/d/test_files/
+        filepath = self.folder / name
+        for _ in range(60):
+            if filepath.exists():
+                # Functions can choose arbitrary name for file so we glob for it
+                # XXX Consider using generated_file name instead, but how to get it before try...
+                myFile = [i for i in filepath.glob("*.*")]
+                assert len(myFile) == 1, (
+                    "Multiple cache files per folder is not supported"
+                )
+                self.cached_files[name] = filepath / myFile[0]
+                return self.cached_files[name]
+
+            try:
+                with lock(self.folder / f"{name}.lock"):
+                    work_path = filepath.with_name(f"{filepath.name}-tmp")
+                    work_path.mkdir(exist_ok=True)
+                    generated_file = getattr(self, name)(work_path)
+
+                    assert generated_file.is_file()
+                    assert generated_file.exists()
+                    work_path.rename(filepath)
+
+            except Locked:
+                sleep(1)
+
+        raise RuntimeError(
+            f"{self.__class__.__name__} fixture generation "
+            f"takes too long: {name}.  Consider using pytest "
+            "--cache-clear if there are stale lockfiles"
+        )
+
+    ### Recipes for creating cached files ###
+    def conda_installer(self, work_path):
+        from cotainr.comm import CommunicationInterface
+        from cotainr.pack import Conda
+        from cotainr.util import cpath
+
+        comm = CommunicationInterface(exec_default=[])
+        conda = Conda(comm=comm)
+        my_work_cfile = cpath(container_directory="/", path=work_path)
+        install_path = conda.download_miniforge(
+            location_cfile=my_work_cfile, architecture="x86_64", license_accepted=True
+        )
+        return install_path.path
+
+    def generic_sif(self, image_path, image):
+        subprocess.run(
+            args=["singularity", "pull", str(image_path.resolve()), image],
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+        return image_path
+
+    def alpine_sif(self, work_path):
+        return self.generic_sif(
+            work_path / "alpine_latest.sif", "docker://alpine:latest"
+        )
+
+    def ubuntu_sif(self, work_path):
+        return self.generic_sif(
+            work_path / "ubuntu_latest.sif", "docker://ubuntu:latest"
+        )
+
+    def conda_sif(self, work_path):
+        from cotainr.container import SingularitySandbox
+        from cotainr.pack import Conda
+        from cotainr.tracing import LogSettings
+
+        log = LogSettings()
+        install_path = self["conda_installer"]
+
+        with SingularitySandbox(
+            base_image=self["ubuntu_sif"], prefix=str(work_path) + "/", log_settings=log
+        ) as sandbox:
+            conda = Conda(comm=sandbox.comm, log_settings=log)
+            local_install_path = sandbox.sandbox_dir / "conda_installer.sh"
+            sandbox.comm.copy(
+                install_path, local_install_path, log_dispatcher=conda.log_dispatcher
+            )
+            conda.install(local_install_path)
+            sandbox.comm.add(
+                filename=sandbox.env_file, log_dispatcher=sandbox.log_dispatcher
+            )
+
+            assert sandbox.env_file.host_path.exists()
+            conda.source_install(env_file=sandbox.env_file)
+            conda.verify_install()
+            conda.update_conda()  # Requires conda connection
+            sandbox.build_image(path=work_path / "conda.sif")
+
+        return work_path / "conda.sif"
+
+
+class Locked(FileExistsError):
+    pass
+
+
+@contextmanager
+def lock(path):
+    fd = None
+    try:
+        with path.open("x") as fd:
+            yield
+    except FileExistsError:
+        raise Locked() from None
+    finally:
+        if fd is not None:
+            path.unlink()

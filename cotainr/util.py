@@ -24,11 +24,69 @@ systems_file
 
 import json
 import logging
-from pathlib import Path
+from pathlib import Path, PosixPath
 import sys
 
 logger = logging.getLogger(__name__)
 systems_file = (Path(__file__) / "../../systems.json").resolve()
+
+
+class cpath:
+    """
+    Dataclass to store the path to a folder or file inside a container.
+
+    Parameters
+    ----------
+    path : PosixPath or str
+        The absolute path to a file or folder in the reference of the container file system.
+    container_directory : PosixPath or str
+        The absolute path to the container in the reference of the host file system.
+    """
+
+    def __init__(
+        self, path: PosixPath | str = "/", container_directory: PosixPath | str = None
+    ):
+        self._container_directory = container_directory
+        self.path = Path(path)
+
+    @property
+    def container_directory(self):
+        """Wrapper to expose the optional directory on the host filesystem."""
+        if self._container_directory is None:
+            raise AttributeError(
+                f"{self.path} is only defined in the context of the container:\n"
+            )
+        return Path(self._container_directory)
+
+    @property
+    def host_path(self):
+        """Get the host filesystem path to a file inside the container."""
+        if str(self.path)[0] == "/":
+            path = Path(str(self.path)[1:])
+        else:
+            path = self.path
+        return self.container_directory / path
+
+    @classmethod
+    def from_hostpath(cls, host_path, container_directory):
+        """Alternative Constructor using from a host filesystem path."""
+        if isinstance(host_path, str):
+            host_path = Path(host_path)
+        if isinstance(container_directory, str):
+            container_directory = Path(container_directory)
+        path = host_path.relative_to(container_directory)  # Errors if not relative
+        path = Path("/" + str(path))
+        return cls(path=path, container_directory=container_directory)
+
+    def __truediv__(self, other):
+        """Overwrite Python builtin to mirror pathlib.Path syntax."""
+        if isinstance(other, cpath):
+            assert self._container_directory == other._container_directory
+        else:
+            other = cpath(path=other)
+        return cpath(
+            path=self.path / other.path, container_directory=self._container_directory
+        )
 
 
 def answer_is_yes(input_text, max_attempts=1000):

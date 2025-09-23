@@ -19,6 +19,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from . import comm, tracing
+from .util import cpath
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class SingularitySandbox:
         value is `None` (unknown) until entering the the sandbox context.
     """
 
-    def __init__(self, *, base_image, log_settings=None):
+    def __init__(self, *, base_image, log_settings=None, prefix=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
@@ -65,7 +66,7 @@ class SingularitySandbox:
         self.env_file = None
         self.metadata_file = None
         self.comm = None
-        self.comm_methods = []
+        self.prefix = prefix
 
         if log_settings is None:
             log_settings = tracing.LogSettings()
@@ -100,9 +101,9 @@ class SingularitySandbox:
         self._origin = Path().resolve()
 
         # Create sandbox
-        self._tmp_dir = TemporaryDirectory()
-        self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
-        self.sandbox_dir.mkdir(exist_ok=False)
+        self._tmp_dir = TemporaryDirectory(prefix=self.prefix)
+        sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
+        sandbox_dir.mkdir(exist_ok=False)
 
         # Create communication interface into sandbox
         """
@@ -126,6 +127,8 @@ class SingularitySandbox:
           umask to 0022). If you need other file permissions, you must manually
           change them.
         """
+        self.sandbox_dir = cpath.from_hostpath(sandbox_dir, sandbox_dir)
+        # self.sandbox_dir = cpath(sandbox_dir)
         exec_default = [
             "singularity",
             "--nocolor",
@@ -133,13 +136,13 @@ class SingularitySandbox:
             "--writable",
             "--no-home",
             "--no-umask",
-            self.sandbox_dir,
+            self.sandbox_dir.host_path,
         ]
         self.comm = comm.CommunicationInterface(exec_default)
         self.env_file = self.sandbox_dir / ".singularity.d/env/92-cotainr-env.sh"
         self.metadata_file = self.sandbox_dir / ".singularity.d/labels.json"
 
-        self.comm._subprocess_runner(
+        self.comm.subprocess_runner(
             args=[
                 "singularity",
                 self.ss_verbosity,
@@ -148,19 +151,19 @@ class SingularitySandbox:
                 "--force",  # sandbox_dir.mkdir() checks for existing sandbox image
                 "--sandbox",
                 "--fix-perms",
-                self.sandbox_dir,
+                self.sandbox_dir.host_path,
                 self.base_image,
             ],
             log_dispatcher=self.log_dispatcher,
         )
 
         # Change directory to the sandbox
-        os.chdir(self.sandbox_dir)
+        os.chdir(self.sandbox_dir.host_path)
 
         # Get the architecture of the sandbox if it is not already set
         # (should not be set in real world scenarios)
         if self.architecture is None:
-            arch_process = self.comm.run_command_in_container(
+            arch_process = self.comm.run(
                 cmd="uname -m", log_dispatcher=self.log_dispatcher
             )
             self.architecture = arch_process.stdout.strip()
@@ -203,7 +206,7 @@ class SingularitySandbox:
         path : :class:`os.PathLike`
             Path to the built container image.
         """
-        self.comm._subprocess_runner(
+        self.comm.subprocess_runner(
             args=[
                 "singularity",
                 self.ss_verbosity,
@@ -211,7 +214,7 @@ class SingularitySandbox:
                 "build",
                 "--force",
                 path,
-                self.sandbox_dir,
+                self.sandbox_dir.host_path,
             ],
             log_dispatcher=self.log_dispatcher,
         )

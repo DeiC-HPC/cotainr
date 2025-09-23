@@ -223,21 +223,21 @@ class Build(CotainrSubcommand):
                 base_image=self.base_image, log_settings=self.log_settings
             ) as sandbox:
                 comm = sandbox.comm
-
+                sandbox_dir = sandbox.sandbox_dir
                 if self.conda_env is not None:
                     # Install supplied conda env
                     logger.info("Installing Conda environment: %s", self.conda_env)
-                    conda_env_name = "conda_container_env"
-                    conda_env_file = sandbox.sandbox_dir / self.conda_env.name
 
+                    conda_env_cfile = sandbox_dir / self.conda_env.name
                     conda = pack.Conda(comm=comm, log_settings=self.log_settings)
-                    conda.copy_file(self.conda_env, conda_env_file)
-                    install_path = conda.download_miniforge(
-                        location=sandbox.sandbox_dir,
+                    conda.copy(self.conda_env, conda_env_cfile)
+                    install_cfile = conda.download_miniforge(
+                        location_cpath=sandbox_dir,
                         architecture=sandbox.architecture,
                     )
+
                     if not self.accept_licenses:
-                        license_text = conda.extract_license(install_path)
+                        license_text = conda.extract_license(install_cfile)
                         conda.verify_license(license_text)
                     else:
                         conda.log_dispatcher.logger_stderr.log(
@@ -247,19 +247,18 @@ class Build(CotainrSubcommand):
                             ),
                             level=logging.WARNING,
                         )
-                    conda.install(install_path=install_path)
+                    conda.install(install_cpath=install_cfile)
                     conda.source_install(env_file=sandbox.env_file)
                     conda.verify_install()
                     conda.update_conda()
-                    conda.add_environment(path=conda_env_file, name=conda_env_name)
 
-                    conda.write_to_file(
-                        sandbox.env_file, f"\nconda activate {conda_env_name}"
-                    )
+                    conda_env_name = "conda_container_env"
+                    conda.add_environment(cpath=conda_env_cfile, name=conda_env_name)
+                    conda.write(sandbox.env_file, f"\nconda activate {conda_env_name}")
 
                     # Clean-up unused files
                     logger.info("Cleaning up unused Conda files")
-                    install_path.unlink()
+                    install_cfile.host_path.unlink()
                     conda.cleanup_unused_files()
                     logger.info(
                         "Finished installing conda environment: %s", self.conda_env
@@ -271,7 +270,7 @@ class Build(CotainrSubcommand):
                     "cotainr.version": _cotainr_version,
                     "cotainr.url": "https://github.com/DeiC-HPC/cotainr",
                 }
-                sandbox.write_to_file(sandbox.metadata_file, data=metadata, mode="r+")
+                sandbox.write(sandbox.metadata_file, data=metadata, mode="r+")
                 logger.info("Building container image")
                 sandbox.build_image(path=self.image_path)
 

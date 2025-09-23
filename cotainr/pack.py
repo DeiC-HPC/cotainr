@@ -14,7 +14,6 @@ CondaInstall
 """
 
 import logging
-from pathlib import Path
 import re
 import sys
 
@@ -158,7 +157,7 @@ class Conda:
         )
         return miniforge_url
 
-    def extract_license(self, installer_path):
+    def extract_license(self, install_cpath):
         """
         Extract and display Miniforge installer license for acceptance.
 
@@ -168,7 +167,7 @@ class Conda:
 
         Parameters
         ----------
-        installer_path : pathlib.Path
+        install_cpath : pathlib.Path
                 The path of the Miniforge installer to run to bootstrap Conda.
 
         Raises
@@ -187,13 +186,13 @@ class Conda:
         when running the installer and pressing ENTER. We then prompt for a
         "yes" to the license terms.
         """
-        # process = self.comm._subprocess_runner(
-        #     ["bash", f"{installer_path.name}"], self.log_dispatcher, input="\n",
+        # process = self.comm.subprocess_runner(
+        #     ["bash", f"{install_cpath.name}"], self.log_dispatcher, input="\n",
         # )
         import subprocess
 
         with subprocess.Popen(
-            ["bash", f"{installer_path.name}"],
+            ["bash", f"{install_cpath.path.name}"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             text=True,
@@ -220,26 +219,26 @@ class Conda:
             msg="You have accepted the Miniforge installer license.",
         )
 
-    def download_miniforge(self, location, architecture, license_accepted=False):
+    def download_miniforge(self, location_cpath, architecture, license_accepted=False):
         """Download the Miniforge installer."""
-        conda_installer_path = Path(location).resolve() / "conda_installer.sh"
+        conda_installer_cfile = location_cpath / "conda_installer.sh"
         self.comm.download(
             src_url=self.get_miniforge_url(architecture),
-            dst_path=conda_installer_path,
+            dst_path=conda_installer_cfile,
             log_dispatcher=self.log_dispatcher,
         )
-        return conda_installer_path
+        return conda_installer_cfile
 
-    def install(self, install_path):
-        """Install Miniforge conda using the .sh installer at install_path."""
-        self.comm.run_command_in_container(
-            cmd=f"bash {install_path.name} -b -s -p {self.prefix}",
+    def install(self, install_cpath):
+        """Install Miniforge conda using the .sh installer at install_cpath."""
+        self.comm.run(
+            cmd=f"bash {install_cpath.path.name} -b -s -p {self.prefix}",
             log_dispatcher=self.log_dispatcher,
         )
 
     def source_install(self, env_file):
         """Add source conda.sh to the container environment."""
-        self.comm.write_to_file(
+        self.comm.write(
             env_file,
             f"source {self.prefix}/etc/profile.d/conda.sh",
             log_dispatcher=self.log_dispatcher,
@@ -251,7 +250,7 @@ class Conda:
 
         Raise RuntimeError if multiple interfering Conda installs are found.
         """
-        source_check_process = self.comm.run_command_in_container(
+        source_check_process = self.comm.run(
             cmd="conda info --base", log_dispatcher=self.log_dispatcher
         )
         if source_check_process.stdout.strip() != f"{self.prefix}":
@@ -263,13 +262,13 @@ class Conda:
 
     def update_conda(self):
         """Update the installed Conda package manager to the latest version."""
-        self.comm.run_command_in_container(
+        self.comm.run(
             cmd="conda update -y -n base -c conda-forge conda -q"
             + self._conda_verbosity_arg,
             log_dispatcher=self.log_dispatcher,
         )
 
-    def add_environment(self, *, path, name):
+    def add_environment(self, *, cpath, name):
         """
         Add an exported Conda environment to the Conda install.
 
@@ -277,14 +276,15 @@ class Conda:
 
         Parameters
         ----------
-        path : :class:`os.PathLike`
+        cpath : :class:`util.cpath`
             The path to the exported env.yml file describing the Conda
             environment to install.
         name : str
             The name to use for the installed Conda environment.
         """
-        self.comm.run_command_in_container(
-            cmd=f"conda env create -f {path} -n {name} -q" + self._conda_verbosity_arg,
+        self.comm.run(
+            cmd=f"conda env create -f {cpath.path} -n {name} -q"
+            + self._conda_verbosity_arg,
             log_dispatcher=self.log_dispatcher,
         )
 
@@ -294,7 +294,7 @@ class Conda:
 
         Equivalent to calling "conda clean -a".
         """
-        self.comm.run_command_in_container(
+        self.comm.run(
             cmd="conda clean -y -a -q" + self._conda_verbosity_arg,
             log_dispatcher=self.log_dispatcher,
         )
