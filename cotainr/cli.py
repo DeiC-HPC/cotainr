@@ -33,7 +33,6 @@ import logging
 from pathlib import Path
 import platform
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -223,22 +222,36 @@ class Build(CotainrSubcommand):
             with container.SingularitySandbox(
                 base_image=self.base_image, log_settings=self.log_settings
             ) as sandbox:
+                comm = sandbox.comm
+
                 if self.conda_env is not None:
                     # Install supplied conda env
                     logger.info("Installing Conda environment: %s", self.conda_env)
                     conda_env_name = "conda_container_env"
                     conda_env_file = sandbox.sandbox_dir / self.conda_env.name
-                    shutil.copyfile(self.conda_env, conda_env_file)
+                    comm.copy(
+                        self.conda_env,
+                        conda_env_file,
+                        log_dispatcher=sandbox.log_dispatcher,
+                    )
+                    # shutil.copyfile(self.conda_env, conda_env_file)
                     conda_install = pack.CondaInstall(
-                        sandbox=sandbox,
+                        comm=comm,
+                        sandbox_dir=sandbox.sandbox_dir,
+                        env_file=sandbox.env_file,
+                        architecture=sandbox.architecture,
                         license_accepted=self.accept_licenses,
                         log_settings=self.log_settings,
                     )
                     conda_install.add_environment(
                         path=conda_env_file, name=conda_env_name
                     )
-
-                    sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
+                    comm.write(
+                        sandbox.env_file,
+                        f"\nconda activate {conda_env_name}",
+                        log_dispatcher=conda_install.log_dispatcher,
+                    )
+                    # sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
 
                     # Clean-up unused files
                     logger.info("Cleaning up unused Conda files")
@@ -247,8 +260,6 @@ class Build(CotainrSubcommand):
                         "Finished installing conda environment: %s", self.conda_env
                     )
 
-                logger.info("Adding metadata to container")
-                sandbox.add_metadata()
                 logger.info("Building container image")
                 sandbox.build_image(path=self.image_path)
 

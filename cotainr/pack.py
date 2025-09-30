@@ -15,13 +15,9 @@ CondaInstall
 
 import logging
 from pathlib import Path
-import random
 import re
 import subprocess
 import sys
-import time
-import urllib.error
-import urllib.request
 
 from . import tracing, util
 
@@ -63,7 +59,7 @@ class CondaInstall:
         Singularity commands that run in sandbox, if the logging machinery is
         used.
 
-    Notes
+    v    Notes
     -----
     When adding a Conda environment, it is the responsibility of the user of
     cotainr to make sure they have the necessary rights to use the Conda
@@ -75,13 +71,16 @@ class CondaInstall:
     def __init__(
         self,
         *,
-        sandbox,
+        comm,
+        sandbox_dir,
+        env_file,
+        architecture,
         prefix="/opt/cotainr/conda",
         license_accepted=False,
         log_settings=None,
     ):
         """Bootstrap a conda installation."""
-        self.sandbox = sandbox
+        self.comm = comm
         self.prefix = prefix
         self.license_accepted = license_accepted
         if log_settings is not None:
@@ -97,10 +96,10 @@ class CondaInstall:
             self.log_dispatcher = None
 
         # Download Miniforge installer
-        conda_installer_path = (
-            Path(self.sandbox.sandbox_dir).resolve() / "conda_installer.sh"
+        conda_installer_path = Path(sandbox_dir).resolve() / "conda_installer.sh"
+        self._download_miniforge_installer(
+            installer_path=conda_installer_path, architecture=architecture
         )
-        self._download_miniforge_installer(installer_path=conda_installer_path)
 
         # Make sure the user has accepted the Miniforge installer license
         if not license_accepted:
@@ -117,7 +116,7 @@ class CondaInstall:
             )
 
         # Bootstrap Conda environment in container
-        self._bootstrap_conda(installer_path=conda_installer_path)
+        self._bootstrap_conda(installer_path=conda_installer_path, env_file=env_file)
 
         # Remove unneeded files
         conda_installer_path.unlink()
@@ -151,7 +150,7 @@ class CondaInstall:
             cmd="conda clean -y -a" + self._conda_verbosity_arg
         )
 
-    def _bootstrap_conda(self, *, installer_path):
+    def _bootstrap_conda(self, *, installer_path, env_file):
         """
         Install Conda and at its source script to the sandbox env.
 
@@ -166,8 +165,10 @@ class CondaInstall:
         )
 
         # Add Conda to container sandbox env
-        self.sandbox.add_to_env(
-            shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}"
+        self.comm.write(
+            env_file,
+            f"source {self.prefix}/etc/profile.d/conda.sh",
+            log_dispatcher=self.log_dispatcher,
         )
 
         # Check that we correctly use the newly installed Conda from now on
@@ -317,7 +318,7 @@ class CondaInstall:
 
         return install_script
 
-    def _download_miniforge_installer(self, *, installer_path):
+    def _download_miniforge_installer(self, *, installer_path, architecture):
         """
         Download the Miniforge installer to `installer_path`.
 
@@ -333,7 +334,6 @@ class CondaInstall:
         urllib.error.URLError
             If three attempts at downloading the installer all fail.
         """
-        architecture = self.sandbox.architecture
         if architecture is None:
             raise RuntimeError(
                 f"Cotainr's CondaInstall got '{architecture=}' "
@@ -346,22 +346,11 @@ class CondaInstall:
             + install_script
         )
 
-        # Make up to 3 attempts at downloading the installer
-        for retry in range(3):
-            try:
-                with urllib.request.urlopen(miniforge_installer_url) as url:  # nosec B310
-                    installer_path.write_bytes(url.read())
-
-                break
-
-            except urllib.error.URLError as e:
-                url_error = e
-
-                # Exponential back-off
-                time.sleep(2**retry + random.uniform(0.001, 1))  # nosec B311
-
-        else:
-            raise url_error
+        self.comm.download(
+            src_url=miniforge_installer_url,
+            dst_path=installer_path,
+            log_dispatcher=self.log_dispatcher,
+        )
 
     def _run_command_in_sandbox(self, *, cmd):
         """
@@ -381,9 +370,7 @@ class CondaInstall:
         process : :class:`subprocess.CompletedProcess`
             Information about the process that ran in the container sandbox.
         """
-        return self.sandbox.run_command_in_container(
-            cmd=cmd, custom_log_dispatcher=self.log_dispatcher
-        )
+        return self.comm.run(cmd=cmd, log_dispatcher=self.log_dispatcher)
 
     @property
     def _conda_verbosity_arg(self):
