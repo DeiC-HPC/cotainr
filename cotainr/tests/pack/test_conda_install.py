@@ -28,6 +28,31 @@ from .patches import (
 from .stubs import StubEmptyLicensePopen, StubShowLicensePopen
 
 
+class TestCachedInstaller:
+    @staticmethod
+    def test_cache(files):
+        conda_installer = files["conda_installer"]
+        # TODO: Update when depricate Python 3.10
+        # https://stackoverflow.com/questions/22058048/hashing-a-file-in-python
+        from hashlib import sha256
+
+        h = sha256()
+        b = bytearray(128 * 1024)
+        mv = memoryview(b)
+        with open(conda_installer, "rb", buffering=0) as f:
+            while n := f.readinto(mv):
+                h.update(mv[:n])
+        assert (
+            h.hexdigest()
+            == "376b160ed8130820db0ab0f3826ac1fc85923647f75c1b8231166e3d559ab768"
+        )
+
+    @staticmethod
+    def test_recursive_cache(files):
+        # Temporary test to initialize the conda_sif conftest
+        _ = files["conda_sif"]
+
+
 class TestConstructor:
     def test_attributes(
         self,

@@ -345,12 +345,16 @@ class CondaInstall:
             "https://github.com/conda-forge/miniforge/releases/latest/download/"
             + install_script
         )
+        self.download(miniforge_installer_url, installer_path)
 
+    @staticmethod
+    def download(url, installer_path):
+        """Download an arbitrary url to the `installer_path` location."""
         # Make up to 3 attempts at downloading the installer
         for retry in range(3):
             try:
-                with urllib.request.urlopen(miniforge_installer_url) as url:  # nosec B310
-                    installer_path.write_bytes(url.read())
+                with urllib.request.urlopen(url) as open_url:  # nosec B310
+                    installer_path.write_bytes(open_url.read())
 
                 break
 

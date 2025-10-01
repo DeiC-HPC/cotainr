@@ -62,11 +62,12 @@ class SingularitySandbox:
         value is `None` (unknown) until entering the the sandbox context.
     """
 
-    def __init__(self, *, base_image, log_settings=None):
+    def __init__(self, *, base_image, log_settings=None, prefix=None):
         """Construct the SingularitySandbox context manager."""
         self.base_image = base_image
         self.sandbox_dir = None
         self.architecture = None
+        self.prefix = prefix
         if log_settings is not None:
             self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
@@ -91,9 +92,10 @@ class SingularitySandbox:
         self._origin = Path().resolve()
 
         # Create sandbox
-        self._tmp_dir = TemporaryDirectory()
+        self._tmp_dir = TemporaryDirectory(prefix=self.prefix)
         self.sandbox_dir = Path(self._tmp_dir.name) / "singularity_sandbox"
         self.sandbox_dir.mkdir(exist_ok=False)
+
         self._subprocess_runner(
             args=self._add_verbosity_arg(
                 args=[
@@ -325,8 +327,9 @@ class SingularitySandbox:
         """
         self._assert_within_sandbox_context()
 
+        local_f = f.relative_to(self.sandbox_dir)
         # ensure that the file is created *within* the container to get correct permissions, etc.
-        self.run_command_in_container(cmd=f"touch {f}")
+        self.run_command_in_container(cmd=f"touch /{local_f}")
 
         if not f.exists():
             raise FileNotFoundError(f"Creating file {f} failed.")
