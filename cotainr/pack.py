@@ -17,6 +17,7 @@ import logging
 from pathlib import Path
 import random
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -43,9 +44,6 @@ class CondaInstall:
         The sandbox in which Conda should be installed.
     prefix : str
         The Conda prefix to use for the Conda install.
-    license_accepted : bool, default=False
-        The flag to indicate whether or not the user has already accepted the
-        Miniforge license terms.
     log_settings : :class:`~cotainr.tracing.LogSettings`, optional
         The data used to setup the logging machinery (the default is None which
         implies that the logging machinery is not used).
@@ -56,8 +54,6 @@ class CondaInstall:
         The sandbox in which Conda is installed.
     prefix : str
         The Conda prefix used for the Conda install.
-    license_accepted : bool
-        Whether or not the Miniforge license terms have been accepted.
     log_dispatcher : :class:`~cotainr.tracing.LogDispatcher` or None.
         The log dispatcher used to process stdout/stderr message from
         Singularity commands that run in sandbox, if the logging machinery is
@@ -65,7 +61,7 @@ class CondaInstall:
 
     Notes
     -----
-    When adding a Conda environment, it is the responsibility of the user of
+    v    When adding a Conda environment, it is the responsibility of the user of
     cotainr to make sure they have the necessary rights to use the Conda
     channels/repositories and packages specified in the Conda environment, e.g.
     if `using the default Anaconda repositories
@@ -77,13 +73,11 @@ class CondaInstall:
         *,
         sandbox,
         prefix="/opt/cotainr/conda",
-        license_accepted=False,
         log_settings=None,
     ):
         """Bootstrap a conda installation."""
         self.sandbox = sandbox
         self.prefix = prefix
-        self.license_accepted = license_accepted
         if log_settings is not None:
             self._verbosity = log_settings.verbosity
             self.log_dispatcher = tracing.LogDispatcher(
@@ -96,13 +90,36 @@ class CondaInstall:
             self._verbosity = 0
             self.log_dispatcher = None
 
-        # Download Miniforge installer
+    def bootstrap(self, accept_licenses):
+        """Run the entire bootstrapping procedure of downloading and installing conda."""
+        install_path = self.download_miniforge()
+        self.verify_license(
+            license_accepted=accept_licenses, conda_installer_path=install_path
+        )
+        self.install(install_path)
+        self.source_install()
+        self.verify_install()
+        self.update_conda()
+        self.clean(install_path)
+
+    def install_environment(self, environment_yml):
+        """Install the user-provided environment."""
+        conda_env_name = "conda_container_env"
+        conda_env_file = self.sandbox.sandbox_dir / environment_yml.name
+        shutil.copyfile(environment_yml, conda_env_file)
+        self.add_environment(path=conda_env_file, name=conda_env_name)
+        self.sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
+
+    def download_miniforge(self):
+        """Download Miniforge installer."""
         conda_installer_path = (
             Path(self.sandbox.sandbox_dir).resolve() / "conda_installer.sh"
         )
         self._download_miniforge_installer(installer_path=conda_installer_path)
+        return conda_installer_path
 
-        # Make sure the user has accepted the Miniforge installer license
+    def verify_license(self, license_accepted, conda_installer_path):
+        """Make sure the user has accepted the Miniforge installer license."""
         if not license_accepted:
             self._display_miniforge_license_for_acceptance(
                 installer_path=conda_installer_path
@@ -116,10 +133,8 @@ class CondaInstall:
                 log_level=logging.WARNING,
             )
 
-        # Bootstrap Conda environment in container
-        self._bootstrap_conda(installer_path=conda_installer_path)
-
-        # Remove unneeded files
+    def clean(self, conda_installer_path):
+        """Remove unneeded files."""
         conda_installer_path.unlink()
         self.cleanup_unused_files()
 
@@ -151,37 +166,19 @@ class CondaInstall:
             cmd="conda clean -y -a" + self._conda_verbosity_arg
         )
 
-    def _bootstrap_conda(self, *, installer_path):
-        """
-        Install Conda and at its source script to the sandbox env.
-
-        Parameters
-        ----------
-        installer_path : pathlib.Path
-            The path of the Conda installer to run to bootstrap Conda.
-        """
-        # Run Conda installer
+    def install(self, installer_path):
+        """Run Conda installer."""
         self._run_command_in_sandbox(
             cmd=f"bash {installer_path.name} -b -s -p {self.prefix}"
         )
 
-        # Add Conda to container sandbox env
+    def source_install(self):
+        """Add Conda to container sandbox env."""
         self.sandbox.add_to_env(
             shell_script=f"source {self.prefix + '/etc/profile.d/conda.sh'}"
         )
 
-        # Check that we correctly use the newly installed Conda from now on
-        self._check_conda_bootstrap_integrity()
-
-        # Update the installed Conda package manager to the latest version
-        self._run_command_in_sandbox(
-            cmd=(
-                "conda update -y -n base -c conda-forge conda"
-                + self._conda_verbosity_arg
-            )
-        )
-
-    def _check_conda_bootstrap_integrity(self):
+    def verify_install(self):
         """Raise RuntimeError if multiple interfering Conda installs are found."""
         source_check_process = self._run_command_in_sandbox(cmd="conda info --base")
         if source_check_process.stdout.strip() != f"{self.prefix}":
@@ -190,6 +187,15 @@ class CondaInstall:
                 "We risk destroying the Conda install in "
                 f"{source_check_process.stdout.strip()}. Aborting!"
             )
+
+    def update_conda(self):
+        """Update the installed Conda package manager to the latest version."""
+        self._run_command_in_sandbox(
+            cmd=(
+                "conda update -y -n base -c conda-forge conda"
+                + self._conda_verbosity_arg
+            )
+        )
 
     def _display_message(self, *, msg, log_level=None):
         """

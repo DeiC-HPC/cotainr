@@ -33,7 +33,6 @@ import logging
 from pathlib import Path
 import platform
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -224,25 +223,20 @@ class Build(CotainrSubcommand):
                 base_image=self.base_image, log_settings=self.log_settings
             ) as sandbox:
                 if self.conda_env is not None:
-                    # Install supplied conda env
-                    logger.info("Installing Conda environment: %s", self.conda_env)
-                    conda_env_name = "conda_container_env"
-                    conda_env_file = sandbox.sandbox_dir / self.conda_env.name
-                    shutil.copyfile(self.conda_env, conda_env_file)
-                    conda_install = pack.CondaInstall(
+                    conda = pack.CondaInstall(
                         sandbox=sandbox,
-                        license_accepted=self.accept_licenses,
                         log_settings=self.log_settings,
                     )
-                    conda_install.add_environment(
-                        path=conda_env_file, name=conda_env_name
-                    )
 
-                    sandbox.add_to_env(shell_script=f"conda activate {conda_env_name}")
+                    logger.info("Downloading and installing miniforge conda")
+                    conda.bootstrap(accept_licenses=self.accept_licenses)
 
-                    # Clean-up unused files
+                    logger.info("Installing Conda environment: %s", self.conda_env)
+                    conda.install_environment(environment_yml=self.conda_env)
+
                     logger.info("Cleaning up unused Conda files")
-                    conda_install.cleanup_unused_files()
+                    conda.cleanup_unused_files()
+
                     logger.info(
                         "Finished installing conda environment: %s", self.conda_env
                     )
