@@ -298,12 +298,14 @@ class LogDispatcher:
         map_log_level_func,
         log_settings,
         filters=None,
+        log_prefix=None,
     ):
         """Set up the log dispatcher."""
         self.map_log_level = map_log_level_func
         self.verbosity = log_settings.verbosity
         self.log_file_path = log_settings.log_file_path
         self.no_color = log_settings.no_color
+        self.log_prefix = log_prefix
         log_level = self._determine_log_level(verbosity=log_settings.verbosity)
 
         # Setup cotainr log format
@@ -370,7 +372,11 @@ class LogDispatcher:
         msg : str
             The message to log.
         """
-        self.logger_stderr.log(level=self.map_log_level(msg), msg=msg)
+        if self.log_prefix is None:
+            self.logger_stderr.log(level=self.map_log_level(msg), msg=msg)
+        else:
+            with self.stderr_prefix(self.log_prefix):
+                self.logger_stderr.log(level=self.map_log_level(msg), msg=msg)
 
     def log_to_stdout(self, msg):
         """
@@ -384,10 +390,14 @@ class LogDispatcher:
         msg : str
             The message to log.
         """
+        # if self.log_prefix is None:
         self.logger_stdout.log(level=self.map_log_level(msg), msg=msg)
+        # else:
+        #     with self.stdout_prefix(self.log_prefix):
+        #         self.logger_stdout.log(level=self.map_log_level(msg), msg=msg)
 
     @contextlib.contextmanager
-    def prefix_stderr_name(self, *, prefix):
+    def stderr_prefix(self, prefix):
         """
         Manage a context to prefix the `stderr` logger name.
 
@@ -403,6 +413,24 @@ class LogDispatcher:
         self.logger_stderr.name = prefix + "/" + logger_stderr_name
         yield
         self.logger_stderr.name = logger_stderr_name
+
+    @contextlib.contextmanager
+    def stdout_prefix(self, prefix):
+        """
+        Manage a context to prefix the `stdout` logger name.
+
+        When inside the context, the name of the `stdout` logger is changed to
+        be prefixed by "`prefix`/".
+
+        Parameters
+        ----------
+        prefix : str
+            The prefix add to the `stdout` logger name.
+        """
+        logger_stdout_name = self.logger_stdout.name
+        self.logger_stdout.name = prefix + "/" + logger_stdout_name
+        yield
+        self.logger_stdout.name = logger_stdout_name
 
     @staticmethod
     def _determine_log_level(*, verbosity):

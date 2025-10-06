@@ -84,17 +84,27 @@ class CondaInstall:
         self.sandbox = sandbox
         self.prefix = prefix
         self.license_accepted = license_accepted
-        if log_settings is not None:
-            self._verbosity = log_settings.verbosity
-            self.log_dispatcher = tracing.LogDispatcher(
-                name=__class__.__name__,
-                map_log_level_func=self._map_log_level,
-                filters=self._logging_filters,
-                log_settings=log_settings,
-            )
+        if log_settings is None:
+            log_settings = tracing.LogSettings()
+
+        self.log_dispatcher = tracing.LogDispatcher(
+            name=__class__.__name__,
+            log_prefix=sandbox.__class__.__name__,
+            map_log_level_func=self._map_log_level,
+            filters=self._logging_filters,
+            log_settings=log_settings,
+        )
+
+        if log_settings.verbosity <= 0:
+            self._v = " -q"
+        elif log_settings.verbosity == 2:
+            self._v = " -v"  # Conda INFO
+        elif log_settings.verbosity == 3 or log_settings.verbosity == 4:
+            self._v = " -vv"  # Conda DEBUG
+        elif log_settings.verbosity >= 5:
+            self._v = " -vvv"  # Conda TRACE
         else:
-            self._verbosity = 0
-            self.log_dispatcher = None
+            self._v = ""
 
         # Download Miniforge installer
         conda_installer_path = (
@@ -108,12 +118,12 @@ class CondaInstall:
                 installer_path=conda_installer_path
             )
         else:
-            self._display_message(
+            self.log_dispatcher.logger_stderr.log(
                 msg=(
                     "You have accepted the Miniforge installer license via the command "
                     "line option '--accept-licenses'."
                 ),
-                log_level=logging.WARNING,
+                level=logging.WARNING,
             )
 
         # Bootstrap Conda environment in container
@@ -138,7 +148,7 @@ class CondaInstall:
             The name to use for the installed Conda environment.
         """
         self._run_command_in_sandbox(
-            cmd=f"conda env create -f {path} -n {name}" + self._conda_verbosity_arg
+            cmd=f"conda env create -f {path} -n {name}" + self._v
         )
 
     def cleanup_unused_files(self):
@@ -147,9 +157,7 @@ class CondaInstall:
 
         Equivalent to calling "conda clean -a".
         """
-        self._run_command_in_sandbox(
-            cmd="conda clean -y -a" + self._conda_verbosity_arg
-        )
+        self._run_command_in_sandbox(cmd="conda clean -y -a" + self._v)
 
     def _bootstrap_conda(self, *, installer_path):
         """
@@ -175,10 +183,7 @@ class CondaInstall:
 
         # Update the installed Conda package manager to the latest version
         self._run_command_in_sandbox(
-            cmd=(
-                "conda update -y -n base -c conda-forge conda"
-                + self._conda_verbosity_arg
-            )
+            cmd=("conda update -y -n base -c conda-forge conda" + self._v)
         )
 
     def _check_conda_bootstrap_integrity(self):
@@ -190,33 +195,6 @@ class CondaInstall:
                 "We risk destroying the Conda install in "
                 f"{source_check_process.stdout.strip()}. Aborting!"
             )
-
-    def _display_message(self, *, msg, log_level=None):
-        """
-        Display a message to the user.
-
-        Displays the message using the `log_dispatcher` if `log_level` is not
-        `None` and a `log_dispatcher` is defined for the `CondaInstall`.
-        Otherwise prints the message on stdout. When the `log_dispatcher` is
-        used, messages with `log_levels` of WARNING or above are sent to stderr
-        whereas massages with with `log_level` below WARNING are sent to
-        stdout.
-
-        Parameters
-        ----------
-        msg : str
-            The message to display to the user.
-        log_level : int, optional
-            The logging level to use for the message, e.g. `logging.INFO` or
-            `logging.WARNING`.
-        """
-        if self.log_dispatcher is None or log_level is None:
-            print(msg)
-        else:
-            if log_level >= logging.WARNING:
-                self.log_dispatcher.logger_stderr.log(level=log_level, msg=msg)
-            else:
-                self.log_dispatcher.logger_stdout.log(level=log_level, msg=msg)
 
     def _display_miniforge_license_for_acceptance(self, *, installer_path):
         """
@@ -272,16 +250,16 @@ class CondaInstall:
             logger.debug(f"The Miniforge displayed license is: {license_text}")
             # prompt user for acceptance of license terms
             if not util.answer_is_yes(license_text):
-                self._display_message(
+                self.log_dispatcher.logger_stderr.log(
                     msg="You have not accepted the Miniforge installer license. Aborting!",
-                    log_level=logging.CRITICAL,
+                    level=logging.CRITICAL,
                 )
                 sys.exit(0)
 
             self.license_accepted = True
-            self._display_message(
+            self.log_dispatcher.logger_stdout.log(
                 msg="You have accepted the Miniforge installer license.",
-                log_level=logging.INFO,
+                level=logging.INFO,
             )
         else:
             raise RuntimeError(
@@ -382,37 +360,8 @@ class CondaInstall:
             Information about the process that ran in the container sandbox.
         """
         return self.sandbox.run_command_in_container(
-            cmd=cmd, custom_log_dispatcher=self.log_dispatcher
+            cmd=cmd, log_dispatcher=self.log_dispatcher
         )
-
-    @property
-    def _conda_verbosity_arg(self):
-        """
-        Get a verbosity level for Conda commands.
-
-        A mapping of the internal cotainr verbosity level to `Conda verbosity
-        flags
-        <https://docs.conda.io/projects/conda/en/latest/commands/create.html#Output,%20Prompt,%20and%20Flow%20Control%20Options>`_.
-
-        Returns
-        -------
-        verbosity_arg : str
-            The verbosity arg ("-q", "-v", "-vv", etc.) to add to the Conda
-            command.
-        """
-        if self._verbosity <= 0:
-            return " -q"
-        elif self._verbosity == 2:
-            # Conda INFO
-            return " -v"
-        elif self._verbosity == 3 or self._verbosity == 4:
-            # Conda DEBUG
-            return " -vv"
-        elif self._verbosity >= 5:
-            # Conda TRACE
-            return " -vvv"
-        else:
-            return ""
 
     @property
     def _logging_filters(self):

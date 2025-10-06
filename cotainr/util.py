@@ -23,7 +23,6 @@ systems_file
 """
 
 from concurrent.futures import ThreadPoolExecutor
-import functools
 import json
 import logging
 from pathlib import Path
@@ -147,20 +146,12 @@ def stream_subprocess(*, args, log_dispatcher=None, **kwargs):
             stdout_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stdout,
-                print_dispatch=(
-                    log_dispatcher.log_to_stdout
-                    if log_dispatcher is not None
-                    else functools.partial(print, end="", file=sys.stdout)
-                ),
+                print_dispatch=log_dispatcher.log_to_stdout,
             )
             stderr_future = executor.submit(
                 _print_and_capture_stream,
                 stream_handle=process.stderr,
-                print_dispatch=(
-                    log_dispatcher.log_to_stderr
-                    if log_dispatcher is not None
-                    else functools.partial(print, end="", file=sys.stderr)
-                ),
+                print_dispatch=log_dispatcher.log_to_stderr,
             )
             captured_stdout = stdout_future.result()
             captured_stderr = stderr_future.result()
