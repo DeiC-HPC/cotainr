@@ -18,7 +18,6 @@ from pathlib import Path
 import random
 import re
 import shutil
-import subprocess
 import sys
 import time
 import urllib.error
@@ -93,9 +92,8 @@ class CondaInstall:
     def bootstrap(self, accept_licenses):
         """Run the entire bootstrapping procedure of downloading and installing conda."""
         install_path = self.download_miniforge()
-        self.verify_license(
-            license_accepted=accept_licenses, conda_installer_path=install_path
-        )
+        license_text = self.extract_license(install_path)
+        self.verify_license(license_text=license_text, license_accepted=accept_licenses)
         self.install(install_path)
         self.source_install()
         self.verify_install()
@@ -118,12 +116,10 @@ class CondaInstall:
         self._download_miniforge_installer(installer_path=conda_installer_path)
         return conda_installer_path
 
-    def verify_license(self, license_accepted, conda_installer_path):
+    def verify_license(self, license_accepted, license_text):
         """Make sure the user has accepted the Miniforge installer license."""
         if not license_accepted:
-            self._display_miniforge_license_for_acceptance(
-                installer_path=conda_installer_path
-            )
+            self.display_license(license_text)
         else:
             self._display_message(
                 msg=(
@@ -141,8 +137,6 @@ class CondaInstall:
     def add_environment(self, *, path, name):
         """
         Add an exported Conda environment to the Conda install.
-
-        Equivalent to calling "conda env create -f `path` -n `name`".
 
         Parameters
         ----------
@@ -224,7 +218,7 @@ class CondaInstall:
             else:
                 self.log_dispatcher.logger_stdout.log(level=log_level, msg=msg)
 
-    def _display_miniforge_license_for_acceptance(self, *, installer_path):
+    def extract_license(self, install_path):
         """
         Extract and display Miniforge installer license for acceptance.
 
@@ -234,13 +228,13 @@ class CondaInstall:
 
         Parameters
         ----------
-        installer_path : pathlib.Path
-            The path of the Miniforge installer to run to bootstrap Conda.
+        install_path : pathlib.Path
+                The path of the Miniforge installer to run to bootstrap Conda.
 
         Raises
         ------
         RuntimeError
-            If unable to extract a license from the Miniforge installer.
+                If unable to extract a license from the Miniforge installer.
 
         Notes
         -----
@@ -253,10 +247,15 @@ class CondaInstall:
         when running the installer and pressing ENTER. We then prompt for a
         "yes" to the license terms.
         """
-        with subprocess.Popen(
-            ["bash", f"{installer_path.name}"],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
+        # process = self.comm.subprocess_runner(
+        #     ["bash", f"{install_cpath.name}"], self.log_dispatcher, input="\n",
+        # )
+        from subprocess import PIPE, Popen
+
+        with Popen(
+            ["bash", f"{install_path.name}"],
+            stdin=PIPE,
+            stdout=PIPE,
             text=True,
         ) as process:
             license_text, _ = process.communicate(
@@ -266,33 +265,20 @@ class CondaInstall:
             process.kill()  # We only use this process to extract the license
 
         util._flush_stdin_buffer()
-        if license_text:
-            license_text = license_text.replace(
-                # remove prompt for pressing enter (as we have already done this...)
-                "Please, press ENTER to continue\n>>> ",
-                "\n",
-            )
-            # Remove "[yes|no]"" and ">>>" from license text as answer_is_yes
-            # adds them as part of the input handling
-            license_text = license_text.replace(" [yes|no]\n>>> ", "")
-            logger.debug(f"The Miniforge displayed license is: {license_text}")
-            # prompt user for acceptance of license terms
-            if not util.answer_is_yes(license_text):
-                self._display_message(
-                    msg="You have not accepted the Miniforge installer license. Aborting!",
-                    log_level=logging.CRITICAL,
-                )
-                sys.exit(0)
+        return license_text
 
-            self.license_accepted = True
-            self._display_message(
-                msg="You have accepted the Miniforge installer license.",
-                log_level=logging.INFO,
+    def display_license(self, license_text):
+        """Prompt user for acceptance of license terms."""
+        if not util.answer_is_yes(license_text):
+            self.log_dispatcher.log_to_stderr(
+                msg="You have not accepted the Miniforge installer license. Aborting!",
             )
-        else:
-            raise RuntimeError(
-                "No license seems to be displayed by the Miniforge installer."
-            )
+            sys.exit(0)
+
+        self.license_accepted = True
+        self.log_dispatcher.log_to_stdout(
+            msg="You have accepted the Miniforge installer license.",
+        )
 
     @staticmethod
     def _get_install_script(architecture):
