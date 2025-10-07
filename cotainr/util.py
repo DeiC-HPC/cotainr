@@ -50,6 +50,14 @@ def answer_is_yes(input_text, max_attempts=1000):
     answer_is_yes : bool
         The indicator of whether or not the answer is yes.
     """
+    input_text = input_text.replace(
+        # remove prompt for pressing enter (as we have already done this...)
+        "Please, press ENTER to continue\n>>> ",
+        "\n",
+    )
+    # Remove "[yes|no]"" and ">>>" from license text as answer_is_yes
+    # adds them as part of the input handling
+    input_text = input_text.replace(" [yes|no]\n>>> ", "")
     answer_prompt = input_text + " [yes/no]\n>>> "
     for _ in range(max_attempts):
         answer = input(answer_prompt)
