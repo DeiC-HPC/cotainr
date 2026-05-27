@@ -32,6 +32,11 @@
 			"source": "commandhistory",
 			"target": "/commandhistory",
 			"type": "volume"
+		},
+		{// Make the home directory writeable (for running the devcontainer as --read-only)
+			"source": "ubuntu-home",
+			"target": "/home/ubuntu",
+			"type": "volume"
 		}
 	],
 
@@ -63,6 +68,7 @@
 	// This has been tested with Podman. If using Docker, more configuration may be needed to avoid permission errors with the volume mounts.
 	// See https://github.com/microsoft/vscode-remote-release/issues/9931 for more details.
 	"containerUser": "1000:1000",
+	"updateRemoteUserUID": false,
 
 	// Configure tool-specific properties.
 	"customizations": {
