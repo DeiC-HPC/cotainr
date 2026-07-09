@@ -12,29 +12,29 @@
 	// These should be sufficient for running the container using rootless Podman.
 	// More settings may be needed for other container runtimes, e.g. Docker.
 	"securityOpt": [
-		"systempaths=unconfined",
+		"unmask=/proc/*",
 		"no-new-privileges"
 	],
 
 	// Mounts to persist select data between container restarts and rebuilds.
 	"mounts": [
 		{// Persist the virtual environment (with paths relative to the dev container setup)
-			"source": "uv-env",
+			"source": "cotainr-uv-env",
 			"target": "/uv-env",
 			"type": "volume"
 		},
 		{// Persist the pre-commit environment
-			"source": "pre-commit-env",
+			"source": "cotainr-pre-commit-env",
 			"target": "/pre-commit-env",
 			"type": "volume"
 		},
 		{// Persist the command history
-			"source": "commandhistory",
+			"source": "cotainr-commandhistory",
 			"target": "/commandhistory",
 			"type": "volume"
 		},
 		{// Make the home directory writeable (for running the devcontainer as --read-only)
-			"source": "ubuntu-home",
+			"source": "cotainr-ubuntu-home",
 			"target": "/home/ubuntu",
 			"type": "volume"
 		}
@@ -81,12 +81,7 @@
 				"python.defaultInterpreterPath": "/uv-env/venv/bin/python3", // Set the default Python interpreter to the uv virtual environment
 				"python.terminal.activateEnvironment": true, // Activate the uv virtual environment in the terminal
 				"python.testing.pytestEnabled": true, // Enable pytest integration
-				"python.languageServer": "Pylance", // Use Pylance as Python language server
-				"github.copilot.chat.codeGeneration.instructions": [
-					{
-						"text": "This dev container is used for developing and testing Cotainr. Cotainr is a tool for building Singularity / Apptainer containers in a rootless setting. It is written in pure Python and uses pytest for testing as well as sphinx for building the documentation. The documentation is written as restructured text."
-					}
-				]
+				"python.languageServer": "Pylance" // Use Pylance as Python language server
 			},
 			// VS Code extensions to install in the dev container.
 			// https://code.visualstudio.com/docs/devcontainers/containers#_managing-extensions
